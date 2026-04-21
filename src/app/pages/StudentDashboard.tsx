@@ -1,0 +1,1141 @@
+import { useState, useEffect } from "react";
+import {
+  Bell,
+  LogOut,
+  Clock,
+  Users,
+  AlertTriangle,
+  CheckCircle2,
+  BookOpen,
+  TrendingUp,
+  CalendarDays,
+  ChevronRight,
+  Play,
+  Award,
+  LayoutDashboard,
+  FileText,
+  BarChart3,
+  Calendar,
+  Star,
+  Code2,
+  AlignLeft,
+  Target,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  Zap,
+  ClipboardList,
+  Lock,
+  ShieldAlert,
+  Settings,
+  Eye,
+  Save,
+  Activity,
+  EyeOff,
+  User,
+  Mail,
+  Building,
+  Phone,
+  Shield,
+  Smartphone,
+  Monitor,
+  X,
+} from "lucide-react";
+import { useNavigate } from "react-router";
+import { Logo } from "../components/Logo";
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const stats = [
+  { label: "Examens à venir", value: "3", icon: CalendarDays, change: "+1 cette semaine" },
+  { label: "Examens complétés", value: "12", icon: CheckCircle2, change: "+2 ce mois" },
+  { label: "Score moyen", value: "84%", icon: TrendingUp, change: "+3% vs mois dernier" },
+  { label: "Certifications", value: "4", icon: Award, change: "1 en cours" },
+];
+
+const allExams = [
+  {
+    id: 1,
+    title: "Architecture Java EE",
+    subject: "Génie Logiciel",
+    status: "completed",
+    date: "28 Mars 2026",
+    time: "10:00",
+    duration: 90,
+    students: 45,
+    score: 87,
+    maxScore: 100,
+    types: ["mcq", "code"],
+    rank: 3,
+    classAvg: 74,
+  },
+  {
+    id: 2,
+    title: "Introduction au Cloud",
+    subject: "Infrastructure",
+    status: "ongoing",
+    date: "4 Avril 2026",
+    time: "14:30",
+    duration: 120,
+    students: 38,
+    types: ["mcq", "text"],
+    progress: 65,
+  },
+  {
+    id: 3,
+    title: "Bases de données NoSQL",
+    subject: "Data Engineering",
+    status: "upcoming",
+    date: "10 Avril 2026",
+    time: "09:00",
+    duration: 75,
+    students: 52,
+    types: ["mcq", "code", "text"],
+  },
+  {
+    id: 4,
+    title: "Sécurité des Applications Web",
+    subject: "Cybersécurité",
+    status: "upcoming",
+    date: "15 Avril 2026",
+    time: "11:00",
+    duration: 90,
+    students: 40,
+    types: ["mcq", "code"],
+  },
+  {
+    id: 5,
+    title: "Machine Learning Avancé",
+    subject: "IA & Data Science",
+    status: "completed",
+    date: "20 Mars 2026",
+    time: "13:00",
+    duration: 150,
+    students: 30,
+    score: 92,
+    maxScore: 100,
+    types: ["mcq", "code"],
+    rank: 1,
+    classAvg: 78,
+  },
+];
+
+const calendarEvents = [
+  {
+    id: 1,
+    title: "Architecture Java EE",
+    date: "28",
+    month: "Mars",
+    time: "10:00",
+    status: "completed",
+  },
+  {
+    id: 2,
+    title: "Introduction au Cloud",
+    date: "4",
+    month: "Avril",
+    time: "14:30",
+    status: "ongoing",
+  },
+  {
+    id: 3,
+    title: "Bases de données NoSQL",
+    date: "10",
+    month: "Avril",
+    time: "09:00",
+    status: "upcoming",
+  },
+  {
+    id: 4,
+    title: "Sécurité des Applications Web",
+    date: "15",
+    month: "Avril",
+    time: "11:00",
+    status: "upcoming",
+  },
+];
+
+// ─── Components ───────────────────────────────────────────────────────────────
+
+function TypeChip({ type }: { type: string }) {
+  const typeMap: Record<string, { label: string; icon: any }> = {
+    mcq: { label: "QCM", icon: ClipboardList },
+    text: { label: "Texte", icon: AlignLeft },
+    code: { label: "Code", icon: Code2 },
+  };
+
+  const config = typeMap[type];
+  const Icon = config.icon;
+
+  return (
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F5F7FB] border border-[#E5E5E5] rounded-lg">
+      <Icon className="w-3 h-3 text-black" />
+      <span className="text-xs font-medium text-black">{config.label}</span>
+    </div>
+  );
+}
+
+function ScoreRing({ score, size = "md" }: { score: number; size?: "sm" | "md" | "lg" }) {
+  const sizes = {
+    sm: { width: 60, stroke: 4, fontSize: "text-sm" },
+    md: { width: 80, stroke: 5, fontSize: "text-lg" },
+    lg: { width: 100, stroke: 6, fontSize: "text-2xl" },
+  };
+
+  const config = sizes[size];
+  const radius = (config.width - config.stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+
+  return (
+    <div className="relative inline-flex items-center justify-center" style={{ width: config.width, height: config.width }}>
+      <svg className="transform -rotate-90" width={config.width} height={config.width}>
+        <circle
+          cx={config.width / 2}
+          cy={config.width / 2}
+          r={radius}
+          stroke="#E5E5E5"
+          strokeWidth={config.stroke}
+          fill="none"
+        />
+        <circle
+          cx={config.width / 2}
+          cy={config.width / 2}
+          r={radius}
+          stroke="#000000"
+          strokeWidth={config.stroke}
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className={`font-bold text-black ${config.fontSize}`}>{score}%</span>
+      </div>
+    </div>
+  );
+}
+
+export function StudentDashboard() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"dashboard" | "exams" | "results" | "calendar" | "settings">("dashboard");
+  const [notifPanelOpen, setNotifPanelOpen] = useState(false);
+  const [examFilter, setExamFilter] = useState<"all" | "ongoing" | "upcoming" | "completed">("all");
+  const [selectedResult, setSelectedResult] = useState<number | null>(null);
+  const [settingsTab, setSettingsTab] = useState<"profile" | "password" | "notifications" | "security">("profile");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showExamLock, setShowExamLock] = useState(false);
+  const [targetExamId, setTargetExamId] = useState<number | null>(null);
+
+  const [notificationSettings, setNotificationSettings] = useState({
+    examReminders: true,
+    resultNotifications: true,
+    systemUpdates: false,
+  });
+
+  const handleJoinExam = (examId: number) => {
+    setTargetExamId(examId);
+    setShowExamLock(true);
+  };
+
+  const confirmJoinExam = () => {
+    if (targetExamId) {
+      navigate(`/exam/${targetExamId}`);
+    }
+  };
+
+  const handleLogout = () => {
+    navigate("/");
+  };
+
+  const activeExam = allExams.find((e) => e.status === "ongoing");
+  const filteredExams = examFilter === "all" ? allExams : allExams.filter((e) => e.status === examFilter);
+  const completedExams = allExams.filter((e) => e.status === "completed");
+
+  return (
+    <div className="min-h-screen bg-[#FAFAFA]">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white border-b border-[#E5E5E5]">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Logo size="sm" />
+            <nav className="hidden md:flex items-center gap-6">
+              {[
+                { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+                { id: "exams", label: "Mes Examens", icon: FileText },
+                { id: "results", label: "Résultats", icon: BarChart3 },
+                { id: "calendar", label: "Calendrier", icon: Calendar },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm transition-all ${
+                      activeTab === tab.id
+                        ? "bg-[#00809D] text-white"
+                        : "text-[#666666] hover:text-black hover:bg-[#F5F7FB]"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setNotifPanelOpen(!notifPanelOpen)}
+              className="relative p-2 rounded-lg hover:bg-[#F5F7FB] transition-colors"
+            >
+              <Bell className="w-5 h-5 text-black" />
+              <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#00809D] rounded-full"></div>
+            </button>
+
+            <div className="flex items-center gap-3 pl-3 border-l border-[#E5E5E5]">
+              <button
+                onClick={() => setActiveTab("settings")}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#F5F7FB] transition-colors"
+              >
+                <div className="w-8 h-8 bg-[#00809D] rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">JD</span>
+                </div>
+                <div className="hidden md:block text-left">
+                  <p className="text-sm font-semibold text-black">Jean Dupont</p>
+                  <p className="text-xs text-[#666666]">Étudiant</p>
+                </div>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg hover:bg-[#F5F7FB] transition-colors"
+                title="Se déconnecter"
+              >
+                <LogOut className="w-5 h-5 text-black" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Welcome Header */}
+        {activeTab === "dashboard" && (
+          <div className="mb-8">
+            <h1 className="text-4xl font-serif text-black mb-2" style={{ fontFamily: "'IM FELL French Canon', serif" }}>Bonjour, Jean            </h1>
+            <p className="text-[#666666] text-lg">Bienvenue sur votre tableau de bord</p>
+          </div>
+        )}
+
+        {/* Dashboard View */}
+        {activeTab === "dashboard" && (
+          <div className="space-y-8">
+            {/* Active Exam CTA */}
+            {activeExam && (
+              <div className="bg-[#00809D] rounded-2xl p-8 border border-[#1C1C1C]">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full">
+                        <div className="w-2 h-2 bg-[#00809D] rounded-full animate-pulse"></div>
+                        <span className="text-xs font-bold text-black uppercase">En cours</span>
+                      </div>
+                      <span className="text-white/70 text-sm">Examen actif</span>
+                    </div>
+                    <h2 className="text-3xl font-serif text-white mb-2" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                      {activeExam.title}
+                    </h2>
+                    <p className="text-white/70 text-lg mb-6">{activeExam.subject}</p>
+                    <div className="flex items-center gap-6 mb-6">
+                      <div className="flex items-center gap-2 text-white">
+                        <Clock className="w-4 h-4" />
+                        <span className="text-sm">{activeExam.duration} min</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-white">
+                        <Users className="w-4 h-4" />
+                        <span className="text-sm">{activeExam.students} étudiants</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {activeExam.types.map((type) => (
+                          <div key={type} className="px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-xs">
+                            {type.toUpperCase()}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleJoinExam(activeExam.id)}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white hover:bg-[#F5F7FB] text-black font-bold rounded-xl transition-all"
+                    >
+                      <Play className="w-4 h-4" />
+                      <span>Reprendre l'examen</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {stats.map((stat, idx) => {
+                const Icon = stat.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="bg-white border border-[#E5E5E5] rounded-2xl p-6 hover:shadow-lg transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="w-12 h-12 bg-[#F5F7FB] rounded-xl flex items-center justify-center">
+                        <Icon className="w-6 h-6 text-black" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold text-black mb-1">{stat.value}</p>
+                      <p className="text-sm font-medium text-[#666666] mb-2">{stat.label}</p>
+                      <p className="text-xs text-[#AAABAC]">{stat.change}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Main Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              {/* Recent & Upcoming Exams */}
+              <div className="xl:col-span-2 space-y-5">
+                <h2 className="text-2xl font-serif text-black" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                  Examens récents & à venir
+                </h2>
+                {allExams.slice(0, 3).map((exam) => (
+                  <div
+                    key={exam.id}
+                    className="bg-white border border-[#E5E5E5] rounded-2xl p-6 hover:shadow-lg transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                            exam.status === "completed"
+                              ? "bg-[#00809D] text-white"
+                              : exam.status === "ongoing"
+                              ? "bg-[#F5F7FB] text-black border border-black"
+                              : "bg-[#F5F7FB] text-[#666666] border border-[#E5E5E5]"
+                          }`}>
+                            {exam.status === "completed" && <CheckCircle2 className="w-3 h-3" />}
+                            {exam.status === "ongoing" && <Play className="w-3 h-3" />}
+                            {exam.status === "upcoming" && <Clock className="w-3 h-3" />}
+                            {exam.status === "completed" ? "Terminé" : exam.status === "ongoing" ? "En cours" : "À venir"}
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-bold text-black mb-1">{exam.title}</h3>
+                        <p className="text-sm text-[#666666] mb-3">{exam.subject}</p>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex items-center gap-1.5 text-sm text-[#666666]">
+                            <CalendarDays className="w-4 h-4" />
+                            <span>{exam.date}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-[#666666]">
+                            <Clock className="w-4 h-4" />
+                            <span>{exam.time} • {exam.duration} min</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-[#666666]">
+                            <Users className="w-4 h-4" />
+                            <span>{exam.students}</span>
+                          </div>
+                        </div>
+                      </div>
+                      {exam.status === "completed" && exam.score !== undefined && (
+                        <div className="flex-shrink-0 ml-4">
+                          <ScoreRing score={exam.score} size="md" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 pt-4 border-t border-[#E5E5E5]">
+                      {exam.types.map((type) => (
+                        <TypeChip key={type} type={type} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Sidebar */}
+              <div className="space-y-6">
+                {/* Performance */}
+                <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6">
+                  <h3 className="text-lg font-bold text-black mb-4">Performance</h3>
+                  <div className="flex justify-center mb-4">
+                    <ScoreRing score={84} size="lg" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-[#666666]">Moyenne de la classe</span>
+                      <span className="font-bold text-black">78%</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <ArrowUp className="w-4 h-4 text-black" />
+                      <span className="text-[#666666]">+6% au-dessus de la moyenne</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Calendar */}
+                <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6">
+                  <h3 className="text-lg font-bold text-black mb-4">Calendrier</h3>
+                  <div className="space-y-3">
+                    {calendarEvents.slice(0, 3).map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-start gap-3 p-3 bg-[#F5F7FB] rounded-xl"
+                      >
+                        <div className="flex-shrink-0 w-12 h-12 bg-white border border-[#E5E5E5] rounded-lg flex flex-col items-center justify-center">
+                          <span className="text-xs font-medium text-[#666666] uppercase">{event.month.slice(0, 3)}</span>
+                          <span className="text-lg font-bold text-black">{event.date}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-black mb-0.5 truncate">{event.title}</p>
+                          <p className="text-xs text-[#666666]">{event.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Exams View */}
+        {activeTab === "exams" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-4xl font-serif text-black" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                Mes Examens
+              </h1>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+              {[
+                { id: "all", label: "Tous", count: allExams.length },
+                { id: "ongoing", label: "En cours", count: allExams.filter((e) => e.status === "ongoing").length },
+                { id: "upcoming", label: "À venir", count: allExams.filter((e) => e.status === "upcoming").length },
+                { id: "completed", label: "Terminés", count: allExams.filter((e) => e.status === "completed").length },
+              ].map((filter) => (
+                <button
+                  key={filter.id}
+                  onClick={() => setExamFilter(filter.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
+                    examFilter === filter.id
+                      ? "bg-[#00809D] text-white"
+                      : "bg-white border border-[#E5E5E5] text-[#666666] hover:text-black hover:border-black"
+                  }`}
+                >
+                  <span>{filter.label}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                    examFilter === filter.id ? "bg-white text-black" : "bg-[#F5F7FB] text-[#666666]"
+                  }`}>
+                    {filter.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Exam List */}
+            <div className="grid gap-5">
+              {filteredExams.map((exam) => (
+                <div
+                  key={exam.id}
+                  className="bg-white border border-[#E5E5E5] rounded-2xl p-6 hover:shadow-lg transition-all"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                          exam.status === "completed"
+                            ? "bg-[#00809D] text-white"
+                            : exam.status === "ongoing"
+                            ? "bg-[#F5F7FB] text-black border border-black"
+                            : "bg-[#F5F7FB] text-[#666666] border border-[#E5E5E5]"
+                        }`}>
+                          {exam.status === "completed" && <CheckCircle2 className="w-3 h-3" />}
+                          {exam.status === "ongoing" && <Play className="w-3 h-3" />}
+                          {exam.status === "upcoming" && <Clock className="w-3 h-3" />}
+                          {exam.status === "completed" ? "Terminé" : exam.status === "ongoing" ? "En cours" : "À venir"}
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-black mb-2">{exam.title}</h3>
+                      <p className="text-base text-[#666666] mb-4">{exam.subject}</p>
+                      <div className="flex flex-wrap items-center gap-4 mb-4">
+                        <div className="flex items-center gap-2 text-sm text-[#666666]">
+                          <CalendarDays className="w-4 h-4" />
+                          <span>{exam.date}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-[#666666]">
+                          <Clock className="w-4 h-4" />
+                          <span>{exam.time} • {exam.duration} min</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-[#666666]">
+                          <Users className="w-4 h-4" />
+                          <span>{exam.students} étudiants</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {exam.types.map((type) => (
+                          <TypeChip key={type} type={type} />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-3 ml-4">
+                      {exam.status === "completed" && exam.score !== undefined && (
+                        <ScoreRing score={exam.score} size="lg" />
+                      )}
+                      {exam.status === "ongoing" && (
+                        <button
+                          onClick={() => handleJoinExam(exam.id)}
+                          className="px-6 py-3 bg-[#00809D] hover:bg-[#1C1C1C] text-white font-bold rounded-xl transition-all flex items-center gap-2"
+                        >
+                          <Play className="w-4 h-4" />
+                          <span>Reprendre</span>
+                        </button>
+                      )}
+                      {exam.status === "upcoming" && (
+                        <button className="px-6 py-3 bg-white border border-[#E5E5E5] hover:border-black text-black font-medium rounded-xl transition-all">
+                          Détails
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Results View */}
+        {activeTab === "results" && (
+          <div className="space-y-6">
+            {selectedResult === null ? (
+              <>
+                <h1 className="text-4xl font-serif text-black mb-6" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                  Mes Résultats
+                </h1>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {completedExams.map((exam) => (
+                    <button
+                      key={exam.id}
+                      onClick={() => setSelectedResult(exam.id)}
+                      className="bg-white border border-[#E5E5E5] rounded-2xl p-6 hover:shadow-lg transition-all text-left"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-black mb-1">{exam.title}</h3>
+                          <p className="text-sm text-[#666666] mb-3">{exam.subject}</p>
+                          <p className="text-xs text-[#AAABAC]">{exam.date}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center mb-4">
+                        <ScoreRing score={exam.score!} size="lg" />
+                      </div>
+                      <div className="pt-4 border-t border-[#E5E5E5] space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[#666666]">Votre score</span>
+                          <span className="font-bold text-black">{exam.score}/{exam.maxScore}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[#666666]">Classement</span>
+                          <span className="font-bold text-black">#{exam.rank}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[#666666]">Moyenne</span>
+                          <span className="font-bold text-black">{exam.classAvg}%</span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div>
+                {(() => {
+                  const exam = allExams.find((e) => e.id === selectedResult)!;
+                  return (
+                    <>
+                      <button
+                        onClick={() => setSelectedResult(null)}
+                        className="flex items-center gap-2 text-[#666666] hover:text-black mb-6 transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span className="font-medium">Retour aux résultats</span>
+                      </button>
+
+                      <div className="bg-white border border-[#E5E5E5] rounded-2xl p-8">
+                        <div className="flex items-start justify-between mb-8">
+                          <div>
+                            <h1 className="text-3xl font-serif text-black mb-2" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                              {exam.title}
+                            </h1>
+                            <p className="text-lg text-[#666666] mb-4">{exam.subject}</p>
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2 text-sm text-[#666666]">
+                                <CalendarDays className="w-4 h-4" />
+                                <span>{exam.date}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-[#666666]">
+                                <Clock className="w-4 h-4" />
+                                <span>{exam.duration} min</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <ScoreRing score={exam.score!} size="lg" />
+                            <p className="text-sm text-[#666666] mt-2">Votre score</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                          <div className="bg-[#F5F7FB] rounded-xl p-5">
+                            <p className="text-sm text-[#666666] mb-1">Note finale</p>
+                            <p className="text-3xl font-bold text-black">{exam.score}/{exam.maxScore}</p>
+                          </div>
+                          <div className="bg-[#F5F7FB] rounded-xl p-5">
+                            <p className="text-sm text-[#666666] mb-1">Classement</p>
+                            <p className="text-3xl font-bold text-black">#{exam.rank}</p>
+                          </div>
+                          <div className="bg-[#F5F7FB] rounded-xl p-5">
+                            <p className="text-sm text-[#666666] mb-1">Moyenne classe</p>
+                            <p className="text-3xl font-bold text-black">{exam.classAvg}%</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <h3 className="text-xl font-bold text-black">Détails par type de question</h3>
+                          {exam.types.map((type) => (
+                            <div key={type} className="bg-[#F5F7FB] rounded-xl p-5">
+                              <div className="flex items-center justify-between mb-3">
+                                <TypeChip type={type} />
+                                <span className="text-sm font-bold text-black">85%</span>
+                              </div>
+                              <div className="w-full bg-white rounded-full h-2">
+                                <div className="bg-[#00809D] h-2 rounded-full" style={{ width: "85%" }}></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Calendar View */}
+        {activeTab === "calendar" && (
+          <div className="space-y-6">
+            <h1 className="text-4xl font-serif text-black" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+              Calendrier des Examens
+            </h1>
+
+            <div className="grid gap-4">
+              {calendarEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="bg-white border border-[#E5E5E5] rounded-2xl p-6 hover:shadow-lg transition-all"
+                >
+                  <div className="flex items-center gap-6">
+                    <div className="flex-shrink-0 w-20 h-20 bg-[#F5F7FB] border border-[#E5E5E5] rounded-2xl flex flex-col items-center justify-center">
+                      <span className="text-sm font-medium text-[#666666] uppercase">{event.month.slice(0, 3)}</span>
+                      <span className="text-2xl font-bold text-black">{event.date}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-black mb-1">{event.title}</h3>
+                      <p className="text-sm text-[#666666]">{event.time}</p>
+                    </div>
+                    <span className={`px-4 py-2 rounded-xl text-sm font-bold ${
+                      event.status === "completed"
+                        ? "bg-[#00809D] text-white"
+                        : event.status === "ongoing"
+                        ? "bg-[#F5F7FB] text-black border border-black"
+                        : "bg-[#F5F7FB] text-[#666666] border border-[#E5E5E5]"
+                    }`}>
+                      {event.status === "completed" ? "Terminé" : event.status === "ongoing" ? "En cours" : "À venir"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-[#F5F7FB] border border-[#E5E5E5] rounded-2xl p-6">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-black" />
+                </div>
+                <div>
+                  <p className="font-semibold text-black mb-1">Rejoindre un examen</p>
+                  <p className="text-sm text-[#666666]">
+                    Vous pouvez rejoindre un examen 5 minutes avant l'heure de début prévue.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Settings View */}
+        {activeTab === "settings" && (
+          <div className="space-y-6">
+            <h1 className="text-4xl font-serif text-black mb-6" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+              Paramètres
+            </h1>
+
+            <div className="flex gap-6">
+              {/* Settings Sidebar */}
+              <div className="w-64 bg-white border border-[#E5E5E5] rounded-2xl p-4">
+                <nav className="space-y-1">
+                  {[
+                    { id: "profile", label: "Profil", icon: User },
+                    { id: "password", label: "Mot de passe", icon: Lock },
+                    { id: "notifications", label: "Notifications", icon: Bell },
+                    { id: "security", label: "Sécurité", icon: Shield },
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setSettingsTab(tab.id as any)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium transition-all ${
+                          settingsTab === tab.id
+                            ? "bg-[#00809D] text-white"
+                            : "text-[#666666] hover:bg-[#F5F7FB] hover:text-black"
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* Settings Content */}
+              <div className="flex-1 bg-white border border-[#E5E5E5] rounded-2xl p-8">
+                {settingsTab === "profile" && (
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-serif text-black mb-6" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                      Informations du profil
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2">Prénom</label>
+                        <input
+                          type="text"
+                          defaultValue="Jean"
+                          className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2">Nom</label>
+                        <input
+                          type="text"
+                          defaultValue="Dupont"
+                          className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2">Email</label>
+                        <input
+                          type="email"
+                          defaultValue="jean.dupont@universite.fr"
+                          className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2">Téléphone</label>
+                        <input
+                          type="tel"
+                          defaultValue="+33 6 12 34 56 78"
+                          className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-black mb-2">Établissement</label>
+                        <input
+                          type="text"
+                          defaultValue="Université Paris-Saclay"
+                          readOnly
+                          className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-[#666666] cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end pt-4">
+                      <button className="px-6 py-3 bg-[#00809D] hover:bg-[#1C1C1C] text-white font-bold rounded-xl transition-all flex items-center gap-2">
+                        <Save className="w-4 h-4" />
+                        <span>Enregistrer</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {settingsTab === "password" && (
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-serif text-black mb-6" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                      Changer le mot de passe
+                    </h2>
+                    <div className="space-y-5">
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2">Mot de passe actuel</label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 pr-12 text-black focus:outline-none focus:ring-2 focus:ring-black"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#666666] hover:text-black"
+                          >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2">Nouveau mot de passe</label>
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 pr-12 text-black focus:outline-none focus:ring-2 focus:ring-black"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#666666] hover:text-black"
+                          >
+                            {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-2">Confirmer le mot de passe</label>
+                        <div className="relative">
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 pr-12 text-black focus:outline-none focus:ring-2 focus:ring-black"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#666666] hover:text-black"
+                          >
+                            {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end pt-4">
+                      <button className="px-6 py-3 bg-[#00809D] hover:bg-[#1C1C1C] text-white font-bold rounded-xl transition-all">
+                        Mettre à jour le mot de passe
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {settingsTab === "notifications" && (
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-serif text-black mb-6" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                      Préférences de notification
+                    </h2>
+                    <div className="space-y-5">
+                      {[
+                        { key: "examReminders", label: "Rappels d'examen", desc: "Recevoir des notifications avant chaque examen" },
+                        { key: "resultNotifications", label: "Notifications de résultats", desc: "Être averti lorsque les résultats sont publiés" },
+                        { key: "systemUpdates", label: "Mises à jour système", desc: "Recevoir les annonces et mises à jour de la plateforme" },
+                      ].map((setting) => (
+                        <div key={setting.key} className="flex items-center justify-between p-5 bg-[#F5F7FB] rounded-xl">
+                          <div className="flex-1">
+                            <p className="font-semibold text-black mb-1">{setting.label}</p>
+                            <p className="text-sm text-[#666666]">{setting.desc}</p>
+                          </div>
+                          <button
+                            onClick={() =>
+                              setNotificationSettings((prev) => ({
+                                ...prev,
+                                [setting.key]: !prev[setting.key as keyof typeof prev],
+                              }))
+                            }
+                            className={`relative w-12 h-6 rounded-full transition-all ${
+                              notificationSettings[setting.key as keyof typeof notificationSettings]
+                                ? "bg-[#00809D]"
+                                : "bg-[#E5E5E5]"
+                            }`}
+                          >
+                            <div
+                              className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all ${
+                                notificationSettings[setting.key as keyof typeof notificationSettings]
+                                  ? "right-0.5"
+                                  : "left-0.5"
+                              }`}
+                            ></div>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {settingsTab === "security" && (
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-serif text-black mb-6" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                      Sécurité du compte
+                    </h2>
+                    <div className="space-y-5">
+                      <div className="p-5 bg-[#F5F7FB] rounded-xl">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                              <Shield className="w-5 h-5 text-black" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-black">Authentification à deux facteurs</p>
+                              <p className="text-sm text-[#666666]">Ajouter une couche de sécurité supplémentaire</p>
+                            </div>
+                          </div>
+                          <button className="px-4 py-2 bg-[#00809D] text-white text-sm font-bold rounded-lg hover:bg-[#1C1C1C] transition-all">
+                            Activer
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold text-black mb-3">Sessions actives</h3>
+                        <div className="space-y-3">
+                          {[
+                            { device: "MacBook Pro", location: "Paris, France", current: true, icon: Monitor },
+                            { device: "iPhone 14", location: "Paris, France", current: false, icon: Smartphone },
+                          ].map((session, idx) => {
+                            const Icon = session.icon;
+                            return (
+                              <div key={idx} className="flex items-center justify-between p-4 bg-[#F5F7FB] rounded-xl">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                                    <Icon className="w-5 h-5 text-black" />
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-black text-sm">
+                                      {session.device}
+                                      {session.current && (
+                                        <span className="ml-2 px-2 py-0.5 bg-[#00809D] text-white text-xs rounded-full">
+                                          Actuelle
+                                        </span>
+                                      )}
+                                    </p>
+                                    <p className="text-xs text-[#666666]">{session.location}</p>
+                                  </div>
+                                </div>
+                                {!session.current && (
+                                  <button className="text-sm text-[#666666] hover:text-black font-medium">
+                                    Révoquer
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="p-5 bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl">
+                        <p className="font-semibold text-black mb-2">Supprimer le compte</p>
+                        <p className="text-sm text-[#666666] mb-4">
+                          Cette action est irréversible. Toutes vos données seront définitivement supprimées.
+                        </p>
+                        <button className="px-4 py-2 bg-white border border-black text-black text-sm font-bold rounded-lg hover:bg-[#00809D] hover:text-white transition-all">
+                          Supprimer mon compte
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Exam Lock Modal */}
+      {showExamLock && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#00809D]/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full border-2 border-[#E5E5E5] shadow-2xl">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-[#F5F7FB] rounded-full flex items-center justify-center mb-4">
+                <ShieldAlert className="w-8 h-8 text-black" />
+              </div>
+              <h2 className="text-2xl font-serif text-black mb-3" style={{ fontFamily: "'IM FELL French Canon', serif" }}>
+                Mode Examen Sécurisé
+              </h2>
+              <p className="text-[#666666] mb-6">
+                En rejoignant cet examen, votre session sera verrouillée. Vous ne pourrez pas quitter la page ou changer d'onglet sans déclencher une alerte.
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setShowExamLock(false)}
+                  className="flex-1 px-4 py-3 bg-white border border-[#E5E5E5] text-black font-medium rounded-xl hover:border-black transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={confirmJoinExam}
+                  className="flex-1 px-4 py-3 bg-[#00809D] text-white font-bold rounded-xl hover:bg-[#1C1C1C] transition-all flex items-center justify-center gap-2"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>Rejoindre</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Panel */}
+      {notifPanelOpen && (
+        <div className="fixed right-6 top-20 w-80 bg-white border border-[#E5E5E5] rounded-2xl shadow-2xl p-5 z-50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-black">Notifications</h3>
+            <button
+              onClick={() => setNotifPanelOpen(false)}
+              className="p-1 hover:bg-[#F5F7FB] rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4 text-black" />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {[
+              { icon: CheckCircle2, text: "Vos résultats sont disponibles", time: "Il y a 2h" },
+              { icon: Clock, text: "Examen dans 24h", time: "Hier" },
+              { icon: Award, text: "Nouveau badge débloqué", time: "Il y a 3j" },
+            ].map((notif, idx) => {
+              const Icon = notif.icon;
+              return (
+                <div key={idx} className="flex items-start gap-3 p-3 bg-[#F5F7FB] rounded-xl hover:bg-[#F0F0F0] transition-colors cursor-pointer">
+                  <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-4 h-4 text-black" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-black">{notif.text}</p>
+                    <p className="text-xs text-[#666666] mt-0.5">{notif.time}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
