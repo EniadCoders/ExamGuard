@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
   # WebAppProject
 
@@ -9,3 +10,6 @@
 
   Run `npm run dev` to start the development server.
   
+=======
+# ExamGuard
+>>>>>>> b0fdfa74e0f515a510c3f989928252034ace7078
