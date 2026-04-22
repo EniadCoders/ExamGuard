@@ -1,17 +1,23 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Bell,
-  X,
-  CheckCircle2,
   AlertTriangle,
-  Play,
-  Clock,
-  Shield,
-  FileText,
+  Bell,
   Check,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Play,
+  Shield,
+  X,
 } from "lucide-react";
 
-export type NotifType = "exam_start" | "exam_submit" | "fraud" | "warning" | "info" | "result";
+export type NotifType =
+  | "exam_start"
+  | "exam_submit"
+  | "fraud"
+  | "warning"
+  | "info"
+  | "result";
 
 export interface Notification {
   id: number;
@@ -22,49 +28,135 @@ export interface Notification {
   read: boolean;
 }
 
-// ─── Per-role mock notifications ─────────────────────────────────────────────
 const studentNotifs: Notification[] = [
-  { id: 1, type: "exam_start", title: "Examen démarré", body: "«\u202fSystèmes d'Exploitation\u202f» est maintenant accessible. Rejoignez maintenant.", time: "14:00", read: false },
-  { id: 2, type: "warning", title: "Avertissement reçu", body: "Changement de fenêtre détecté. Cet incident a été signalé.", time: "14:07", read: false },
-  { id: 3, type: "exam_submit", title: "Examen soumis", body: "Votre copie pour «\u202fJava EE\u202f» a bien été enregistrée.", time: "Hier 11:42", read: true },
-  { id: 4, type: "result", title: "Note disponible", body: "Votre note pour «\u202fBase de Données\u202f» est disponible : 91/100.", time: "28 Mar", read: true },
-  { id: 5, type: "info", title: "Rappel d'examen", body: "«\u202fAlgorithmique Avancée\u202f» commence dans 24h. Préparez votre environnement.", time: "28 Mar", read: true },
+  {
+    id: 1,
+    type: "exam_start",
+    title: "Examen demarre",
+    body: "Systemes d'Exploitation est maintenant accessible. Rejoignez maintenant.",
+    time: "14:00",
+    read: false,
+  },
+  {
+    id: 2,
+    type: "warning",
+    title: "Avertissement recu",
+    body: "Changement de fenetre detecte. Cet incident a ete signale.",
+    time: "14:07",
+    read: false,
+  },
+  {
+    id: 3,
+    type: "exam_submit",
+    title: "Examen soumis",
+    body: "Votre copie pour Java EE a bien ete enregistree.",
+    time: "Hier 11:42",
+    read: true,
+  },
+  {
+    id: 4,
+    type: "result",
+    title: "Note disponible",
+    body: "Votre note pour Base de Donnees est disponible : 91/100.",
+    time: "28 Mar",
+    read: true,
+  },
+  {
+    id: 5,
+    type: "info",
+    title: "Rappel d'examen",
+    body: "Algorithmique Avancee commence dans 24h. Preparez votre environnement.",
+    time: "28 Mar",
+    read: true,
+  },
 ];
 
 const adminNotifs: Notification[] = [
-  { id: 1, type: "fraud", title: "Alerte fraude — Critique", body: "Marie Dubois · Changement d'onglet × 3 — Réseaux & Sécurité", time: "10:05", read: false },
-  { id: 2, type: "fraud", title: "Alerte fraude — Critique", body: "Sophie Bernard · Comportement suspect détecté — Réseaux & Sécurité", time: "10:08", read: false },
-  { id: 3, type: "exam_start", title: "Examen démarré", body: "«\u202fSystèmes d'Exploitation\u202f» · 43 étudiants connectés", time: "14:00", read: false },
-  { id: 4, type: "fraud", title: "Alerte fraude — Moyen", body: "Thomas Martin · Mouvement suspect — Algorithmique Avancée", time: "10:11", read: true },
-  { id: 5, type: "exam_submit", title: "Examen terminé", body: "«\u202fBase de Données Avancées\u202f» · 38/38 copies soumises.", time: "Hier 16:00", read: true },
-  { id: 6, type: "info", title: "Examen planifié", body: "«\u202fArchitecture Java EE\u202f» planifié le 09 Avr à 18h00.", time: "27 Mar", read: true },
+  {
+    id: 1,
+    type: "fraud",
+    title: "Alerte fraude critique",
+    body: "Marie Dubois · Changement d'onglet x3 · Reseaux et Securite",
+    time: "10:05",
+    read: false,
+  },
+  {
+    id: 2,
+    type: "fraud",
+    title: "Alerte fraude critique",
+    body: "Sophie Bernard · Comportement suspect detecte · Reseaux et Securite",
+    time: "10:08",
+    read: false,
+  },
+  {
+    id: 3,
+    type: "exam_start",
+    title: "Examen demarre",
+    body: "Systemes d'Exploitation · 43 etudiants connectes",
+    time: "14:00",
+    read: false,
+  },
+  {
+    id: 4,
+    type: "fraud",
+    title: "Alerte fraude moyenne",
+    body: "Thomas Martin · Mouvement suspect · Algorithmique Avancee",
+    time: "10:11",
+    read: true,
+  },
+  {
+    id: 5,
+    type: "exam_submit",
+    title: "Examen termine",
+    body: "Base de Donnees Avancees · 38/38 copies soumises.",
+    time: "Hier 16:00",
+    read: true,
+  },
+  {
+    id: 6,
+    type: "info",
+    title: "Examen planifie",
+    body: "Architecture Java EE planifie le 09 Avr a 18h00.",
+    time: "27 Mar",
+    read: true,
+  },
 ];
 
-// ─── Icon per type ────────────────────────────────────────────────────────────
 function NotifIcon({ type }: { type: NotifType }) {
-  const cls = "w-4 h-4";
+  const cls = "h-4 w-4";
   switch (type) {
-    case "exam_start": return <Play className={`${cls} text-blue-400`} />;
-    case "exam_submit": return <CheckCircle2 className={`${cls} text-green-400`} />;
-    case "fraud": return <AlertTriangle className={`${cls} text-red-400`} />;
-    case "warning": return <Shield className={`${cls} text-amber-400`} />;
-    case "result": return <FileText className={`${cls} text-cyan-400`} />;
-    default: return <Clock className={`${cls} text-slate-400`} />;
+    case "exam_start":
+      return <Play className={`${cls} text-cyan-300`} />;
+    case "exam_submit":
+      return <CheckCircle2 className={`${cls} text-emerald-300`} />;
+    case "fraud":
+      return <AlertTriangle className={`${cls} text-rose-300`} />;
+    case "warning":
+      return <Shield className={`${cls} text-amber-300`} />;
+    case "result":
+      return <FileText className={`${cls} text-sky-200`} />;
+    default:
+      return <Clock className={`${cls} text-slate-400`} />;
   }
 }
 
-function bgFor(type: NotifType) {
+function iconSurface(type: NotifType) {
   switch (type) {
-    case "exam_start": return "bg-blue-500/10 border-blue-500/20";
-    case "exam_submit": return "bg-green-500/10 border-green-500/20";
-    case "fraud": return "bg-red-500/10 border-red-500/20";
-    case "warning": return "bg-amber-500/10 border-amber-500/20";
-    case "result": return "bg-cyan-500/10 border-cyan-500/20";
-    default: return "bg-slate-700/30 border-slate-700/30";
+    case "exam_start":
+      return "border-cyan-400/20 bg-cyan-500/10";
+    case "exam_submit":
+      return "border-emerald-400/20 bg-emerald-500/10";
+    case "fraud":
+      return "border-rose-400/20 bg-rose-500/10";
+    case "warning":
+      return "border-amber-400/20 bg-amber-500/10";
+    case "result":
+      return "border-sky-400/20 bg-sky-500/10";
+    default:
+      return "border-slate-700/40 bg-slate-800/40";
   }
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
 interface NotificationPanelProps {
   role: "student" | "admin";
 }
@@ -77,116 +169,146 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
 
   const unread = notifs.filter((n) => !n.read).length;
 
-  // Close on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
+
     if (open) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const markAllRead = () => setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-  const dismiss = (id: number) => setNotifs((prev) => prev.filter((n) => n.id !== id));
-  const markRead = (id: number) => setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  const markAllRead = () =>
+    setNotifs((prev) => prev.map((notif) => ({ ...notif, read: true })));
+  const dismiss = (id: number) =>
+    setNotifs((prev) => prev.filter((notif) => notif.id !== id));
+  const markRead = (id: number) =>
+    setNotifs((prev) =>
+      prev.map((notif) =>
+        notif.id === id ? { ...notif, read: true } : notif,
+      ),
+    );
 
   return (
     <div className="relative" ref={panelRef}>
-      {/* Bell button */}
       <button
-        onClick={() => setOpen((p) => !p)}
-        className={`relative p-2 rounded-lg transition-colors ${open ? "bg-slate-700/60 text-white" : "hover:bg-slate-800/50 text-slate-400 hover:text-slate-200"}`}
+        onClick={() => setOpen((value) => !value)}
+        className={`relative rounded-xl p-2.5 transition-colors ${
+          open
+            ? "border border-[rgba(123,241,255,0.16)] bg-[rgba(11,27,38,0.88)] text-white"
+            : "text-slate-400 hover:bg-[rgba(11,27,38,0.66)] hover:text-slate-200"
+        }`}
         aria-label="Notifications"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="h-5 w-5" />
         {unread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center ring-2 ring-[#0a0e27] leading-none">
+          <span className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[linear-gradient(135deg,#3dd8e9,#8bf3ff)] px-1 text-[10px] leading-none text-[#041117] ring-2 ring-[#07111a]">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
       </button>
 
-      {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] w-[360px] z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-          {/* Glow border */}
-          <div className="absolute -inset-px bg-gradient-to-br from-blue-500/20 to-cyan-500/10 rounded-2xl blur-sm" />
-          <div className="relative bg-slate-900/95 backdrop-blur-2xl border border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/60">
+        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[360px] animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="absolute -inset-px rounded-2xl bg-gradient-to-br from-cyan-400/18 via-transparent to-cyan-200/10 blur-sm" />
+
+          <div className="relative overflow-hidden rounded-2xl border border-[rgba(123,241,255,0.16)] bg-[rgba(5,14,22,0.96)] shadow-[0_28px_70px_rgba(0,0,0,0.34)] backdrop-blur-2xl">
+            <div className="flex items-center justify-between border-b border-[rgba(117,195,214,0.12)] px-5 py-4">
               <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-blue-400" />
+                <Bell className="h-4 w-4 text-cyan-300" />
                 <span className="text-sm text-slate-200">Notifications</span>
                 {unread > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-xs border border-blue-500/25">
+                  <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-1.5 py-0.5 text-xs text-cyan-200">
                     {unread} nouvelle{unread > 1 ? "s" : ""}
                   </span>
                 )}
               </div>
+
               {unread > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-cyan-300 transition-colors hover:text-cyan-100"
                 >
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="h-3.5 w-3.5" />
                   Tout lire
                 </button>
               )}
             </div>
 
-            {/* List */}
-            <div className="max-h-[400px] overflow-y-auto divide-y divide-slate-800/40">
+            <div className="max-h-[400px] overflow-y-auto divide-y divide-[rgba(117,195,214,0.08)]">
               {notifs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-5">
-                  <Bell className="w-10 h-10 text-slate-700 mb-3" />
+                <div className="flex flex-col items-center justify-center px-5 py-12">
+                  <Bell className="mb-3 h-10 w-10 text-slate-700" />
                   <p className="text-sm text-slate-500">Aucune notification</p>
                 </div>
-              ) : notifs.map((n) => (
-                <div
-                  key={n.id}
-                  onClick={() => markRead(n.id)}
-                  className={`flex items-start gap-3 px-5 py-3.5 cursor-pointer transition-all group ${n.read ? "hover:bg-slate-800/20" : "bg-blue-500/[0.04] hover:bg-blue-500/[0.08]"}`}
-                >
-                  {/* Icon */}
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border ${bgFor(n.type)}`}>
-                    <NotifIcon type={n.type} />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm leading-snug ${n.read ? "text-slate-300" : "text-white"}`}>
-                        {n.title}
-                      </p>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span className="text-xs text-slate-600 whitespace-nowrap">{n.time}</span>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); dismiss(n.id); }}
-                          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-700/60 transition-all"
-                        >
-                          <X className="w-3 h-3 text-slate-500" />
-                        </button>
-                      </div>
+              ) : (
+                notifs.map((notif) => (
+                  <div
+                    key={notif.id}
+                    onClick={() => markRead(notif.id)}
+                    className={`group flex cursor-pointer items-start gap-3 px-5 py-3.5 transition-all ${
+                      notif.read
+                        ? "hover:bg-[rgba(11,27,38,0.44)]"
+                        : "bg-cyan-500/[0.05] hover:bg-cyan-500/[0.08]"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border ${iconSurface(
+                        notif.type,
+                      )}`}
+                    >
+                      <NotifIcon type={notif.type} />
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{n.body}</p>
-                  </div>
 
-                  {/* Unread dot */}
-                  {!n.read && (
-                    <div className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-400 mt-1" />
-                  )}
-                </div>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p
+                          className={`text-sm leading-snug ${
+                            notif.read ? "text-slate-300" : "text-white"
+                          }`}
+                        >
+                          {notif.title}
+                        </p>
+
+                        <div className="flex flex-shrink-0 items-center gap-1.5">
+                          <span className="whitespace-nowrap text-xs text-slate-600">
+                            {notif.time}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              dismiss(notif.id);
+                            }}
+                            className="rounded p-0.5 opacity-0 transition-all group-hover:opacity-100 hover:bg-slate-700/60"
+                          >
+                            <X className="h-3 w-3 text-slate-500" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                        {notif.body}
+                      </p>
+                    </div>
+
+                    {!notif.read && (
+                      <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-cyan-300" />
+                    )}
+                  </div>
+                ))
+              )}
             </div>
 
-            {/* Footer */}
-            <div className="px-5 py-3 border-t border-slate-800/60 flex items-center justify-between">
-              <span className="text-xs text-slate-600">{notifs.length} notification{notifs.length > 1 ? "s" : ""} au total</span>
+            <div className="flex items-center justify-between border-t border-[rgba(117,195,214,0.12)] px-5 py-3">
+              <span className="text-xs text-slate-600">
+                {notifs.length} notification{notifs.length > 1 ? "s" : ""} au
+                total
+              </span>
               <button
                 onClick={() => setNotifs([])}
-                className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                className="text-xs text-slate-500 transition-colors hover:text-slate-300"
               >
                 Effacer tout
               </button>

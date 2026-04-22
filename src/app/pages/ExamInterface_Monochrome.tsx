@@ -270,7 +270,8 @@ function ExamResultsScreen({ navigate, answeredCount, total, flaggedCount }: {
   const circ = 2 * Math.PI * 52;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="cyber-exam-page relative min-h-screen overflow-hidden bg-white">
+      <GridBackground variant="exam" />
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
           <div className="bg-white border-2 border-[#E5E5E5] rounded-3xl p-8 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
@@ -293,10 +294,10 @@ function ExamResultsScreen({ navigate, answeredCount, total, flaggedCount }: {
             <div className="flex justify-center mb-8">
               <div className="relative w-36 h-36 flex items-center justify-center">
                 <svg className="-rotate-90 absolute" width="144" height="144">
-                  <circle cx="72" cy="72" r="52" fill="none" stroke="#E5E5E5" strokeWidth="8" />
+                  <circle cx="72" cy="72" r="52" fill="none" stroke="rgba(117, 195, 214, 0.16)" strokeWidth="8" />
                   <circle
                     cx="72" cy="72" r="52" fill="none"
-                    stroke="#000000" strokeWidth="8"
+                    stroke="#8BF3FF" strokeWidth="8"
                     strokeDasharray={circ}
                     strokeDashoffset={circ * (1 - score / 100)}
                     strokeLinecap="round"
@@ -444,7 +445,8 @@ export function ExamInterface() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="cyber-exam-page relative min-h-screen overflow-hidden bg-white">
+      <GridBackground variant="exam" />
       {showSubmit && (
         <SubmitModal
           answeredCount={answeredCount}
@@ -471,7 +473,7 @@ export function ExamInterface() {
         </div>
 
         {/* Header */}
-        <header className="border-b border-[#E5E5E5] bg-white sticky top-0 z-40 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+        <header className="cyber-topbar border-b border-[#E5E5E5] bg-white sticky top-0 z-40 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
           <div className="max-w-[1400px] mx-auto px-6 h-[64px] flex items-center gap-4 justify-between">
             {/* Left */}
             <div className="flex items-center gap-4 min-w-0">

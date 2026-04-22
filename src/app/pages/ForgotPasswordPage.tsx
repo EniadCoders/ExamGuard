@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Mail, ArrowLeft, CheckCircle2, Send, Lock } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Lock, Mail, Send } from "lucide-react";
 import { useNavigate } from "react-router";
-import { GridBackground } from "../components/GridBackground";
-import { Logo } from "../components/Logo";
+import { AuthShell } from "../components/auth/AuthShell";
 
 type Step = "form" | "sent";
 
@@ -22,141 +21,140 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0e27] text-white relative overflow-hidden flex items-center justify-center p-6">
-      <GridBackground />
-
-      <div className="relative z-10 w-full max-w-md">
-        {/* Logo — centré, grand */}
-        <div className="flex justify-center mb-10">
-          <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 to-cyan-500/15 rounded-3xl blur-2xl" />
-            <Logo size="xl" className="relative drop-shadow-2xl" />
-          </div>
-        </div>
-
-        {/* Card */}
-        <div className="relative">
-          <div className="absolute -inset-px bg-gradient-to-br from-blue-500/30 via-transparent to-cyan-500/20 rounded-2xl blur-sm opacity-70" />
-          <div className="relative bg-slate-900/80 backdrop-blur-2xl border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden">
-
-            {/* ── STEP: form ── */}
-            {step === "form" && (
-              <div className="p-8">
-                {/* Header */}
-                <div className="mb-8">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-5">
-                    <Mail className="w-6 h-6 text-blue-400" />
-                  </div>
-                  <h2 className="text-2xl text-white mb-2">Mot de passe oublié ?</h2>
-                  <p className="text-slate-400 text-sm leading-relaxed">
-                    Saisissez votre adresse e-mail. Nous vous enverrons un lien pour réinitialiser votre mot de passe.
-                  </p>
+    <AuthShell
+      heroBadge="Credential recovery"
+      heroTitle={
+        <>
+          Recover access
+          <br />
+          without friction.
+        </>
+      }
+      heroDescription={
+        <>
+          Reset links stay inside the same secure product language: dark
+          surface, clear recovery states, and explicit platform protection
+          signals.
+        </>
+      }
+      footer="Secure recovery flow with audited reset entry points"
+      panelClassName="max-w-[34rem]"
+    >
+      <div className="space-y-6">
+        <div className="cyber-auth-card overflow-hidden rounded-[1.9rem] p-6 sm:p-8">
+          {step === "form" && (
+            <div>
+              <div className="mb-8">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(61,216,233,0.12)]">
+                  <Mail className="h-6 w-6 text-[var(--cyber-accent-strong)]" />
                 </div>
-
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div>
-                    <label className="block text-sm text-slate-300 mb-2">
-                      Adresse e-mail
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="votre@email.fr"
-                        required
-                        className="w-full bg-slate-800/60 border border-slate-700/50 rounded-xl pl-11 pr-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isLoading || !email.trim()}
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center justify-center gap-2 group"
-                  >
-                    {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                        Envoyer le lien de réinitialisation
-                      </>
-                    )}
-                  </button>
-                </form>
-
-                {/* Back link */}
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={() => navigate("/")}
-                    className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    Retour à la connexion
-                  </button>
-                </div>
+                <h2 className="text-3xl font-bold text-[var(--cyber-text)]">
+                  Mot de passe oublie ?
+                </h2>
+                <p className="mt-2 text-sm leading-7 text-[var(--cyber-muted-text)] sm:text-base">
+                  Saisissez votre adresse e-mail. Nous vous enverrons un lien
+                  pour reinitialiser votre mot de passe.
+                </p>
               </div>
-            )}
 
-            {/* ── STEP: sent ── */}
-            {step === "sent" && (
-              <div className="p-8 text-center">
-                {/* Success icon */}
-                <div className="relative flex justify-center mb-6">
-                  <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                    <CheckCircle2 className="w-8 h-8 text-green-400" />
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="cyber-label" htmlFor="recovery-email">
+                    Adresse e-mail
+                  </label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--cyber-subtle-text)]" />
+                    <input
+                      id="recovery-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="votre@email.fr"
+                      required
+                      className="cyber-input w-full rounded-2xl py-3.5 pl-11 pr-4 text-sm text-[var(--cyber-text)]"
+                    />
                   </div>
-                  {/* Pulse ring */}
-                  <div className="absolute top-0 w-16 h-16 rounded-2xl bg-green-500/20 animate-ping opacity-30" />
                 </div>
 
-                <h2 className="text-2xl text-white mb-3">Lien envoyé !</h2>
-                <p className="text-slate-400 text-sm leading-relaxed mb-2">
-                  Un e-mail de réinitialisation a été envoyé à
-                </p>
-                <p className="text-cyan-400 text-sm mb-6 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-xl inline-block">
-                  {email}
-                </p>
-                <p className="text-slate-500 text-xs leading-relaxed mb-8 mx-auto max-w-xs">
-                  Vérifiez votre boîte de réception et cliquez sur le lien pour créer un nouveau mot de passe. Le lien expire dans <span className="text-slate-300">30 minutes</span>.
-                </p>
+                <button
+                  type="submit"
+                  disabled={isLoading || !email.trim()}
+                  className="cyber-button-primary flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isLoading ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgba(4,17,23,0.18)] border-t-[rgba(4,17,23,0.95)]" />
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Envoyer le lien de reinitialisation
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
 
-                {/* Simulate clicking the link in email */}
+          {step === "sent" && (
+            <div className="text-center">
+              <div className="relative mb-6 flex justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[rgba(110,242,189,0.22)] bg-[rgba(110,242,189,0.12)]">
+                  <CheckCircle2 className="h-8 w-8 text-[var(--cyber-success)]" />
+                </div>
+                <div className="absolute top-0 h-16 w-16 rounded-2xl bg-[rgba(110,242,189,0.12)] opacity-30 animate-ping" />
+              </div>
+
+              <h2 className="text-3xl font-bold text-[var(--cyber-text)]">
+                Lien envoye
+              </h2>
+              <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[var(--cyber-muted-text)] sm:text-base">
+                Un e-mail de reinitialisation a ete envoye a cette adresse.
+              </p>
+
+              <div className="my-6 rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.64)] px-4 py-3 text-sm font-semibold text-[var(--cyber-accent-strong)]">
+                {email}
+              </div>
+
+              <p className="mx-auto mb-8 max-w-md text-xs leading-6 text-[var(--cyber-subtle-text)]">
+                Verifiez votre boite de reception et cliquez sur le lien pour
+                creer un nouveau mot de passe. Le lien expire dans 30 minutes.
+              </p>
+
+              <div className="space-y-3">
                 <button
                   onClick={() => navigate("/reset-password")}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white py-3 rounded-xl transition-all shadow-lg shadow-blue-500/25 text-sm mb-4"
+                  className="cyber-button-primary w-full rounded-2xl px-5 py-3.5 text-sm font-bold"
                 >
-                  Simuler le lien reçu par e-mail →
+                  Simuler le lien recu par e-mail
                 </button>
-
-                <div className="flex flex-col gap-3 items-center">
-                  <button
-                    onClick={() => { setStep("form"); setEmail(""); }}
-                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    Changer d'adresse e-mail
-                  </button>
-                  <button
-                    onClick={() => navigate("/")}
-                    className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    Retour à la connexion
-                  </button>
-                </div>
+                <button
+                  onClick={() => {
+                    setStep("form");
+                    setEmail("");
+                  }}
+                  className="cyber-button-secondary w-full rounded-2xl px-5 py-3.5 text-sm font-semibold"
+                >
+                  Changer d&apos;adresse e-mail
+                </button>
               </div>
-            )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-4 text-sm text-[var(--cyber-muted-text)]">
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 font-semibold text-[var(--cyber-muted-text)] hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour a la connexion
+          </button>
+
+          <div className="cyber-auth-note mt-0">
+            <Lock className="h-3.5 w-3.5" />
+            <span>Canal de reinitialisation chiffre</span>
           </div>
         </div>
-
-        {/* Security note */}
-        <div className="mt-6 flex items-center justify-center gap-2 text-slate-700 text-xs">
-          <Lock className="w-3 h-3" />
-          <span>Connexion chiffrée TLS 1.3 · Données sécurisées</span>
-        </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

@@ -10,7 +10,6 @@ import {
   Users,
   Plus,
   Calendar,
-  ArrowUpRight,
   Eye,
   TrendingUp,
   Shield,
@@ -41,7 +40,15 @@ import {
 } from "lucide-react";
 import { NotificationPanel } from "../components/NotificationPanel";
 import { useNavigate } from "react-router";
+import { GridBackground } from "../components/GridBackground";
 import { Logo } from "../components/Logo";
+import {
+  DashboardCard,
+  DashboardMetricCard,
+  DashboardMetaItem,
+  DashboardSectionCard,
+  DashboardStatusBadge,
+} from "../components/dashboard/DashboardCard";
 import {
   BarChart,
   Bar,
@@ -175,27 +182,16 @@ interface StatCardProps {
   desc: string;
 }
 function StatCard({ label, value, change, trend, icon: Icon, desc }: StatCardProps) {
-  const isAlert = trend === "alert";
   return (
-    <div className="group bg-white border border-[#E5E5E5] rounded-2xl p-6 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-all">
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-xl ${isAlert ? "bg-[#EAEAEA] border-2 border-black" : "bg-[#F5F5F5]"}`}>
-          <Icon className={`w-5 h-5 ${isAlert ? "text-black" : "text-[#666666]"}`} />
-        </div>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold ${
-          isAlert ? "bg-black text-white" : "bg-[#F5F5F5] text-black"
-        }`}>
-          {trend === "up" && <ArrowUpRight className="w-3 h-3" />}
-          {trend === "alert" && <AlertTriangle className="w-3 h-3" />}
-          <span>{change}</span>
-        </div>
-      </div>
-      <div>
-        <h3 className="text-3xl font-bold text-black mb-1">{value}</h3>
-        <p className="text-sm text-[#666666] font-medium">{label}</p>
-        <p className="text-xs text-[#888888] mt-2">{desc}</p>
-      </div>
-    </div>
+    <DashboardMetricCard
+      icon={Icon}
+      label={label}
+      value={value}
+      change={change}
+      description={desc}
+      iconTone={trend === "alert" ? "danger" : "default"}
+      changeTone={trend === "alert" ? "danger" : "info"}
+    />
   );
 }
 
@@ -204,13 +200,13 @@ function QuickActionButton({ icon: Icon, label, onClick }: { icon: any; label: s
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-[#E5E5E5] bg-white hover:bg-[#F5F5F5] hover:border-[#CCCCCC] transition-all text-left group"
+      className="dashboard-card dashboard-card-interactive flex w-full items-center gap-3 px-4 py-3 text-left group"
     >
-      <div className="p-2 rounded-lg bg-[#F5F5F5] group-hover:bg-black transition-colors">
-        <Icon className="w-4 h-4 text-[#666666] group-hover:text-white transition-colors" />
+      <div className="dashboard-icon-badge dashboard-icon-badge-neutral">
+        <Icon className="h-4 w-4" />
       </div>
-      <span className="text-sm font-medium text-black">{label}</span>
-      <ChevronRight className="w-4 h-4 text-[#888888] ml-auto group-hover:translate-x-1 transition-transform" />
+      <span className="text-sm font-medium text-[var(--cyber-text)]">{label}</span>
+      <ChevronRight className="ml-auto h-4 w-4 text-[var(--cyber-subtle-text)] transition-transform group-hover:translate-x-1" />
     </button>
   );
 }
@@ -875,127 +871,126 @@ function OverviewTab({
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Recent Exams */}
-        <div className="xl:col-span-2 bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <div className="px-6 py-4 border-b border-[#E5E5E5] flex items-center justify-between bg-[#FAFAFA]">
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-black" />
-              <h2 className="text-base font-bold text-black">Examens récents</h2>
-            </div>
+        <DashboardSectionCard
+          className="xl:col-span-2"
+          title="Examens récents"
+          subtitle="Sessions planifiées, brouillons et dernières activités"
+          icon={FileText}
+          action={
             <button
               onClick={onGoToExams}
-              className="text-xs font-medium text-[#666666] hover:text-black flex items-center gap-1 transition-colors"
+              className="text-xs font-medium text-[var(--cyber-muted-text)] transition-colors hover:text-[var(--cyber-text)]"
             >
               Voir tout
-              <ChevronRight className="w-3 h-3" />
             </button>
-          </div>
-          <div className="divide-y divide-[#E5E5E5]">
+          }
+          bodyClassName="p-0"
+        >
+          <div>
             {recentExams.map((exam) => (
               <div
                 key={exam.id}
                 onClick={() => onExamDetails(exam)}
-                className="px-6 py-4 hover:bg-[#FAFAFA] transition-colors group cursor-pointer"
+                className="dashboard-list-row dashboard-list-row-interactive group"
               >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-black mb-1 group-hover:underline">{exam.title}</h3>
-                    <p className="text-xs text-[#666666]">{exam.subject}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <DashboardStatusBadge
+                      status={exam.status as "scheduled" | "draft" | "completed"}
+                    />
                   </div>
-                  <span className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium ${
-                    exam.status === "scheduled"
-                      ? "bg-black text-white"
-                      : "bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]"
-                  }`}>
-                    {exam.status === "scheduled" ? "Planifié" : "Brouillon"}
-                  </span>
+                  <h3 className="text-sm font-semibold text-[var(--cyber-text)]">
+                    {exam.title}
+                  </h3>
+                  <p className="mt-1 text-xs text-[var(--cyber-muted-text)]">{exam.subject}</p>
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                    <DashboardMetaItem icon={Clock}>{exam.duration} min</DashboardMetaItem>
+                    <DashboardMetaItem icon={Users}>{exam.students} étudiants</DashboardMetaItem>
+                    <DashboardMetaItem icon={Calendar}>{exam.date}</DashboardMetaItem>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-[#888888]">
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{exam.duration} min</span>
-                  <span className="flex items-center gap-1"><Users className="w-3 h-3" />{exam.students} étudiants</span>
-                  <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{exam.date}</span>
-                </div>
+                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[var(--cyber-subtle-text)] transition-transform group-hover:translate-x-1" />
               </div>
             ))}
           </div>
-        </div>
+        </DashboardSectionCard>
 
         {/* Right Column */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <div className="bg-white border border-[#E5E5E5] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <h3 className="text-sm font-bold text-black mb-4 flex items-center gap-2">
-              <Zap className="w-4 h-4" />
-              Actions rapides
-            </h3>
+          <DashboardSectionCard
+            title="Actions rapides"
+            subtitle="Accès direct aux opérations courantes"
+            icon={Zap}
+          >
             <div className="space-y-2">
               <QuickActionButton icon={Plus} label="Créer un examen" onClick={onCreateExam} />
               <QuickActionButton icon={UserPlus} label="Ajouter un étudiant" onClick={onAddStudent} />
               <QuickActionButton icon={Upload} label="Importer données" onClick={onImportData} />
             </div>
-          </div>
+          </DashboardSectionCard>
 
           {/* Activity Feed */}
-          <div className="bg-white border border-[#E5E5E5] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <h3 className="text-sm font-bold text-black mb-4 flex items-center gap-2">
-              <Activity className="w-4 h-4" />
-              Activité récente
-            </h3>
+          <DashboardSectionCard
+            title="Activité récente"
+            subtitle="Événements importants de la plateforme"
+            icon={Activity}
+          >
             <div className="space-y-3">
               {activityFeed.map((item) => (
-                <div key={item.id} className="flex items-start gap-3">
-                  <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
-                    item.type === "alert" ? "bg-black" : "bg-[#CCCCCC]"
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-black">{item.text}</p>
-                    <p className="text-xs text-[#888888] mt-0.5">{item.time}</p>
+                <div key={item.id} className="rounded-2xl border border-[rgba(117,195,214,0.1)] bg-[rgba(11,27,38,0.5)] p-3">
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${
+                      item.type === "alert" ? "bg-[var(--cyber-danger)]" : "bg-[var(--cyber-accent)]"
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[var(--cyber-text)]">{item.text}</p>
+                      <p className="mt-1 text-xs text-[var(--cyber-subtle-text)]">{item.time}</p>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </DashboardSectionCard>
         </div>
       </div>
 
       {/* Fraud Alerts */}
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-        <div className="px-6 py-4 border-b border-[#E5E5E5] flex items-center justify-between bg-[#FAFAFA]">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-black" />
-            <h2 className="text-base font-bold text-black">Alertes de fraude récentes</h2>
-          </div>
-          <button className="text-xs font-medium text-[#666666] hover:text-black flex items-center gap-1 transition-colors">
+      <DashboardSectionCard
+        title="Alertes de fraude récentes"
+        subtitle="Signalements à examiner en priorité"
+        icon={Shield}
+        action={
+          <button className="text-xs font-medium text-[var(--cyber-muted-text)] transition-colors hover:text-[var(--cyber-text)]">
             Voir tout
-            <ChevronRight className="w-3 h-3" />
           </button>
-        </div>
-        <div className="divide-y divide-[#E5E5E5]">
+        }
+        bodyClassName="p-0"
+      >
+        <div>
           {fraudAlerts.map((alert) => (
-            <div key={alert.id} className="px-6 py-4 hover:bg-[#FAFAFA] transition-colors flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-bold text-white">{alert.initials}</span>
+            <div key={alert.id} className="dashboard-list-row">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(117,195,214,0.14)] bg-[rgba(11,27,38,0.72)]">
+                <span className="text-xs font-semibold text-[var(--cyber-text)]">{alert.initials}</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="text-sm font-bold text-black">{alert.student}</h4>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    alert.severity === "high"
-                      ? "bg-black text-white"
-                      : "bg-[#EAEAEA] text-black border border-[#CCCCCC]"
-                  }`}>
-                    {alert.severity === "high" ? "Élevée" : "Moyenne"}
-                  </span>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <h4 className="text-sm font-semibold text-[var(--cyber-text)]">{alert.student}</h4>
+                  <DashboardStatusBadge
+                    status={alert.severity as "high" | "medium"}
+                    label={alert.severity === "high" ? "Élevée" : "Moyenne"}
+                  />
                 </div>
-                <p className="text-xs text-[#666666]">{alert.exam} · {alert.type}</p>
-                <p className="text-xs text-[#888888] mt-1">{alert.time}</p>
+                <p className="text-sm text-[var(--cyber-muted-text)]">{alert.exam} • {alert.type}</p>
+                <p className="mt-1 text-xs text-[var(--cyber-subtle-text)]">{alert.time}</p>
               </div>
-              <button className="flex-shrink-0 px-4 py-2 rounded-lg bg-black hover:bg-[#222222] text-white text-xs font-medium transition-colors">
+              <button className="cyber-button-secondary rounded-xl px-4 py-2 text-xs font-medium">
                 Examiner
               </button>
             </div>
           ))}
         </div>
-      </div>
+      </DashboardSectionCard>
     </div>
   );
 }
@@ -1070,62 +1065,49 @@ function ExamsTab({ onCreateExam }: { onCreateExam: () => void }) {
 
       {/* Exams Grid */}
       {filtered.length === 0 ? (
-        <div className="bg-white border border-[#E5E5E5] rounded-2xl p-12 flex flex-col items-center gap-3">
+        <DashboardCard className="p-12 flex flex-col items-center gap-3">
           <FileText className="w-10 h-10 text-[#CCCCCC]" />
           <p className="text-sm text-[#666666]">Aucun examen trouvé</p>
-        </div>
+        </DashboardCard>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filtered.map((exam) => (
-            <div key={exam.id} className="bg-white border border-[#E5E5E5] rounded-2xl p-5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-all group">
+            <DashboardCard key={exam.id} interactive className="p-5 group">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-bold text-black mb-1 truncate">{exam.title}</h3>
-                  <p className="text-xs text-[#666666]">{exam.subject}</p>
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <DashboardStatusBadge
+                      status={exam.status as "scheduled" | "completed" | "draft"}
+                    />
+                  </div>
+                  <h3 className="truncate text-base font-semibold text-[var(--cyber-text)]">{exam.title}</h3>
+                  <p className="mt-1 text-xs text-[var(--cyber-muted-text)]">{exam.subject}</p>
                 </div>
-                <span className={`flex-shrink-0 ml-3 px-2.5 py-1 rounded-lg text-xs font-medium ${
-                  exam.status === "scheduled" ? "bg-black text-white"
-                  : exam.status === "completed" ? "bg-[#F5F5F5] text-black border border-[#CCCCCC]"
-                  : "bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]"
-                }`}>
-                  {exam.status === "scheduled" ? "Planifié" : exam.status === "completed" ? "Terminé" : "Brouillon"}
-                </span>
               </div>
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="flex items-center gap-2 text-xs text-[#666666]">
-                  <Clock className="w-3.5 h-3.5 text-[#888888]" />
-                  <span>{exam.duration} min</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-[#666666]">
-                  <Users className="w-3.5 h-3.5 text-[#888888]" />
-                  <span>{exam.students} étudiants</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-[#666666]">
-                  <Calendar className="w-3.5 h-3.5 text-[#888888]" />
-                  <span>{exam.date}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-[#666666]">
-                  <Hash className="w-3.5 h-3.5 text-[#888888]" />
-                  <span>{exam.questions} questions</span>
-                </div>
+                <DashboardMetaItem icon={Clock}>{exam.duration} min</DashboardMetaItem>
+                <DashboardMetaItem icon={Users}>{exam.students} étudiants</DashboardMetaItem>
+                <DashboardMetaItem icon={Calendar}>{exam.date}</DashboardMetaItem>
+                <DashboardMetaItem icon={Hash}>{exam.questions} questions</DashboardMetaItem>
               </div>
-              <div className="flex items-center gap-2 pt-4 border-t border-[#E5E5E5]">
+              <div className="dashboard-divider mb-4" />
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => { setEditingExam(exam); setShowEdit(true); }}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#E5E5E5] text-xs font-medium text-black hover:bg-[#F5F5F5] transition-colors"
+                  className="cyber-button-secondary flex-1 rounded-lg px-3 py-2 text-xs font-medium"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   Éditer
                 </button>
                 <button
                   onClick={() => { setSelectedExam(exam); setShowDetails(true); }}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-black hover:bg-[#222222] text-xs font-medium text-white transition-colors"
+                  className="cyber-button-primary flex-1 rounded-lg px-3 py-2 text-xs font-medium"
                 >
                   <Eye className="w-3.5 h-3.5" />
                   Voir détails
                 </button>
               </div>
-            </div>
+            </DashboardCard>
           ))}
         </div>
       )}
@@ -1195,7 +1177,7 @@ function StudentsTab() {
       </div>
 
       {/* Students Table */}
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="dashboard-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -1245,14 +1227,9 @@ function StudentsTab() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
-                      <span className={`inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded text-xs font-medium ${
-                        student.status === "active"
-                          ? "bg-black text-white"
-                          : "bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]"
-                      }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${student.status === "active" ? "bg-white" : "bg-[#CCCCCC]"}`} />
-                        {student.status === "active" ? "Actif" : "Inactif"}
-                      </span>
+                      <DashboardStatusBadge
+                        status={student.status as "active" | "inactive"}
+                      />
                       <span className="text-xs text-[#888888]">{student.lastActive}</span>
                     </div>
                   </td>
@@ -1304,28 +1281,26 @@ function AnalyticsTab() {
           { icon: Users, label: "Total étudiants", value: "1,247", sub: "+124 ce mois" },
           { icon: FileText, label: "Examens menés", value: "342", sub: "Ce semestre" },
         ].map(({ icon: Icon, label, value, sub }) => (
-          <div key={label} className="bg-white border border-[#E5E5E5] rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-xl bg-[#F5F5F5]">
-                <Icon className="w-5 h-5 text-[#666666]" />
-              </div>
-              <h3 className="text-sm font-bold text-black">{label}</h3>
-            </div>
-            <p className="text-4xl font-bold text-black mb-2">{value}</p>
-            <p className="text-xs text-[#666666]">{sub}</p>
-          </div>
+          <DashboardMetricCard
+            key={label}
+            icon={Icon}
+            label={label}
+            value={value}
+            description={sub}
+            change="Analyse"
+          />
         ))}
       </div>
 
       {/* Performance by Subject */}
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6">
-        <h3 className="text-sm font-bold text-black mb-6 flex items-center gap-2">
-          <BarChart3 className="w-4 h-4" />
-          Performance par matière
-        </h3>
+      <DashboardSectionCard
+        title="Performance par matière"
+        subtitle="Comparaison de la moyenne et du score de passage"
+        icon={BarChart3}
+      >
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={analyticsData} barGap={4}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(117, 195, 214, 0.12)" vertical={false} />
             <XAxis dataKey="subject" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[50, 100]} />
             <Tooltip
@@ -1333,40 +1308,40 @@ function AnalyticsTab() {
               cursor={{ fill: "#F5F5F5" }}
             />
             <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
-            <Bar dataKey="avg" name="Moyenne" fill="#000000" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="passing" name="Score de passage" fill="#CCCCCC" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="avg" name="Moyenne" fill="#3DD8E9" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="passing" name="Score de passage" fill="#1D4556" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </DashboardSectionCard>
 
       {/* Trend charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-black mb-6 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Taux de réussite — 6 derniers mois
-          </h3>
+        <DashboardSectionCard
+          title="Taux de réussite — 6 derniers mois"
+          subtitle="Évolution mensuelle des résultats"
+          icon={TrendingUp}
+        >
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(117, 195, 214, 0.12)" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[75, 95]} />
               <Tooltip
                 contentStyle={{ background: "white", border: "1px solid #E5E5E5", borderRadius: "12px", fontSize: 12 }}
               />
-              <Line type="monotone" dataKey="success" name="Réussite %" stroke="#000000" strokeWidth={2} dot={{ fill: "#000", r: 3 }} />
+              <Line type="monotone" dataKey="success" name="Réussite %" stroke="#8BF3FF" strokeWidth={2} dot={{ fill: "#8BF3FF", r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
-        </div>
+        </DashboardSectionCard>
 
-        <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-black mb-6 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            Examens & alertes fraude
-          </h3>
+        <DashboardSectionCard
+          title="Examens & alertes fraude"
+          subtitle="Volume d'activité et signalements"
+          icon={AlertTriangle}
+        >
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={trendData} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(117, 195, 214, 0.12)" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
               <Tooltip
@@ -1374,19 +1349,20 @@ function AnalyticsTab() {
                 cursor={{ fill: "#F5F5F5" }}
               />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
-              <Bar dataKey="exams" name="Examens" fill="#000000" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="fraud" name="Alertes fraude" fill="#CCCCCC" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="exams" name="Examens" fill="#3DD8E9" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="fraud" name="Alertes fraude" fill="#FF7B82" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </DashboardSectionCard>
       </div>
 
       {/* Ranking table */}
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#E5E5E5] bg-[#FAFAFA] flex items-center gap-2">
-          <Activity className="w-4 h-4 text-black" />
-          <h3 className="text-sm font-bold text-black">Classement des étudiants (Top 5)</h3>
-        </div>
+      <DashboardSectionCard
+        title="Classement des étudiants (Top 5)"
+        subtitle="Meilleures moyennes sur la période"
+        icon={Activity}
+        bodyClassName="p-0"
+      >
         <div className="divide-y divide-[#E5E5E5]">
           {allStudentsData.sort((a, b) => b.avg - a.avg).slice(0, 5).map((student, i) => (
             <div key={student.id} className="flex items-center gap-4 px-6 py-4 hover:bg-[#FAFAFA] transition-colors">
@@ -1409,7 +1385,7 @@ function AnalyticsTab() {
             </div>
           ))}
         </div>
-      </div>
+      </DashboardSectionCard>
     </div>
   );
 }
@@ -1426,31 +1402,29 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
   return (
     <div className="space-y-6 max-w-3xl">
       {/* Profile card CTA */}
-      <div className="bg-black rounded-2xl p-6 flex items-center justify-between gap-4">
+      <DashboardCard tone="accent" className="p-6">
+        <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-            <User className="w-6 h-6 text-white" />
+          <div className="dashboard-icon-badge">
+            <User className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Paramètres du profil</h3>
-            <p className="text-sm text-white/60">Modifiez vos informations personnelles, photo et mot de passe</p>
+            <h3 className="text-base font-semibold text-[var(--cyber-text)]">Paramètres du profil</h3>
+            <p className="text-sm text-[var(--cyber-muted-text)]">Modifiez vos informations personnelles, photo et mot de passe</p>
           </div>
         </div>
         <button
           onClick={onGoToProfile}
-          className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#F5F5F5] rounded-xl text-sm font-medium text-black transition-colors"
+          className="cyber-button-secondary flex-shrink-0 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium"
         >
           Accéder
           <ChevronRight className="w-4 h-4" />
         </button>
-      </div>
+        </div>
+      </DashboardCard>
 
       {/* Surveillance settings */}
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6">
-        <h2 className="text-base font-bold text-black mb-6 flex items-center gap-2">
-          <Shield className="w-5 h-5" />
-          Surveillance & Sécurité
-        </h2>
+      <DashboardSectionCard title="Surveillance & Sécurité" icon={Shield}>
         <div className="space-y-0 divide-y divide-[#E5E5E5]">
           {[
             { key: "strict", title: "Mode de surveillance strict", desc: "Désactive le copier-coller et les changements d'onglet", default: true },
@@ -1467,14 +1441,10 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
             </div>
           ))}
         </div>
-      </div>
+      </DashboardSectionCard>
 
       {/* Notification settings */}
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6">
-        <h2 className="text-base font-bold text-black mb-6 flex items-center gap-2">
-          <Bell className="w-5 h-5" />
-          Notifications
-        </h2>
+      <DashboardSectionCard title="Notifications" icon={Bell}>
         <div className="space-y-0 divide-y divide-[#E5E5E5]">
           {[
             { key: "email", title: "Notifications par email", desc: "Recevoir des alertes pour les événements importants", default: true },
@@ -1491,14 +1461,10 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
             </div>
           ))}
         </div>
-      </div>
+      </DashboardSectionCard>
 
       {/* Exam defaults */}
-      <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6">
-        <h2 className="text-base font-bold text-black mb-6 flex items-center gap-2">
-          <FileText className="w-5 h-5" />
-          Paramètres par défaut des examens
-        </h2>
+      <DashboardSectionCard title="Paramètres par défaut des examens" icon={FileText}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label className="block text-sm font-medium text-black mb-2">Durée par défaut (min)</label>
@@ -1529,7 +1495,7 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
             </select>
           </div>
         </div>
-      </div>
+      </DashboardSectionCard>
 
       {/* Save */}
       <div className="flex items-center gap-4">
@@ -1569,7 +1535,9 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="cyber-dashboard-page relative min-h-screen overflow-hidden bg-[#FAFAFA]">
+      <GridBackground variant="dashboard" />
+      <div className="relative z-10">
       {/* Global modals */}
       {showCreateExam && <CreateExamModal onClose={() => setShowCreateExam(false)} />}
       {showAddStudent && <AddStudentModal onClose={() => setShowAddStudent(false)} />}
@@ -1583,7 +1551,7 @@ export function AdminDashboard() {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-[#E5E5E5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <header className="cyber-topbar sticky top-0 z-40 border-b border-[#E5E5E5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Logo size="md" />
@@ -1624,7 +1592,7 @@ export function AdminDashboard() {
       </header>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-[#E5E5E5] bg-white sticky top-16 z-30">
+      <div className="cyber-tabbar border-b border-[#E5E5E5] bg-white sticky top-16 z-30">
         <div className="max-w-[1600px] mx-auto px-6">
           <div className="flex items-center gap-1 overflow-x-auto">
             {tabs.map((tab) => {
@@ -1665,6 +1633,7 @@ export function AdminDashboard() {
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "settings" && <SettingsTab onGoToProfile={() => navigate("/admin/profile")} />}
       </main>
+      </div>
     </div>
   );
 }

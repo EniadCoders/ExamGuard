@@ -1,40 +1,84 @@
-export function GridBackground() {
+import { cn } from "./ui/utils";
+
+interface GridBackgroundProps {
+  variant?: "auth" | "dashboard" | "exam" | "default";
+  className?: string;
+}
+
+const variantMap = {
+  default: {
+    minor: "rgba(123, 241, 255, 0.06)",
+    major: "rgba(61, 216, 233, 0.08)",
+    primary: "rgba(61, 216, 233, 0.14)",
+    secondary: "rgba(11, 89, 108, 0.18)",
+    tertiary: "rgba(123, 241, 255, 0.09)",
+  },
+  auth: {
+    minor: "rgba(123, 241, 255, 0.06)",
+    major: "rgba(61, 216, 233, 0.08)",
+    primary: "rgba(61, 216, 233, 0.18)",
+    secondary: "rgba(8, 84, 110, 0.24)",
+    tertiary: "rgba(123, 241, 255, 0.1)",
+  },
+  dashboard: {
+    minor: "rgba(123, 241, 255, 0.045)",
+    major: "rgba(61, 216, 233, 0.06)",
+    primary: "rgba(61, 216, 233, 0.12)",
+    secondary: "rgba(7, 60, 79, 0.18)",
+    tertiary: "rgba(123, 241, 255, 0.07)",
+  },
+  exam: {
+    minor: "rgba(123, 241, 255, 0.04)",
+    major: "rgba(61, 216, 233, 0.05)",
+    primary: "rgba(61, 216, 233, 0.1)",
+    secondary: "rgba(10, 73, 93, 0.15)",
+    tertiary: "rgba(123, 241, 255, 0.06)",
+  },
+} satisfies Record<string, { minor: string; major: string; primary: string; secondary: string; tertiary: string }>;
+
+export function GridBackground({ variant = "default", className }: GridBackgroundProps) {
+  const colors = variantMap[variant];
+
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
-      {/* Fine grid pattern */}
+    <div className={cn("fixed inset-0 pointer-events-none overflow-hidden", className)}>
       <div
         className="absolute inset-0"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(50, 130, 184, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(50, 130, 184, 0.03) 1px, transparent 1px)
+            linear-gradient(${colors.minor} 1px, transparent 1px),
+            linear-gradient(90deg, ${colors.minor} 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px',
+          backgroundSize: "42px 42px",
         }}
       />
 
-      {/* Larger grid overlay */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(187, 225, 250, 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(187, 225, 250, 0.04) 1px, transparent 1px)
+            linear-gradient(${colors.major} 1px, transparent 1px),
+            linear-gradient(90deg, ${colors.major} 1px, transparent 1px)
           `,
-          backgroundSize: '200px 200px',
+          backgroundSize: "170px 170px",
         }}
       />
 
-      {/* Base gradient - ExamGuard blue style */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1B262C]/30 via-transparent to-[#0F4C75]/40" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(123,241,255,0.12),transparent_28%),linear-gradient(180deg,rgba(4,9,15,0.15),rgba(4,9,15,0.05))]" />
 
-      {/* Ambient glow blobs */}
-      <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] bg-[#3282B8]/10 rounded-full blur-[120px] animate-pulse-soft" />
-      <div className="absolute top-1/3 -right-32 w-[400px] h-[400px] bg-[#BBE1FA]/8 rounded-full blur-[100px] animate-pulse-soft" style={{ animationDelay: '1s' }} />
-      <div className="absolute bottom-0 left-1/3 w-[600px] h-[300px] bg-[#0F4C75]/6 rounded-full blur-[80px] animate-pulse-soft" style={{ animationDelay: '2s' }} />
+      <div
+        className="absolute -top-36 left-[10%] h-[34rem] w-[34rem] rounded-full blur-[140px] animate-drift-slow"
+        style={{ background: colors.primary }}
+      />
+      <div
+        className="absolute top-[18%] right-[-8rem] h-[28rem] w-[28rem] rounded-full blur-[130px] animate-drift-medium"
+        style={{ background: colors.secondary, animationDelay: "0.8s" }}
+      />
+      <div
+        className="absolute bottom-[-10rem] left-[24%] h-[24rem] w-[48rem] rounded-full blur-[120px] animate-drift-wide"
+        style={{ background: colors.tertiary, animationDelay: "1.6s" }}
+      />
 
-      {/* Subtle vignette */}
-      <div className="absolute inset-0 bg-gradient-radial from-transparent to-[#1B262C]/50" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_42%,rgba(4,9,15,0.78)_100%)]" />
     </div>
   );
 }

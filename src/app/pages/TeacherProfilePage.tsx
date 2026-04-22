@@ -24,8 +24,14 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { GridBackground } from "../components/GridBackground";
 import { Logo } from "../components/Logo";
 import { NotificationPanel } from "../components/NotificationPanel";
+import {
+  DashboardCard,
+  DashboardSectionCard,
+  DashboardStatusBadge,
+} from "../components/dashboard/DashboardCard";
 
 // ─── Toggle Switch ─────────────────────────────────────────────────────────────
 function ToggleSwitch({ defaultChecked = false }: { defaultChecked?: boolean }) {
@@ -50,13 +56,9 @@ function ToggleSwitch({ defaultChecked = false }: { defaultChecked?: boolean }) 
 // ─── Section wrapper ───────────────────────────────────────────────────────────
 function Section({ title, icon: Icon, children }: { title: string; icon: any; children: ReactNode }) {
   return (
-    <div className="bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-      <div className="px-6 py-4 border-b border-[#E5E5E5] bg-[#FAFAFA] flex items-center gap-2">
-        <Icon className="w-4 h-4 text-black" />
-        <h2 className="text-sm font-bold text-black">{title}</h2>
-      </div>
-      <div className="p-6">{children}</div>
-    </div>
+    <DashboardSectionCard title={title} icon={Icon}>
+      {children}
+    </DashboardSectionCard>
   );
 }
 
@@ -80,7 +82,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-black mb-2">{label}</label>
+      <label className="cyber-label">{label}</label>
       <div className="relative">
         {Icon && <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />}
         <input
@@ -89,7 +91,7 @@ function Field({
           onChange={e => onChange?.(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full ${Icon ? "pl-10" : "px-4"} pr-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all disabled:bg-[#F5F5F5] disabled:text-[#888888] disabled:cursor-not-allowed`}
+          className={`w-full ${Icon ? "pl-10" : "px-4"} cyber-input pr-4 py-3 rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none transition-all disabled:bg-[#F5F5F5] disabled:text-[#888888] disabled:cursor-not-allowed`}
         />
       </div>
     </div>
@@ -106,7 +108,7 @@ function PasswordField({ label, value, onChange, placeholder }: {
   const [show, setShow] = useState(false);
   return (
     <div>
-      <label className="block text-sm font-medium text-black mb-2">{label}</label>
+      <label className="cyber-label">{label}</label>
       <div className="relative">
         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
         <input
@@ -114,7 +116,7 @@ function PasswordField({ label, value, onChange, placeholder }: {
           value={value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
+          className="cyber-input w-full rounded-xl py-3 pl-10 pr-10 text-sm text-black placeholder:text-[#888888] focus:outline-none transition-all"
         />
         <button
           type="button"
@@ -255,11 +257,13 @@ export function TeacherProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="cyber-profile-page relative min-h-screen overflow-hidden bg-[#FAFAFA]">
+      <GridBackground variant="dashboard" />
+      <div className="relative z-10">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-[#E5E5E5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <header className="cyber-topbar sticky top-0 z-40 border-b border-[#E5E5E5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -287,7 +291,7 @@ export function TeacherProfilePage() {
 
       <main className="max-w-[1200px] mx-auto px-6 py-8">
         {/* Page title */}
-        <div className="mb-8">
+        <div className="cyber-page-intro mb-8">
           <h1 className="text-2xl font-bold text-black">Paramètres du profil</h1>
           <p className="text-sm text-[#666666] mt-1">Gérez vos informations personnelles, sécurité et préférences</p>
         </div>
@@ -296,57 +300,59 @@ export function TeacherProfilePage() {
           {/* Left Sidebar */}
           <div className="lg:col-span-1 space-y-4">
             {/* Avatar card */}
-            <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6 flex flex-col items-center gap-4">
+            <DashboardCard interactive className="p-6 flex flex-col items-center gap-4">
               <div className="relative">
-                <div className="w-20 h-20 rounded-2xl bg-black flex items-center justify-center overflow-hidden">
+                <div className="w-20 h-20 rounded-2xl border border-[rgba(117,195,214,0.14)] bg-[rgba(11,27,38,0.72)] flex items-center justify-center overflow-hidden">
                   {profileImage
                     ? <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
-                    : <span className="text-2xl font-bold text-white">PD</span>
+                    : <span className="text-2xl font-bold text-[var(--cyber-text)]">PD</span>
                   }
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-black flex items-center justify-center border-2 border-white hover:bg-[#333] transition-colors"
+                  className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-[var(--cyber-accent)] flex items-center justify-center border-2 border-[rgba(6,15,22,0.95)] hover:bg-[var(--cyber-accent-strong)] transition-colors"
                 >
-                  <Camera className="w-3.5 h-3.5 text-white" />
+                  <Camera className="w-3.5 h-3.5 text-[var(--primary-foreground)]" />
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
               </div>
               <div className="text-center">
-                <p className="text-sm font-bold text-black">{firstName} {lastName}</p>
-                <p className="text-xs text-[#666666] mt-0.5">{title}</p>
-                <p className="text-xs text-[#888888]">{department}</p>
+                <p className="text-sm font-semibold text-[var(--cyber-text)]">{firstName} {lastName}</p>
+                <p className="mt-0.5 text-xs text-[var(--cyber-muted-text)]">{title}</p>
+                <p className="text-xs text-[var(--cyber-subtle-text)]">{department}</p>
               </div>
               {profileImage && (
                 <button
                   onClick={() => setProfileImage(null)}
-                  className="text-xs text-[#888888] hover:text-black transition-colors flex items-center gap-1"
+                  className="text-xs text-[var(--cyber-subtle-text)] hover:text-[var(--cyber-text)] transition-colors flex items-center gap-1"
                 >
                   <Trash2 className="w-3 h-3" />
                   Supprimer la photo
                 </button>
               )}
-            </div>
+            </DashboardCard>
 
             {/* Nav */}
-            <nav className="bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
+            <div className="dashboard-card overflow-hidden">
+            <nav>
               {sections.map((sec, i) => (
                 <button
                   key={sec.id}
                   onClick={() => setActiveSection(sec.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
-                    i < sections.length - 1 ? "border-b border-[#F0F0F0]" : ""
+                    i < sections.length - 1 ? "border-b border-[rgba(117,195,214,0.1)]" : ""
                   } ${
                     activeSection === sec.id
-                      ? "bg-black text-white"
-                      : "hover:bg-[#F5F5F5] text-black"
+                      ? "bg-[rgba(61,216,233,0.12)] text-[var(--cyber-text)]"
+                      : "hover:bg-[rgba(11,27,38,0.56)] text-[var(--cyber-muted-text)]"
                   }`}
                 >
-                  <sec.icon className={`w-4 h-4 flex-shrink-0 ${activeSection === sec.id ? "text-white" : "text-[#666666]"}`} />
+                  <sec.icon className={`w-4 h-4 flex-shrink-0 ${activeSection === sec.id ? "text-[var(--cyber-accent-strong)]" : "text-[var(--cyber-subtle-text)]"}`} />
                   <span className="text-sm font-medium">{sec.label}</span>
                 </button>
               ))}
             </nav>
+            </div>
           </div>
 
           {/* Right Content */}
@@ -488,11 +494,12 @@ export function TeacherProfilePage() {
                 </Section>
 
                 {/* Danger zone */}
-                <div className="bg-white border-2 border-[#E5E5E5] rounded-2xl overflow-hidden">
-                  <div className="px-6 py-4 border-b border-[#E5E5E5] bg-[#FAFAFA] flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-black" />
-                    <h2 className="text-sm font-bold text-black">Zone dangereuse</h2>
-                  </div>
+                <DashboardSectionCard
+                  title="Zone dangereuse"
+                  subtitle="Actions sensibles sur le compte"
+                  icon={AlertCircle}
+                  tone="danger"
+                >
                   <div className="p-6 space-y-4">
                     <div className="flex items-center justify-between gap-4 py-4 border-b border-[#F0F0F0]">
                       <div>
@@ -518,7 +525,7 @@ export function TeacherProfilePage() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </DashboardSectionCard>
               </>
             )}
 
@@ -581,8 +588,8 @@ export function TeacherProfilePage() {
                   {activeSessions.map((session, i) => (
                     <div key={i} className={`flex items-center justify-between gap-4 px-5 py-4 rounded-xl border transition-colors ${
                       session.current
-                        ? "bg-black border-black"
-                        : "bg-[#FAFAFA] border-[#E5E5E5] hover:border-[#CCCCCC]"
+                        ? "bg-[rgba(61,216,233,0.12)] border-[rgba(61,216,233,0.16)]"
+                        : "bg-[rgba(11,27,38,0.5)] border-[rgba(117,195,214,0.12)] hover:border-[rgba(123,241,255,0.22)]"
                     }`}>
                       <div className="flex items-center gap-4 min-w-0">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -593,7 +600,11 @@ export function TeacherProfilePage() {
                         <div className="min-w-0">
                           <p className={`text-sm font-medium truncate ${session.current ? "text-white" : "text-black"}`}>
                             {session.device}
-                            {session.current && <span className="ml-2 text-xs font-normal opacity-70">(session actuelle)</span>}
+                            {session.current && (
+                              <span className="ml-2 inline-block align-middle">
+                                <DashboardStatusBadge status="active" label="Session actuelle" />
+                              </span>
+                            )}
                           </p>
                           <p className={`text-xs mt-0.5 ${session.current ? "text-white/60" : "text-[#888888]"}`}>
                             {session.location} · {session.time}
@@ -627,6 +638,7 @@ export function TeacherProfilePage() {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }
