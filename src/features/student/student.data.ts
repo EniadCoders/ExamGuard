@@ -1,0 +1,87 @@
+import {
+  Award,
+  CalendarDays,
+  CheckCircle2,
+  TrendingUp,
+} from "lucide-react";
+
+export const studentDashboardStats = [
+  { label: "Examens a venir", value: "3", icon: CalendarDays, change: "+1 cette semaine" },
+  { label: "Examens completes", value: "12", icon: CheckCircle2, change: "+2 ce mois" },
+  { label: "Score moyen", value: "84%", icon: TrendingUp, change: "+3% vs mois dernier" },
+  { label: "Certifications", value: "4", icon: Award, change: "1 en cours" },
+];
+
+export const studentExams = [
+  {
+    id: 1,
+    title: "Architecture Java EE",
+    subject: "Genie Logiciel",
+    status: "completed" as const,
+    date: "28 Mars 2026",
+    time: "10:00",
+    duration: 90,
+    students: 45,
+    score: 87,
+    maxScore: 100,
+    types: ["mcq", "code"],
+    rank: 3,
+    classAvg: 74,
+  },
+  {
+    id: 2,
+    title: "Introduction au Cloud",
+    subject: "Infrastructure",
+    status: "ongoing" as const,
+    date: "4 Avril 2026",
+    time: "14:30",
+    duration: 120,
+    students: 38,
+    types: ["mcq", "text"],
+    progress: 65,
+  },
+  {
+    id: 3,
+    title: "Bases de donnees NoSQL",
+    subject: "Data Engineering",
+    status: "upcoming" as const,
+    date: "10 Avril 2026",
+    time: "09:00",
+    duration: 75,
+    students: 52,
+    types: ["mcq", "code", "text"],
+  },
+  {
+    id: 4,
+    title: "Securite des Applications Web",
+    subject: "Cybersecurite",
+    status: "upcoming" as const,
+    date: "15 Avril 2026",
+    time: "11:00",
+    duration: 90,
+    students: 40,
+    types: ["mcq", "code"],
+  },
+  {
+    id: 5,
+    title: "Machine Learning Avance",
+    subject: "IA & Data Science",
+    status: "completed" as const,
+    date: "20 Mars 2026",
+    time: "13:00",
+    duration: 150,
+    students: 30,
+    score: 92,
+    maxScore: 100,
+    types: ["mcq", "code"],
+    rank: 1,
+    classAvg: 78,
+  },
+];
+
+export const studentCalendarEvents = [
+  { id: 1, title: "Architecture Java EE", date: "28", month: "Mars", time: "10:00", status: "completed" as const },
+  { id: 2, title: "Introduction au Cloud", date: "4", month: "Avril", time: "14:30", status: "ongoing" as const },
+  { id: 3, title: "Bases de donnees NoSQL", date: "10", month: "Avril", time: "09:00", status: "upcoming" as const },
+  { id: 4, title: "Securite des Applications Web", date: "15", month: "Avril", time: "11:00", status: "upcoming" as const },
+];
