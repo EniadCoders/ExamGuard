@@ -192,7 +192,7 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
     );
 
   return (
-    <div className="relative" ref={panelRef}>
+    <div className="relative flex-shrink-0" ref={panelRef}>
       <button
         onClick={() => setOpen((value) => !value)}
         className={`relative rounded-xl p-2.5 transition-colors ${
@@ -211,11 +211,11 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[360px] animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[min(22rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] animate-in fade-in slide-in-from-top-2 duration-150 sm:w-[360px]">
           <div className="absolute -inset-px rounded-2xl bg-gradient-to-br from-cyan-400/18 via-transparent to-cyan-200/10 blur-sm" />
 
           <div className="relative overflow-hidden rounded-2xl border border-[rgba(123,241,255,0.16)] bg-[rgba(5,14,22,0.96)] shadow-[0_28px_70px_rgba(0,0,0,0.34)] backdrop-blur-2xl">
-            <div className="flex items-center justify-between border-b border-[rgba(117,195,214,0.12)] px-5 py-4">
+            <div className="flex items-center justify-between gap-3 border-b border-[rgba(117,195,214,0.12)] px-4 py-4 sm:px-5">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-cyan-300" />
                 <span className="text-sm text-slate-200">Notifications</span>
@@ -237,9 +237,9 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
               )}
             </div>
 
-            <div className="max-h-[400px] overflow-y-auto divide-y divide-[rgba(117,195,214,0.08)]">
+            <div className="max-h-[min(60vh,400px)] overflow-y-auto divide-y divide-[rgba(117,195,214,0.08)]">
               {notifs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center px-5 py-12">
+                <div className="flex flex-col items-center justify-center px-4 py-10 sm:px-5 sm:py-12">
                   <Bell className="mb-3 h-10 w-10 text-slate-700" />
                   <p className="text-sm text-slate-500">Aucune notification</p>
                 </div>
@@ -248,7 +248,7 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
                   <div
                     key={notif.id}
                     onClick={() => markRead(notif.id)}
-                    className={`group flex cursor-pointer items-start gap-3 px-5 py-3.5 transition-all ${
+                    className={`group flex cursor-pointer items-start gap-3 px-4 py-3.5 transition-all sm:px-5 ${
                       notif.read
                         ? "hover:bg-[rgba(11,27,38,0.44)]"
                         : "bg-cyan-500/[0.05] hover:bg-cyan-500/[0.08]"
@@ -301,7 +301,7 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
               )}
             </div>
 
-            <div className="flex items-center justify-between border-t border-[rgba(117,195,214,0.12)] px-5 py-3">
+            <div className="flex items-center justify-between gap-3 border-t border-[rgba(117,195,214,0.12)] px-4 py-3 sm:px-5">
               <span className="text-xs text-slate-600">
                 {notifs.length} notification{notifs.length > 1 ? "s" : ""} au
                 total

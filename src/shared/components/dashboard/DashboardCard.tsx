@@ -120,7 +120,7 @@ export function DashboardSectionCard({
         </div>
         {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
       </div>
-      <div className={cn("p-6", bodyClassName)}>{children}</div>
+      <div className={cn("p-4 sm:p-6", bodyClassName)}>{children}</div>
     </DashboardCard>
   );
 }
@@ -236,7 +236,7 @@ export function DashboardMetricCard({
   return (
     <DashboardCard
       interactive={interactive}
-      className={cn("p-6", className)}
+      className={cn("p-5 sm:p-6", className)}
     >
       <div className="flex items-start justify-between gap-4">
         <DashboardIconBadge icon={icon} tone={iconTone} />
@@ -253,7 +253,7 @@ export function DashboardMetricCard({
       </div>
       <div className="mt-6">
         <p className="dashboard-card-kicker">{label}</p>
-        <div className="mt-2 text-[2rem] font-semibold leading-none text-[var(--cyber-text)]">
+        <div className="mt-2 text-[1.75rem] font-semibold leading-none text-[var(--cyber-text)] sm:text-[2rem]">
           {value}
         </div>
         {description ? (

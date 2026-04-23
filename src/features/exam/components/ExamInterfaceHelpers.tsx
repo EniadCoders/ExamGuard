@@ -41,7 +41,7 @@ export function FraudWarningBanner({
 
   return (
     <div className="relative border-b-2 border-black bg-[#EAEAEA]">
-      <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center gap-3">
+      <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:px-6">
         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-black flex items-center justify-center">
           <AlertTriangle className="w-4 h-4 text-white" />
         </div>
@@ -84,7 +84,7 @@ export function SubmitExamModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-sm bg-white border-2 border-black rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.16)]">
+      <div className="relative w-full max-w-sm rounded-2xl border-2 border-black bg-white p-5 shadow-[0_8px_32px_rgba(0,0,0,0.16)] sm:p-8">
         <div className="w-14 h-14 rounded-full bg-black flex items-center justify-center mx-auto mb-5">
           <Shield className="w-7 h-7 text-white" />
         </div>
@@ -104,7 +104,7 @@ export function SubmitExamModal({
             </p>
           </div>
         )}
-        <div className="flex gap-3 mt-2">
+        <div className="mt-2 flex flex-col gap-3 sm:flex-row">
           <button
             onClick={onCancel}
             className="flex-1 py-3 rounded-xl border-2 border-black text-black hover:bg-[#F5F5F5] transition-all text-sm font-medium"
@@ -169,14 +169,14 @@ export function ExamResultsView({
   return (
     <div className="cyber-exam-page relative min-h-screen overflow-hidden bg-white">
       <GridBackground variant="exam" />
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:py-12">
         <div className="w-full max-w-lg">
-          <div className="bg-white border-2 border-[#E5E5E5] rounded-3xl p-8 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+          <div className="rounded-3xl border-2 border-[#E5E5E5] bg-white p-5 shadow-[0_4px_16px_rgba(0,0,0,0.08)] sm:p-8">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center mx-auto mb-4">
                 {isPassed ? <CheckCircle2 className="w-8 h-8 text-white" /> : <XCircle className="w-8 h-8 text-white" />}
               </div>
-              <h1 className="text-2xl font-bold text-black mb-2">Examen soumis !</h1>
+              <h1 className="mb-2 text-xl font-bold text-black sm:text-2xl">Examen soumis !</h1>
               <p className="text-sm text-[#666666]">
                 Examen Java - Architecture Logicielle - 31 Mars 2026
               </p>
@@ -199,13 +199,13 @@ export function ExamResultsView({
                   />
                 </svg>
                 <div className="text-center z-10">
-                  <p className="text-4xl font-bold text-black">{score}%</p>
+                  <p className="text-3xl font-bold text-black sm:text-4xl">{score}%</p>
                   <p className="text-xs text-[#888888] mt-1">{totalPts}/{maxPts} pts</p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="rounded-xl border-2 border-[#E5E5E5] p-4 text-center bg-[#F5F5F5]">
                 {isPassed ? <Check className="w-5 h-5 mx-auto mb-1 text-black" /> : <X className="w-5 h-5 mx-auto mb-1 text-black" />}
                 <p className="text-xs text-[#888888]">Statut</p>

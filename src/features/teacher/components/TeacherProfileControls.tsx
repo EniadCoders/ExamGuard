@@ -118,7 +118,7 @@ export function ProfileToast({
   onClose,
 }: ProfileToastProps) {
   return (
-    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.16)] border transition-all ${
+    <div className={`fixed bottom-4 left-4 right-4 z-50 flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.16)] transition-all sm:bottom-6 sm:left-auto sm:right-6 sm:px-5 sm:py-4 ${
       type === "success" ? "bg-black text-white border-black" : "bg-white text-black border-[#E5E5E5]"
     }`}>
       {type === "success"

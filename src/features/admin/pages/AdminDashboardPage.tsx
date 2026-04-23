@@ -219,9 +219,9 @@ function ModalBase({ children, onClose, title, wide = false }: {
   wide?: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className={`relative w-full ${wide ? "max-w-3xl" : "max-w-2xl"} bg-white border border-[#E5E5E5] rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.18)] max-h-[90vh] flex flex-col`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5E5] bg-[#FAFAFA] rounded-t-2xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className={`relative flex max-h-[92vh] w-full flex-col rounded-2xl border border-[#E5E5E5] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.18)] ${wide ? "max-w-3xl" : "max-w-2xl"}`}>
+        <div className="flex items-center justify-between gap-3 rounded-t-2xl border-b border-[#E5E5E5] bg-[#FAFAFA] px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="text-base font-bold text-black">{title}</h2>
           <button onClick={onClose} className="p-2 hover:bg-[#EEEEEE] rounded-lg transition-colors">
             <X className="w-5 h-5 text-black" />
@@ -302,13 +302,13 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
           <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] rounded-xl overflow-hidden">
             {participants.map((p, i) => (
               <div key={i} className="flex items-center justify-between px-4 py-3 hover:bg-[#FAFAFA] transition-colors">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <div className="w-7 h-7 rounded-full bg-black flex items-center justify-center">
                     <span className="text-xs font-bold text-white">{p.name.split(" ").map(n => n[0]).join("")}</span>
                   </div>
                   <span className="text-sm text-black">{p.name}</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="text-sm font-bold text-black">{p.score}/100</span>
                   <CheckCircle2 className="w-4 h-4 text-[#888888]" />
                 </div>
@@ -317,7 +317,7 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
           </div>
         </div>
       </div>
-      <div className="px-6 py-4 border-t border-[#E5E5E5] bg-[#FAFAFA] rounded-b-2xl flex items-center justify-between">
+      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <button onClick={onClose} className="px-4 py-2 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
           Fermer
         </button>
@@ -357,7 +357,7 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
           <input value={title} onChange={e => setTitle(e.target.value)}
             className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-black mb-2">Matière</label>
             <select value={subject} onChange={e => setSubject(e.target.value)}
@@ -380,7 +380,7 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-black mb-2">Durée (min)</label>
             <input type="number" value={duration} onChange={e => setDuration(Number(e.target.value))}
@@ -403,7 +403,7 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
             className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all resize-none" />
         </div>
       </div>
-      <div className="px-6 py-4 border-t border-[#E5E5E5] bg-[#FAFAFA] rounded-b-2xl flex items-center justify-end gap-3">
+      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
         <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
           Annuler
         </button>
@@ -441,7 +441,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
             className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-black mb-2">Matière *</label>
             <select value={examSubject} onChange={e => setExamSubject(e.target.value)}
@@ -464,7 +464,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-black mb-2">Date et heure</label>
             <input type="datetime-local" value={examDate} onChange={e => setExamDate(e.target.value)}
@@ -490,7 +490,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
           </p>
         </div>
       </div>
-      <div className="px-6 py-4 border-t border-[#E5E5E5] bg-[#FAFAFA] rounded-b-2xl flex items-center justify-end gap-3">
+      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
         <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
           Annuler
         </button>
@@ -536,7 +536,7 @@ function AddStudentModal({ onClose, onAdded }: { onClose: () => void; onAdded?: 
             placeholder="ETU-2024-XXX"
             className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-black mb-2">Département</label>
             <select value={department} onChange={e => setDepartment(e.target.value)}
@@ -567,7 +567,7 @@ function AddStudentModal({ onClose, onAdded }: { onClose: () => void; onAdded?: 
           </p>
         </div>
       </div>
-      <div className="px-6 py-4 border-t border-[#E5E5E5] bg-[#FAFAFA] rounded-b-2xl flex items-center justify-end gap-3">
+      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
         <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
           Annuler
         </button>
@@ -620,7 +620,7 @@ function StudentDetailsModal({ student, onClose, onEdit }: { student: Student; o
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             { label: "Examens passés", value: student.exams.toString(), icon: FileText },
             { label: "Moyenne générale", value: `${student.avg}%`, icon: TrendingUp },
@@ -644,7 +644,7 @@ function StudentDetailsModal({ student, onClose, onEdit }: { student: Student; o
                   <p className="text-sm font-medium text-black">{e.exam}</p>
                   <p className="text-xs text-[#888888]">{e.date}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="text-sm font-bold text-black">{e.score}/100</span>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                     e.score >= 60 ? "bg-black text-white" : "bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]"
@@ -657,7 +657,7 @@ function StudentDetailsModal({ student, onClose, onEdit }: { student: Student; o
           </div>
         </div>
       </div>
-      <div className="px-6 py-4 border-t border-[#E5E5E5] bg-[#FAFAFA] rounded-b-2xl flex items-center justify-between">
+      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <button onClick={onClose} className="px-4 py-2 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
           Fermer
         </button>
@@ -697,7 +697,7 @@ function EditStudentModal({ student, onClose, onSave }: { student: Student; onCl
           <input type="email" value={email} onChange={e => setEmail(e.target.value)}
             className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-black mb-2">Département</label>
             <select value={department} onChange={e => setDepartment(e.target.value)}
@@ -731,7 +731,7 @@ function EditStudentModal({ student, onClose, onSave }: { student: Student; onCl
           </div>
         </div>
       </div>
-      <div className="px-6 py-4 border-t border-[#E5E5E5] bg-[#FAFAFA] rounded-b-2xl flex items-center justify-end gap-3">
+      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
         <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
           Annuler
         </button>
@@ -759,7 +759,7 @@ function ImportDataModal({ onClose }: { onClose: () => void }) {
         {/* Import type */}
         <div>
           <label className="block text-sm font-medium text-black mb-3">Type de données</label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {([
               { key: "students", label: "Étudiants", icon: Users },
               { key: "exams", label: "Examens", icon: FileText },
@@ -828,7 +828,7 @@ function ImportDataModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-      <div className="px-6 py-4 border-t border-[#E5E5E5] bg-[#FAFAFA] rounded-b-2xl flex items-center justify-end gap-3">
+      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
         <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
           Annuler
         </button>
@@ -1042,7 +1042,7 @@ function ExamsTab({ onCreateExam }: { onCreateExam: () => void }) {
             />
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -1094,14 +1094,14 @@ function ExamsTab({ onCreateExam }: { onCreateExam: () => void }) {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => { setEditingExam(exam); setShowEdit(true); }}
-                  className="cyber-button-secondary flex-1 rounded-lg px-3 py-2 text-xs font-medium"
+                  className="cyber-button-secondary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   Éditer
                 </button>
                 <button
                   onClick={() => { setSelectedExam(exam); setShowDetails(true); }}
-                  className="cyber-button-primary flex-1 rounded-lg px-3 py-2 text-xs font-medium"
+                  className="cyber-button-primary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
                 >
                   <Eye className="w-3.5 h-3.5" />
                   Voir détails
@@ -1195,7 +1195,7 @@ function StudentsTab() {
               {filtered.map((student) => (
                 <tr key={student.id} className="hover:bg-[#FAFAFA] transition-colors">
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
                         <span className="text-xs font-bold text-white">{student.name.split(" ").map(n => n[0]).join("")}</span>
                       </div>
@@ -1501,7 +1501,7 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
       <div className="flex items-center gap-4">
         <button
           onClick={handleSave}
-          className="flex items-center gap-2 px-6 py-2.5 bg-black hover:bg-[#222222] rounded-xl text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
         >
           <Save className="w-4 h-4" />
           Enregistrer les paramètres
@@ -1552,7 +1552,7 @@ export function AdminDashboard() {
 
       {/* Header */}
       <header className="cyber-topbar sticky top-0 z-40 border-b border-[#E5E5E5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-6 sm:py-0">
           <div className="flex items-center gap-6">
             <Logo size="md" />
             <div className="hidden sm:block w-px h-6 bg-[#E5E5E5]" />
@@ -1593,7 +1593,7 @@ export function AdminDashboard() {
 
       {/* Navigation Tabs */}
       <div className="cyber-tabbar border-b border-[#E5E5E5] bg-white sticky top-16 z-30">
-        <div className="max-w-[1600px] mx-auto px-6">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-1 overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -1618,7 +1618,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-[1600px] mx-auto px-6 py-8">
+      <main className="max-w-[1600px] mx-auto px-4 py-6 sm:px-6 sm:py-8">
         {activeTab === "overview" && (
           <OverviewTab
             onGoToExams={() => setActiveTab("exams")}

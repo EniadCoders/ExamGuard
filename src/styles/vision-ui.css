@@ -963,6 +963,7 @@
 @media (max-width: 1023px) {
   .cyber-auth-grid {
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 
   .cyber-auth-aside {
@@ -970,17 +971,20 @@
   }
 
   .cyber-auth-main {
-    padding: 1.5rem;
+    min-height: 100vh;
+    align-items: stretch;
+    padding: 1.25rem;
   }
 
   .cyber-auth-panel {
-    max-width: 100%;
+    max-width: min(100%, 40rem);
+    margin: 0 auto;
   }
 }
 
 @media (max-width: 767px) {
   .cyber-auth-main {
-    padding: 1rem;
+    padding: 0.875rem;
   }
 
   .cyber-auth-metrics,
@@ -989,6 +993,74 @@
   }
 
   .cyber-page-intro {
-    padding: 1.25rem;
+    padding: 1.15rem;
+  }
+
+  .cyber-auth-title {
+    margin-top: 0.85rem;
+    font-size: clamp(2.15rem, 8.5vw, 3rem);
+    line-height: 0.98;
+  }
+
+  .cyber-auth-description {
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  .cyber-auth-kicker {
+    letter-spacing: 0.08em;
+  }
+
+  .dashboard-section-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.1rem 1rem 0;
+  }
+
+  .dashboard-card-title {
+    font-size: 0.95rem;
+  }
+
+  .dashboard-card-subtitle {
+    margin-top: 0.3rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .dashboard-icon-badge {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.85rem;
+  }
+
+  .dashboard-list-row {
+    gap: 0.75rem;
+    padding: 0.95rem 1rem;
+  }
+
+  .dashboard-meta-item {
+    font-size: 0.75rem;
+  }
+
+  .dashboard-tag,
+  .dashboard-status-badge,
+  .dashboard-trend-pill {
+    font-size: 0.625rem;
+  }
+
+  .cyber-auth-note {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 479px) {
+  .cyber-auth-main {
+    padding: 0.75rem;
+  }
+
+  .cyber-auth-feature,
+  .cyber-auth-metric {
+    padding: 0.95rem;
   }
 }

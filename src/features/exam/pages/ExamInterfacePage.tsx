@@ -145,10 +145,10 @@ export function ExamInterface() {
         </div>
 
         {/* Header */}
-        <header className="cyber-topbar border-b border-[#E5E5E5] bg-white sticky top-0 z-40 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-          <div className="max-w-[1400px] mx-auto px-6 h-[64px] flex items-center gap-4 justify-between">
+        <header className="cyber-topbar sticky top-0 z-40 border-b border-[#E5E5E5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-3 sm:px-6 lg:h-[64px] lg:flex-row lg:items-center lg:justify-between lg:py-0">
             {/* Left */}
-            <div className="flex items-center gap-4 min-w-0">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               <Logo size="md" />
               <div className="hidden sm:block w-px h-5 bg-[#E5E5E5]" />
               <div className="hidden sm:block min-w-0">
@@ -161,7 +161,7 @@ export function ExamInterface() {
 
             {/* Center: Timer */}
             <div
-              className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border-2 ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 sm:gap-2.5 sm:px-5 ${
                 isLowTime
                   ? "bg-black border-black shadow-[0_2px_8px_rgba(0,0,0,0.16)]"
                   : "bg-white border-[#E5E5E5]"
@@ -171,7 +171,7 @@ export function ExamInterface() {
                 className={`w-4 h-4 ${isLowTime ? "text-white" : "text-black"}`}
               />
               <span
-                className={`text-2xl tabular-nums tracking-tight font-bold ${
+                className={`text-xl tabular-nums tracking-tight font-bold sm:text-2xl ${
                   isLowTime ? "text-white" : "text-black"
                 }`}
               >
@@ -180,7 +180,7 @@ export function ExamInterface() {
             </div>
 
             {/* Right */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <AutoSaveIndicator visible={showSaved} />
               <div
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ${
@@ -201,7 +201,7 @@ export function ExamInterface() {
         </header>
 
         {/* Main layout */}
-        <div className="flex flex-1 max-w-[1400px] mx-auto w-full px-4 py-6 gap-5">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-1 gap-4 px-3 py-4 sm:px-4 sm:py-6 sm:gap-5">
           {/* Left navigation rail */}
           <aside className="hidden xl:flex flex-col gap-3 w-56 flex-shrink-0">
             <div className="bg-white border border-[#E5E5E5] rounded-2xl p-4 sticky top-[80px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
@@ -289,8 +289,8 @@ export function ExamInterface() {
             {/* Question card */}
             <div className="bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               {/* Card header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5E5] bg-[#FAFAFA]">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 border-b border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#E5E5E5] bg-white text-xs font-medium text-black">
                     <QTypeIcon type={question.type} className="w-3 h-3" />
                     {TYPE_LABELS[question.type]}
@@ -323,20 +323,20 @@ export function ExamInterface() {
               </div>
 
               {/* Question text */}
-              <div className="px-6 py-5">
-                <p className="text-base text-black leading-relaxed font-medium">{question.text}</p>
+              <div className="px-4 py-5 sm:px-6">
+                <p className="text-sm font-medium leading-relaxed text-black sm:text-base">{question.text}</p>
               </div>
 
               {/* MCQ Answer */}
               {question.type === "mcq" && (
-                <div className="px-6 pb-6 space-y-2.5">
+                <div className="space-y-2.5 px-4 pb-5 sm:px-6 sm:pb-6">
                   {question.options.map((opt) => {
                     const sel = answers[current] === opt.id;
                     return (
                       <button
                         key={opt.id}
                         onClick={() => setAnswer(opt.id as MCQAnswer)}
-                        className={`group w-full text-left px-5 py-4 rounded-xl border-2 transition-all ${
+                        className={`group w-full rounded-xl border-2 px-4 py-3.5 text-left transition-all sm:px-5 sm:py-4 ${
                           sel
                             ? "border-black bg-[#F5F5F5] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
                             : "border-[#E5E5E5] bg-white hover:border-[#CCCCCC] hover:bg-[#FAFAFA]"
@@ -384,7 +384,7 @@ export function ExamInterface() {
                 const minW = question.minWords ?? 0;
                 const meetsMin = words >= minW;
                 return (
-                  <div className="px-6 pb-6">
+                  <div className="px-4 pb-5 sm:px-6 sm:pb-6">
                     {question.minWords && (
                       <div className="flex items-center gap-2 mb-3 p-3 rounded-xl bg-[#F5F5F5] border border-[#E5E5E5]">
                         <Info className="w-3.5 h-3.5 text-[#666666] flex-shrink-0" />
@@ -438,7 +438,7 @@ export function ExamInterface() {
                   isRunning: false,
                 };
                 return (
-                  <div className="px-6 pb-6">
+                  <div className="px-4 pb-5 sm:px-6 sm:pb-6">
                     <CodeEditorPanel
                       language={question.language}
                       starterCode={question.starterCode}
@@ -451,11 +451,11 @@ export function ExamInterface() {
             </div>
 
             {/* Navigation */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <button
                 onClick={() => setCurrent(Math.max(0, current - 1))}
                 disabled={current === 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] hover:border-[#CCCCCC] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-2 rounded-xl border-2 border-[#E5E5E5] px-3 py-2.5 text-xs font-medium text-black transition-all hover:border-[#CCCCCC] hover:bg-[#F5F5F5] disabled:cursor-not-allowed disabled:opacity-30 sm:px-5 sm:text-sm"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Précédente
@@ -481,7 +481,7 @@ export function ExamInterface() {
               {current < TOTAL - 1 ? (
                 <button
                   onClick={() => setCurrent(current + 1)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                  className="flex items-center gap-2 rounded-xl bg-black px-3 py-2.5 text-xs font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:px-5 sm:text-sm"
                 >
                   Suivante
                   <ChevronRight className="w-4 h-4" />
@@ -489,7 +489,7 @@ export function ExamInterface() {
               ) : (
                 <button
                   onClick={() => setShowSubmit(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                  className="flex items-center gap-2 rounded-xl bg-black px-3 py-2.5 text-xs font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:px-5 sm:text-sm"
                 >
                   Soumettre
                   <Shield className="w-4 h-4" />

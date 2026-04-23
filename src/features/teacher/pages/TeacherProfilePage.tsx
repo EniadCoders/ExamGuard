@@ -109,7 +109,7 @@ export function TeacherProfilePage() {
 
       {/* Header */}
       <header className="cyber-topbar sticky top-0 z-40 border-b border-[#E5E5E5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-        <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-6 sm:py-0">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate("/admin")}
@@ -134,10 +134,10 @@ export function TeacherProfilePage() {
         </div>
       </header>
 
-      <main className="max-w-[1200px] mx-auto px-6 py-8">
+      <main className="max-w-[1200px] mx-auto px-4 py-6 sm:px-6 sm:py-8">
         {/* Page title */}
         <div className="cyber-page-intro mb-8">
-          <h1 className="text-2xl font-bold text-black">Paramètres du profil</h1>
+          <h1 className="text-xl font-bold text-black sm:text-2xl">Paramètres du profil</h1>
           <p className="text-sm text-[#666666] mt-1">Gérez vos informations personnelles, sécurité et préférences</p>
         </div>
 
@@ -243,10 +243,10 @@ export function TeacherProfilePage() {
                       <p className="text-xs text-[#888888] mt-1.5">{bio.length}/500 caractères</p>
                     </div>
                   </div>
-                  <div className="mt-6 pt-5 border-t border-[#E5E5E5] flex items-center justify-end">
+                  <div className="mt-6 flex items-center justify-stretch border-t border-[#E5E5E5] pt-5 sm:justify-end">
                     <button
                       onClick={handleSaveProfile}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-black hover:bg-[#222222] rounded-xl text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
                     >
                       <Save className="w-4 h-4" />
                       Enregistrer les modifications
@@ -308,10 +308,10 @@ export function TeacherProfilePage() {
                       ))}
                     </div>
                   </div>
-                  <div className="mt-6 pt-5 border-t border-[#E5E5E5] flex items-center justify-end">
+                  <div className="mt-6 flex items-center justify-stretch border-t border-[#E5E5E5] pt-5 sm:justify-end">
                     <button
                       onClick={handleChangePassword}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-black hover:bg-[#222222] rounded-xl text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
                     >
                       <Shield className="w-4 h-4" />
                       Changer le mot de passe
@@ -321,14 +321,14 @@ export function TeacherProfilePage() {
 
                 <Section title="Authentification à deux facteurs" icon={Shield}>
                   <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <h3 className="text-sm font-medium text-black mb-1">Activer la 2FA</h3>
                         <p className="text-xs text-[#666666]">Sécurisez votre compte avec une authentification à deux facteurs via votre application mobile (Google Authenticator, Authy...).</p>
                       </div>
                       <ToggleSwitch defaultChecked={false} />
                     </div>
-                    <div className="flex items-start justify-between gap-4 pt-4 border-t border-[#E5E5E5]">
+                    <div className="flex flex-col gap-4 border-t border-[#E5E5E5] pt-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <h3 className="text-sm font-medium text-black mb-1">Alertes de connexion suspecte</h3>
                         <p className="text-xs text-[#666666]">Recevoir une notification en cas de connexion depuis un nouvel appareil ou une localisation inhabituelle.</p>
@@ -346,7 +346,7 @@ export function TeacherProfilePage() {
                   tone="danger"
                 >
                   <div className="p-6 space-y-4">
-                    <div className="flex items-center justify-between gap-4 py-4 border-b border-[#F0F0F0]">
+                    <div className="flex flex-col gap-4 border-b border-[#F0F0F0] py-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <h3 className="text-sm font-medium text-black mb-1">Déconnecter toutes les sessions</h3>
                         <p className="text-xs text-[#666666]">Mettra fin à toutes les sessions actives sur tous les appareils</p>
@@ -359,7 +359,7 @@ export function TeacherProfilePage() {
                         Déconnecter
                       </button>
                     </div>
-                    <div className="flex items-center justify-between gap-4 py-4">
+                    <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <h3 className="text-sm font-medium text-black mb-1">Supprimer le compte</h3>
                         <p className="text-xs text-[#666666]">Action irréversible. Toutes vos données seront définitivement supprimées.</p>
@@ -386,7 +386,7 @@ export function TeacherProfilePage() {
                       { title: "Soumissions d'examens", desc: "Notifié quand tous les étudiants ont rendu leur copie", default: true },
                       { title: "Nouveaux étudiants inscrits", desc: "Email quand un nouvel étudiant rejoint la plateforme", default: false },
                     ].map(item => (
-                      <div key={item.title} className="flex items-start justify-between gap-4 py-4">
+                      <div key={item.title} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h3 className="text-sm font-medium text-black mb-0.5">{item.title}</h3>
                           <p className="text-xs text-[#666666]">{item.desc}</p>
@@ -404,7 +404,7 @@ export function TeacherProfilePage() {
                       { title: "Activité étudiante", desc: "Informé des connexions et déconnexions pendant les examens", default: false },
                       { title: "Problèmes techniques", desc: "Alertes en cas de problèmes de connexion ou de serveur", default: true },
                     ].map(item => (
-                      <div key={item.title} className="flex items-start justify-between gap-4 py-4">
+                      <div key={item.title} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h3 className="text-sm font-medium text-black mb-0.5">{item.title}</h3>
                           <p className="text-xs text-[#666666]">{item.desc}</p>
@@ -413,10 +413,10 @@ export function TeacherProfilePage() {
                       </div>
                     ))}
                   </div>
-                  <div className="mt-6 pt-5 border-t border-[#E5E5E5] flex items-center justify-end">
+                  <div className="mt-6 flex items-center justify-stretch border-t border-[#E5E5E5] pt-5 sm:justify-end">
                     <button
                       onClick={() => showToast("Préférences de notifications sauvegardées.")}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-black hover:bg-[#222222] rounded-xl text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
                     >
                       <Save className="w-4 h-4" />
                       Enregistrer les préférences
@@ -431,7 +431,7 @@ export function TeacherProfilePage() {
               <Section title="Sessions actives" icon={Globe}>
                 <div className="space-y-3">
                   {activeSessions.map((session, i) => (
-                    <div key={i} className={`flex items-center justify-between gap-4 px-5 py-4 rounded-xl border transition-colors ${
+                    <div key={i} className={`flex flex-col gap-4 rounded-xl border px-5 py-4 transition-colors sm:flex-row sm:items-center sm:justify-between ${
                       session.current
                         ? "bg-[rgba(61,216,233,0.12)] border-[rgba(61,216,233,0.16)]"
                         : "bg-[rgba(11,27,38,0.5)] border-[rgba(117,195,214,0.12)] hover:border-[rgba(123,241,255,0.22)]"
@@ -468,11 +468,11 @@ export function TeacherProfilePage() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-6 pt-5 border-t border-[#E5E5E5] flex items-center justify-between">
+                <div className="mt-6 flex flex-col gap-3 border-t border-[#E5E5E5] pt-5 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs text-[#888888]">{activeSessions.length} session(s) active(s) au total</p>
                   <button
                     onClick={() => showToast("Toutes les autres sessions ont été révoquées.")}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-black text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-black px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-[#F5F5F5] sm:w-auto"
                   >
                     <LogOut className="w-4 h-4" />
                     Révoquer toutes les autres sessions

@@ -113,15 +113,15 @@ export function ResetPasswordPage() {
       footer="Reset credentials inside the same protected ExamGuard shell"
       panelClassName="max-w-[34rem]"
     >
-      <div className="space-y-6">
-        <div className="cyber-auth-card overflow-hidden rounded-[1.9rem] p-6 sm:p-8">
+      <div className="space-y-5 sm:space-y-6">
+        <div className="cyber-auth-card overflow-hidden rounded-[1.6rem] p-5 sm:rounded-[1.9rem] sm:p-8">
           {step === "form" && (
             <div>
               <div className="mb-8">
                 <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(61,216,233,0.12)]">
                   <KeyRound className="h-6 w-6 text-[var(--cyber-accent-strong)]" />
                 </div>
-                <h2 className="text-3xl font-bold text-[var(--cyber-text)]">
+                <h2 className="text-2xl font-bold text-[var(--cyber-text)] sm:text-3xl">
                   Nouveau mot de passe
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-[var(--cyber-muted-text)] sm:text-base">
@@ -288,7 +288,7 @@ export function ResetPasswordPage() {
                 <div className="absolute top-0 h-20 w-20 rounded-3xl bg-[rgba(110,242,189,0.12)] opacity-30 animate-ping" />
               </div>
 
-              <h2 className="text-3xl font-bold text-[var(--cyber-text)]">
+              <h2 className="text-2xl font-bold text-[var(--cyber-text)] sm:text-3xl">
                 Mot de passe mis a jour
               </h2>
               <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[var(--cyber-muted-text)] sm:text-base">
@@ -322,7 +322,7 @@ export function ResetPasswordPage() {
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-4 text-sm text-[var(--cyber-muted-text)]">
+        <div className="flex flex-col gap-3 text-sm text-[var(--cyber-muted-text)] sm:flex-row sm:items-center sm:justify-between">
           <button
             onClick={() => navigate("/")}
             className="inline-flex items-center gap-2 font-semibold text-[var(--cyber-muted-text)] hover:text-white"

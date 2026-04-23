@@ -102,10 +102,10 @@ export function StudentDashboard() {
       <div className="relative z-10">
       {/* Header */}
       <header className="cyber-topbar sticky top-0 z-50 bg-white border-b border-[#E5E5E5]">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 sm:px-6 lg:h-16 lg:flex-row lg:items-center lg:justify-between lg:py-0">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
             <Logo size="sm" />
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="flex items-center gap-2 overflow-x-auto pb-1 lg:gap-6 lg:pb-0">
               {[
                 { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
                 { id: "exams", label: "Mes Examens", icon: FileText },
@@ -117,7 +117,7 @@ export function StudentDashboard() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm transition-all ${
+                    className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
                       activeTab === tab.id
                         ? "bg-[#00809D] text-white"
                         : "text-[#666666] hover:text-black hover:bg-[#F5F7FB]"
@@ -131,7 +131,7 @@ export function StudentDashboard() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-4">
             <NotificationPanel role="student" />
 
             <div className="flex items-center gap-3 pl-3 border-l border-[#E5E5E5]">
@@ -161,12 +161,12 @@ export function StudentDashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         {/* Welcome Header */}
         {activeTab === "dashboard" && (
           <div className="cyber-page-intro mb-8">
-            <h1 className="text-4xl font-serif text-black mb-2">Bonjour, Jean</h1>
-            <p className="text-[#666666] text-lg">Bienvenue sur votre tableau de bord</p>
+            <h1 className="mb-2 text-3xl font-serif text-black sm:text-4xl">Bonjour, Jean</h1>
+            <p className="text-base text-[#666666] sm:text-lg">Bienvenue sur votre tableau de bord</p>
           </div>
         )}
 
@@ -182,7 +182,7 @@ export function StudentDashboard() {
                       <DashboardStatusBadge status="ongoing" />
                       <span className="dashboard-card-kicker">Examen actif</span>
                     </div>
-                    <h2 className="text-3xl font-semibold text-[var(--cyber-text)]">
+                    <h2 className="text-2xl font-semibold text-[var(--cyber-text)] sm:text-3xl">
                       {activeExam.title}
                     </h2>
                     <p className="mt-2 text-base text-[var(--cyber-muted-text)]">
@@ -251,7 +251,7 @@ export function StudentDashboard() {
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               {/* Recent & Upcoming Exams */}
               <div className="xl:col-span-2 space-y-5">
-                <h2 className="text-2xl font-serif text-black">
+                <h2 className="text-xl font-serif text-black sm:text-2xl">
                   Examens récents & à venir
                 </h2>
                 {allExams.slice(0, 3).map((exam) => (
@@ -368,7 +368,7 @@ export function StudentDashboard() {
         {activeTab === "exams" && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h1 className="text-4xl font-serif text-black">
+              <h1 className="text-3xl font-serif text-black sm:text-4xl">
                 Mes Examens
               </h1>
             </div>
@@ -471,7 +471,7 @@ export function StudentDashboard() {
           <div className="space-y-6">
             {selectedResult === null ? (
               <>
-                <h1 className="text-4xl font-serif text-black mb-6">
+                <h1 className="mb-6 text-3xl font-serif text-black sm:text-4xl">
                   Mes Résultats
                 </h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -569,7 +569,7 @@ export function StudentDashboard() {
                               className="rounded-2xl border border-[rgba(117,195,214,0.12)] bg-[rgba(11,27,38,0.58)] p-5"
                             >
                               <p className="text-sm text-[var(--cyber-muted-text)] mb-2">{item.label}</p>
-                              <p className="text-3xl font-semibold text-[var(--cyber-text)]">{item.value}</p>
+                              <p className="text-2xl font-semibold text-[var(--cyber-text)] sm:text-3xl">{item.value}</p>
                             </div>
                           ))}
                         </div>
@@ -600,7 +600,7 @@ export function StudentDashboard() {
         {/* Calendar View */}
         {activeTab === "calendar" && (
           <div className="space-y-6">
-            <h1 className="text-4xl font-serif text-black">
+            <h1 className="text-3xl font-serif text-black sm:text-4xl">
               Calendrier des Examens
             </h1>
 
@@ -611,7 +611,7 @@ export function StudentDashboard() {
                   interactive
                   className="p-6"
                 >
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
                     <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-2xl border border-[rgba(117,195,214,0.14)] bg-[rgba(11,27,38,0.64)]">
                       <span className="text-sm font-medium uppercase text-[var(--cyber-subtle-text)]">{event.month.slice(0, 3)}</span>
                       <span className="text-2xl font-semibold text-[var(--cyber-text)]">{event.date}</span>
@@ -647,14 +647,14 @@ export function StudentDashboard() {
         {/* Settings View */}
         {activeTab === "settings" && (
           <div className="space-y-6">
-            <h1 className="text-4xl font-serif text-black mb-6">
+            <h1 className="mb-6 text-3xl font-serif text-black sm:text-4xl">
               Paramètres
             </h1>
 
-            <div className="flex gap-6">
+            <div className="flex flex-col gap-6 xl:flex-row">
               {/* Settings Sidebar */}
-              <div className="dashboard-card w-64 p-4">
-                <nav className="space-y-1">
+              <div className="dashboard-card w-full shrink-0 p-4 xl:w-64">
+                <nav className="grid grid-cols-2 gap-1 sm:grid-cols-4 xl:grid-cols-1">
                   {[
                     { id: "profile", label: "Profil", icon: User },
                     { id: "password", label: "Mot de passe", icon: Lock },
@@ -681,7 +681,7 @@ export function StudentDashboard() {
               </div>
 
               {/* Settings Content */}
-              <div className="dashboard-card flex-1 p-8">
+              <div className="dashboard-card min-w-0 flex-1 p-5 sm:p-8">
                 {settingsTab === "profile" && (
                   <div className="space-y-6">
                     <h2 className="text-2xl font-serif text-black mb-6">
@@ -730,8 +730,8 @@ export function StudentDashboard() {
                         />
                       </div>
                     </div>
-                    <div className="flex justify-end pt-4">
-                      <button className="px-6 py-3 bg-[#00809D] hover:bg-[#1C1C1C] text-white font-bold rounded-xl transition-all flex items-center gap-2">
+                    <div className="flex justify-stretch pt-4 sm:justify-end">
+                      <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00809D] px-6 py-3 font-bold text-white transition-all hover:bg-[#1C1C1C] sm:w-auto">
                         <Save className="w-4 h-4" />
                         <span>Enregistrer</span>
                       </button>
@@ -794,8 +794,8 @@ export function StudentDashboard() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex justify-end pt-4">
-                      <button className="px-6 py-3 bg-[#00809D] hover:bg-[#1C1C1C] text-white font-bold rounded-xl transition-all">
+                    <div className="flex justify-stretch pt-4 sm:justify-end">
+                      <button className="w-full rounded-xl bg-[#00809D] px-6 py-3 font-bold text-white transition-all hover:bg-[#1C1C1C] sm:w-auto">
                         Mettre à jour le mot de passe
                       </button>
                     </div>
@@ -813,7 +813,7 @@ export function StudentDashboard() {
                         { key: "resultNotifications", label: "Notifications de résultats", desc: "Être averti lorsque les résultats sont publiés" },
                         { key: "systemUpdates", label: "Mises à jour système", desc: "Recevoir les annonces et mises à jour de la plateforme" },
                       ].map((setting) => (
-                        <div key={setting.key} className="flex items-center justify-between p-5 bg-[#F5F7FB] rounded-xl">
+                        <div key={setting.key} className="flex flex-col gap-4 rounded-xl bg-[#F5F7FB] p-5 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex-1">
                             <p className="font-semibold text-black mb-1">{setting.label}</p>
                             <p className="text-sm text-[#666666]">{setting.desc}</p>
@@ -852,7 +852,7 @@ export function StudentDashboard() {
                     </h2>
                     <div className="space-y-5">
                       <div className="p-5 bg-[#F5F7FB] rounded-xl">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                               <Shield className="w-5 h-5 text-black" />
@@ -877,7 +877,7 @@ export function StudentDashboard() {
                           ].map((session, idx) => {
                             const Icon = session.icon;
                             return (
-                              <div key={idx} className="flex items-center justify-between p-4 bg-[#F5F7FB] rounded-xl">
+                              <div key={idx} className="flex flex-col gap-4 rounded-xl bg-[#F5F7FB] p-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex items-center gap-3">
                                   <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                                     <Icon className="w-5 h-5 text-black" />
@@ -926,7 +926,7 @@ export function StudentDashboard() {
       {/* Exam Lock Modal */}
       {showExamLock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#00809D]/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full border-2 border-[#E5E5E5] shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl border-2 border-[#E5E5E5] bg-white p-5 shadow-2xl sm:p-8">
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-[#F5F7FB] rounded-full flex items-center justify-center mb-4">
                 <ShieldAlert className="w-8 h-8 text-black" />
@@ -937,7 +937,7 @@ export function StudentDashboard() {
               <p className="text-[#666666] mb-6">
                 En rejoignant cet examen, votre session sera verrouillée. Vous ne pourrez pas quitter la page ou changer d'onglet sans déclencher une alerte.
               </p>
-              <div className="flex gap-3 w-full">
+              <div className="flex w-full flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setShowExamLock(false)}
                   className="flex-1 px-4 py-3 bg-white border border-[#E5E5E5] text-black font-medium rounded-xl hover:border-black transition-all"
