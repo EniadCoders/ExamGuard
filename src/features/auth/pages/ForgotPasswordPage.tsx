@@ -1,7 +1,18 @@
 import { useState } from "react";
-import { ArrowLeft, CheckCircle2, Lock, Mail, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Mail, Send } from "lucide-react";
 import { useNavigate } from "react-router";
-import { AuthShell } from "@/features/auth/components/AuthShell";
+import {
+  AuthCard,
+  AuthHeading,
+  AuthPageLayout,
+  authFieldClass,
+  authFooterLinkClass,
+  authFooterTextClass,
+  authLabelClass,
+  authPrimaryButtonClass,
+  authSecondaryButtonClass,
+  authTextLinkClass,
+} from "@/features/auth/components/AuthPageLayout";
 
 type Step = "form" | "sent";
 
@@ -15,146 +26,128 @@ export function ForgotPasswordPage() {
     e.preventDefault();
     if (!email.trim()) return;
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 900));
     setIsLoading(false);
     setStep("sent");
   };
 
   return (
-    <AuthShell
-      heroBadge="Credential recovery"
-      heroTitle={
-        <>
-          Recover access
-          <br />
-          without friction.
-        </>
-      }
-      heroDescription={
-        <>
-          Reset links stay inside the same secure product language: dark
-          surface, clear recovery states, and explicit platform protection
-          signals.
-        </>
-      }
-      footer="Secure recovery flow with audited reset entry points"
-      panelClassName="max-w-[34rem]"
-    >
-      <div className="space-y-5 sm:space-y-6">
-        <div className="cyber-auth-card overflow-hidden rounded-[1.6rem] p-5 sm:rounded-[1.9rem] sm:p-8">
-          {step === "form" && (
-            <div>
-              <div className="mb-8">
-                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(61,216,233,0.12)]">
-                  <Mail className="h-6 w-6 text-[var(--cyber-accent-strong)]" />
+    <AuthPageLayout>
+      <AuthCard>
+        {step === "form" ? (
+          <>
+            <AuthHeading
+              title="Forgot Password"
+              description="Enter your account email and we will send you a secure reset link."
+            />
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-[clamp(0.62rem,1.2vh,0.9rem)]">
+              <div>
+                <label className={authLabelClass} htmlFor="recovery-email">
+                  Email address
+                </label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-[clamp(0.85rem,1vw,1rem)] top-1/2 h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)] -translate-y-1/2 text-[var(--cyber-subtle-text)]" />
+                  <input
+                    id="recovery-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    required
+                    className={`${authFieldClass} pl-[calc(clamp(0.85rem,1vw,1rem)+1.45rem)]`}
+                  />
                 </div>
-                <h2 className="text-2xl font-bold text-[var(--cyber-text)] sm:text-3xl">
-                  Mot de passe oublie ?
-                </h2>
-                <p className="mt-2 text-sm leading-7 text-[var(--cyber-muted-text)] sm:text-base">
-                  Saisissez votre adresse e-mail. Nous vous enverrons un lien
-                  pour reinitialiser votre mot de passe.
-                </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label className="cyber-label" htmlFor="recovery-email">
-                    Adresse e-mail
-                  </label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--cyber-subtle-text)]" />
-                    <input
-                      id="recovery-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="votre@email.fr"
-                      required
-                      className="cyber-input w-full rounded-2xl py-3.5 pl-11 pr-4 text-sm text-[var(--cyber-text)]"
-                    />
-                  </div>
-                </div>
+              <button
+                type="submit"
+                disabled={isLoading || !email.trim()}
+                className={authPrimaryButtonClass}
+              >
+                {isLoading ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgba(4,17,23,0.18)] border-t-[rgba(4,17,23,0.95)]" />
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <Send className="h-[clamp(0.9rem,1.55vh,1rem)] w-[clamp(0.9rem,1.55vh,1rem)]" />
+                    Send reset link
+                  </span>
+                )}
+              </button>
+            </form>
 
+            <div className={`space-y-[clamp(0.28rem,0.7vh,0.45rem)] text-center ${authFooterTextClass}`}>
+              <button
+                type="button"
+                className={authFooterLinkClass}
+                onClick={() => navigate("/")}
+              >
+                Back to login
+              </button>
+              <p className="text-[var(--cyber-muted-text)]">
+                Need a new account?{" "}
                 <button
-                  type="submit"
-                  disabled={isLoading || !email.trim()}
-                  className="cyber-button-primary flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
+                  type="button"
+                  className={authTextLinkClass}
+                  onClick={() => navigate("/sign-up")}
                 >
-                  {isLoading ? (
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgba(4,17,23,0.18)] border-t-[rgba(4,17,23,0.95)]" />
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4" />
-                      Envoyer le lien de reinitialisation
-                    </>
-                  )}
+                  Sign up
                 </button>
-              </form>
-            </div>
-          )}
-
-          {step === "sent" && (
-            <div className="text-center">
-              <div className="relative mb-6 flex justify-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[rgba(110,242,189,0.22)] bg-[rgba(110,242,189,0.12)]">
-                  <CheckCircle2 className="h-8 w-8 text-[var(--cyber-success)]" />
-                </div>
-                <div className="absolute top-0 h-16 w-16 rounded-2xl bg-[rgba(110,242,189,0.12)] opacity-30 animate-ping" />
-              </div>
-
-              <h2 className="text-2xl font-bold text-[var(--cyber-text)] sm:text-3xl">
-                Lien envoye
-              </h2>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[var(--cyber-muted-text)] sm:text-base">
-                Un e-mail de reinitialisation a ete envoye a cette adresse.
               </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <AuthHeading
+              title="Check your inbox"
+              description="If the email exists, a reset link has been sent to the address below."
+            />
 
-              <div className="my-6 rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.64)] px-4 py-3 text-sm font-semibold text-[var(--cyber-accent-strong)]">
+            <div className="rounded-[1rem] border border-[rgba(110,242,189,0.18)] bg-[rgba(110,242,189,0.08)] px-4 py-4 text-center md:rounded-[1.05rem]">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(110,242,189,0.2)] bg-[rgba(110,242,189,0.12)]">
+                <CheckCircle2 className="h-6 w-6 text-[var(--cyber-success)]" />
+              </div>
+              <p className="text-[clamp(0.8rem,1.35vh,0.95rem)] font-semibold text-[var(--cyber-text)]">
                 {email}
-              </div>
-
-              <p className="mx-auto mb-8 max-w-md text-xs leading-6 text-[var(--cyber-subtle-text)]">
-                Verifiez votre boite de reception et cliquez sur le lien pour
-                creer un nouveau mot de passe. Le lien expire dans 30 minutes.
               </p>
-
-              <div className="space-y-3">
-                <button
-                  onClick={() => navigate("/reset-password")}
-                  className="cyber-button-primary w-full rounded-2xl px-5 py-3.5 text-sm font-bold"
-                >
-                  Simuler le lien recu par e-mail
-                </button>
-                <button
-                  onClick={() => {
-                    setStep("form");
-                    setEmail("");
-                  }}
-                  className="cyber-button-secondary w-full rounded-2xl px-5 py-3.5 text-sm font-semibold"
-                >
-                  Changer d&apos;adresse e-mail
-                </button>
-              </div>
+              <p className="mt-2 text-[clamp(0.74rem,1.18vh,0.88rem)] leading-[1.5] text-[var(--cyber-muted-text)]">
+                Follow the secure link in the email to continue resetting your password.
+              </p>
             </div>
-          )}
-        </div>
 
-        <div className="flex flex-col gap-3 text-sm text-[var(--cyber-muted-text)] sm:flex-row sm:items-center sm:justify-between">
-          <button
-            onClick={() => navigate("/")}
-            className="inline-flex items-center gap-2 font-semibold text-[var(--cyber-muted-text)] hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour a la connexion
-          </button>
+            <div className="flex flex-col gap-[clamp(0.5rem,1vh,0.7rem)]">
+              <button
+                type="button"
+                onClick={() => navigate("/reset-password")}
+                className={authPrimaryButtonClass}
+              >
+                Continue to reset flow
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("form");
+                  setEmail("");
+                }}
+                className={authSecondaryButtonClass}
+              >
+                Use another email
+              </button>
+            </div>
 
-          <div className="cyber-auth-note mt-0">
-            <Lock className="h-3.5 w-3.5" />
-            <span>Canal de reinitialisation chiffre</span>
-          </div>
-        </div>
-      </div>
-    </AuthShell>
+            <div className={`space-y-[clamp(0.28rem,0.7vh,0.45rem)] text-center ${authFooterTextClass}`}>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 font-medium text-[var(--cyber-accent)] transition hover:text-white"
+                onClick={() => navigate("/")}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to login
+              </button>
+            </div>
+          </>
+        )}
+      </AuthCard>
+    </AuthPageLayout>
   );
 }

@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { SignUpPage } from "@/features/auth/pages/SignUpPage";
 import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
 import { StudentDashboard } from "@/features/student/pages/StudentDashboardPage";
@@ -15,6 +16,10 @@ export const router = createBrowserRouter([
   {
     path: "/forgot-password",
     Component: ForgotPasswordPage,
+  },
+  {
+    path: "/sign-up",
+    Component: SignUpPage,
   },
   {
     path: "/reset-password",

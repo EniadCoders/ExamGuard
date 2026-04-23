@@ -2,8 +2,18 @@ import { useState } from "react";
 import { Building2, Eye, EyeOff, Github, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import imgGoogleIcon from "@/assets/8e4241399baefbe8f8feffab0fe67682e140e1b1.png";
-import { GridBackground } from "@/shared/components/GridBackground";
-import { Logo } from "@/shared/components/BrandLogo";
+import {
+  AuthCard,
+  AuthHeading,
+  AuthPageLayout,
+  authFieldClass,
+  authFooterLinkClass,
+  authFooterTextClass,
+  authLabelClass,
+  authPrimaryButtonClass,
+  authProviderButtonClass,
+  authTextLinkClass,
+} from "@/features/auth/components/AuthPageLayout";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -24,40 +34,21 @@ export function LoginPage() {
   const handleGoogleLogin = () => {
     console.log("Google login clicked");
   };
-
-  const providerButtonClass =
-    "flex h-[clamp(2.25rem,4.2vh,2.75rem)] items-center justify-center rounded-[0.9rem] border border-[rgba(117,195,214,0.14)] bg-[rgba(11,21,31,0.9)] text-[var(--cyber-muted-text)] transition hover:border-[rgba(123,241,255,0.34)] hover:bg-[rgba(14,27,39,0.98)] hover:text-white sm:rounded-[0.95rem] md:rounded-[1.05rem]";
-  const fieldClass =
-    "cyber-input h-[clamp(2.55rem,4.7vh,3rem)] w-full rounded-[0.95rem] px-[clamp(0.85rem,1vw,1rem)] text-[clamp(0.82rem,1.45vh,0.95rem)] text-[var(--cyber-text)] sm:rounded-[1rem] md:rounded-[1.05rem]";
   const roleButtonBaseClass =
     "rounded-[0.78rem] px-3 py-[clamp(0.58rem,1.15vh,0.72rem)] text-[clamp(0.68rem,1.2vh,0.84rem)] font-semibold transition sm:rounded-[0.9rem] sm:px-4 md:rounded-[0.95rem]";
-  const footerTextClass = "text-[clamp(0.74rem,1.25vh,0.9rem)]";
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden overflow-y-auto bg-[var(--cyber-bg)] px-2 py-2 sm:px-4 sm:py-4 md:h-dvh md:overflow-hidden md:px-6 md:py-4 lg:px-8">
-      <GridBackground variant="auth" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,9,15,0.28)_0%,rgba(4,9,15,0.18)_42%,rgba(4,9,15,0.34)_100%)]" />
+    <AuthPageLayout>
+      <AuthCard>
+        <AuthHeading
+          title="Log In"
+          description="Enter your account details below."
+        />
 
-      <div className="relative mx-auto flex min-h-[calc(100dvh-1rem)] w-full max-w-5xl flex-col items-center justify-center gap-[clamp(0.75rem,1.8vh,1.35rem)] sm:min-h-[calc(100dvh-2rem)] md:h-full md:min-h-0">
-        <div className="flex justify-center">
-          <Logo size="xl" className="h-[clamp(2rem,4.4vh,2.85rem)] md:h-[clamp(2.2rem,4.8vh,3.15rem)]" />
-        </div>
-
-        <div className="flex w-full max-w-md flex-col justify-center rounded-[1.15rem] border border-[rgba(117,195,214,0.18)] bg-[rgba(9,16,24,0.9)] p-[clamp(0.85rem,1.8vh,1.35rem)] shadow-[0_32px_90px_rgba(0,0,0,0.45)] backdrop-blur-xl md:max-h-full md:max-w-[32rem] md:rounded-[1.4rem] lg:max-w-[33rem]">
-          <div className="mx-auto flex w-full max-w-[28rem] flex-col gap-[clamp(0.65rem,1.35vh,1rem)]">
-            <div className="text-center">
-              <h1 className="text-[clamp(1.35rem,3.3vh,2.05rem)] font-bold leading-[1.05] text-[var(--cyber-text)] md:text-[clamp(1.55rem,3.6vh,2.2rem)]">
-                Log In
-              </h1>
-              <p className="mt-[clamp(0.22rem,0.7vh,0.45rem)] text-[clamp(0.76rem,1.2vh,0.92rem)] leading-[1.45] text-[var(--cyber-muted-text)]">
-                Enter your account details below.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-[clamp(0.4rem,0.8vh,0.55rem)] sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-[clamp(0.4rem,0.8vh,0.55rem)] sm:grid-cols-4">
               <button
                 type="button"
-                className={providerButtonClass}
+                className={authProviderButtonClass}
                 onClick={() => console.log("Secure access provider clicked")}
                 aria-label="Secure access"
               >
@@ -66,7 +57,7 @@ export function LoginPage() {
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className={providerButtonClass}
+                className={authProviderButtonClass}
                 aria-label="Continue with Google"
               >
                 <img
@@ -77,7 +68,7 @@ export function LoginPage() {
               </button>
               <button
                 type="button"
-                className={providerButtonClass}
+                className={authProviderButtonClass}
                 onClick={() => console.log("GitHub login clicked")}
                 aria-label="Continue with GitHub"
               >
@@ -85,7 +76,7 @@ export function LoginPage() {
               </button>
               <button
                 type="button"
-                className={providerButtonClass}
+                className={authProviderButtonClass}
                 onClick={() => console.log("Organization login clicked")}
                 aria-label="Continue with organization"
               >
@@ -93,15 +84,15 @@ export function LoginPage() {
               </button>
             </div>
 
-            <div className="flex items-center gap-[clamp(0.45rem,1vh,0.7rem)]">
+        <div className="flex items-center gap-[clamp(0.45rem,1vh,0.7rem)]">
               <div className="h-px flex-1 bg-[rgba(117,195,214,0.12)]" />
               <span className="text-[clamp(0.62rem,1.05vh,0.78rem)] font-semibold uppercase tracking-[0.2em] text-[var(--cyber-muted-text)] md:tracking-[0.24em]">
                 Or
               </span>
               <div className="h-px flex-1 bg-[rgba(117,195,214,0.12)]" />
-            </div>
+        </div>
 
-            <div className="grid grid-cols-2 gap-1 rounded-[0.95rem] border border-[rgba(117,195,214,0.14)] bg-[rgba(8,18,27,0.86)] p-1 md:rounded-[1.05rem]">
+        <div className="grid grid-cols-2 gap-1 rounded-[0.95rem] border border-[rgba(117,195,214,0.14)] bg-[rgba(8,18,27,0.86)] p-1 md:rounded-[1.05rem]">
               <button
                 type="button"
                 onClick={() => setRole("student")}
@@ -124,11 +115,11 @@ export function LoginPage() {
               >
                 Admin
               </button>
-            </div>
+        </div>
 
-            <form onSubmit={handleLogin} className="flex flex-col gap-[clamp(0.62rem,1.2vh,0.9rem)]">
+        <form onSubmit={handleLogin} className="flex flex-col gap-[clamp(0.62rem,1.2vh,0.9rem)]">
               <div>
-                <label className="cyber-label mb-[clamp(0.32rem,0.7vh,0.45rem)] text-[clamp(0.72rem,1.08vh,0.82rem)]" htmlFor="login-email">
+                <label className={authLabelClass} htmlFor="login-email">
                   Email/Username
                 </label>
                 <input
@@ -138,13 +129,13 @@ export function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Username or email"
                   required
-                  className={fieldClass}
+                  className={authFieldClass}
                 />
               </div>
 
               <div>
                 <div className="mb-[clamp(0.32rem,0.7vh,0.45rem)] flex items-center justify-between gap-3">
-                  <label className="cyber-label mb-0 text-[clamp(0.72rem,1.08vh,0.82rem)]" htmlFor="login-password">
+                  <label className={`${authLabelClass} mb-0`} htmlFor="login-password">
                     Password
                   </label>
                   <button
@@ -164,7 +155,7 @@ export function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
                     required
-                    className={`${fieldClass} pr-11 sm:pr-12`}
+                    className={`${authFieldClass} pr-11 sm:pr-12`}
                   />
                   <button
                     type="button"
@@ -201,7 +192,7 @@ export function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="cyber-button-primary flex h-[clamp(2.65rem,4.9vh,3.05rem)] w-full items-center justify-center rounded-[0.95rem] px-5 text-[clamp(0.82rem,1.35vh,0.96rem)] font-bold disabled:cursor-not-allowed disabled:opacity-70 md:rounded-[1.05rem]"
+                className={authPrimaryButtonClass}
               >
                 {isLoading ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgba(4,17,23,0.18)] border-t-[rgba(4,17,23,0.95)]" />
@@ -209,12 +200,12 @@ export function LoginPage() {
                   "Log In"
                 )}
               </button>
-            </form>
+        </form>
 
-            <div className={`space-y-[clamp(0.28rem,0.7vh,0.45rem)] text-center ${footerTextClass}`}>
+        <div className={`space-y-[clamp(0.28rem,0.7vh,0.45rem)] text-center ${authFooterTextClass}`}>
               <button
                 type="button"
-                className="font-medium text-[var(--cyber-accent)] transition hover:text-white"
+                className={authFooterLinkClass}
                 onClick={() => console.log("Organization SSO clicked")}
               >
                 Log in with your organization SSO
@@ -223,16 +214,14 @@ export function LoginPage() {
                 Don&apos;t have an account?{" "}
                 <button
                   type="button"
-                  className="font-semibold text-[var(--cyber-accent)] transition hover:text-white"
-                  onClick={() => console.log("Navigate to signup")}
+                  className={authTextLinkClass}
+                  onClick={() => navigate("/sign-up")}
                 >
                   Sign up
                 </button>
               </p>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
+      </AuthCard>
+    </AuthPageLayout>
   );
 }
