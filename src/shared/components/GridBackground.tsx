@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import { cn } from "@/shared/lib/cn";
 
 interface GridBackgroundProps {
@@ -38,9 +41,51 @@ const variantMap = {
 
 export function GridBackground({ variant = "default", className }: GridBackgroundProps) {
   const colors = variantMap[variant];
+  const containerRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const glow = glowRef.current;
+    if (!container || !glow) return;
+
+    let animationFrameId: number;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = e.clientX;
+      const y = e.clientY;
+
+      // Use requestAnimationFrame for smooth animation
+      animationFrameId = requestAnimationFrame(() => {
+        glow.style.setProperty("--cursor-x", `${x}px`);
+        glow.style.setProperty("--cursor-y", `${y}px`);
+      });
+    };
+
+    const handleMouseLeave = () => {
+      // Fade out the glow when mouse leaves the window
+      glow.style.opacity = "0";
+    };
+
+    const handleMouseEnter = () => {
+      // Fade in the glow when mouse enters the window
+      glow.style.opacity = "1";
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
+    document.addEventListener("mouseenter", handleMouseEnter);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener("mouseenter", handleMouseEnter);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
 
   return (
-    <div className={cn("fixed inset-0 pointer-events-none overflow-hidden", className)}>
+    <div ref={containerRef} className={cn("fixed inset-0 pointer-events-none overflow-hidden", className)}>
       <div
         className="absolute inset-0"
         style={{
@@ -65,6 +110,7 @@ export function GridBackground({ variant = "default", className }: GridBackgroun
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(123,241,255,0.12),transparent_28%),linear-gradient(180deg,rgba(4,9,15,0.15),rgba(4,9,15,0.05))]" />
 
+      {/* Animated drift blobs */}
       <div
         className="absolute -top-36 left-[10%] h-[34rem] w-[34rem] rounded-full blur-[140px] animate-drift-slow"
         style={{ background: colors.primary }}
@@ -76,6 +122,34 @@ export function GridBackground({ variant = "default", className }: GridBackgroun
       <div
         className="absolute bottom-[-10rem] left-[24%] h-[24rem] w-[48rem] rounded-full blur-[120px] animate-drift-wide"
         style={{ background: colors.tertiary, animationDelay: "1.6s" }}
+      />
+
+      {/* Additional ambient glow layers for enhanced depth */}
+      <div
+        className="absolute top-[30%] right-[15%] h-[32rem] w-[32rem] rounded-full animate-ambient-glow"
+        style={{
+          background: `radial-gradient(circle, rgba(61, 216, 233, 0.08), transparent)`,
+          animationDelay: "2.4s",
+        }}
+      />
+      <div
+        className="absolute bottom-[20%] left-[5%] h-[28rem] w-[28rem] rounded-full animate-gentle-float"
+        style={{
+          background: `radial-gradient(circle, rgba(123, 241, 255, 0.06), transparent)`,
+          animationDelay: "1.2s",
+        }}
+      />
+
+      {/* Cursor-following glow effect */}
+      <div
+        ref={glowRef}
+        className="cursor-following-glow"
+        style={
+          {
+            "--cursor-x": "0px",
+            "--cursor-y": "0px",
+          } as React.CSSProperties
+        }
       />
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_42%,rgba(4,9,15,0.78)_100%)]" />
