@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useRef } from "react";
 import { cn } from "@/shared/lib/cn";
 
 interface GridBackgroundProps {
@@ -41,68 +38,9 @@ const variantMap = {
 
 export function GridBackground({ variant = "default", className }: GridBackgroundProps) {
   const colors = variantMap[variant];
-  const containerRef = useRef<HTMLDivElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
-  const mousePos = useRef({ x: 0, y: 0 });
-  const glowPos = useRef({ x: 0, y: 0 });
-  const isMouseInside = useRef(false);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    const glow = glowRef.current;
-    if (!container || !glow) return;
-
-    let animationFrameId: number;
-
-    // Easing function for smooth trailing
-    const easeOutQuad = (t: number) => 1 - (1 - t) * (1 - t);
-
-    const updateGlowPosition = () => {
-      // Lerp (linear interpolation) with easing for smooth trailing
-      const easing = 0.12; // Lower = smoother trail, higher = snappier
-      glowPos.current.x += (mousePos.current.x - glowPos.current.x) * easing;
-      glowPos.current.y += (mousePos.current.y - glowPos.current.y) * easing;
-
-      // Update CSS variables for position
-      glow.style.setProperty("--cursor-x", `${glowPos.current.x}px`);
-      glow.style.setProperty("--cursor-y", `${glowPos.current.y}px`);
-
-      // Continue animation loop
-      animationFrameId = requestAnimationFrame(updateGlowPosition);
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      mousePos.current.x = e.clientX;
-      mousePos.current.y = e.clientY;
-    };
-
-    const handleMouseLeave = () => {
-      isMouseInside.current = false;
-      glow.style.opacity = "0";
-    };
-
-    const handleMouseEnter = () => {
-      isMouseInside.current = true;
-      glow.style.opacity = "1";
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseleave", handleMouseLeave);
-    document.addEventListener("mouseenter", handleMouseEnter);
-
-    // Start the animation loop
-    animationFrameId = requestAnimationFrame(updateGlowPosition);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseleave", handleMouseLeave);
-      document.removeEventListener("mouseenter", handleMouseEnter);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
 
   return (
-    <div ref={containerRef} className={cn("fixed inset-0 pointer-events-none overflow-hidden", className)}>
+    <div className={cn("fixed inset-0 pointer-events-none overflow-hidden", className)}>
       <div
         className="absolute inset-0"
         style={{
@@ -155,18 +93,6 @@ export function GridBackground({ variant = "default", className }: GridBackgroun
           background: `radial-gradient(circle, rgba(123, 241, 255, 0.06), transparent)`,
           animationDelay: "1.2s",
         }}
-      />
-
-      {/* Cursor-following glow effect with animation */}
-      <div
-        ref={glowRef}
-        className="cursor-following-glow animate-glow-pulse"
-        style={
-          {
-            "--cursor-x": "0px",
-            "--cursor-y": "0px",
-          } as React.CSSProperties
-        }
       />
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_42%,rgba(4,9,15,0.78)_100%)]" />

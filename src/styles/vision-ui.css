@@ -973,27 +973,6 @@
   animation: scaleRotate 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.cursor-following-glow {
-  position: fixed;
-  top: calc(var(--cursor-y) - 120px);
-  left: calc(var(--cursor-x) - 120px);
-  width: 240px;
-  height: 240px;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(
-    circle,
-    rgba(61, 216, 233, 0.15) 0%,
-    rgba(123, 241, 255, 0.08) 35%,
-    transparent 70%
-  );
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 1;
-  transition: opacity 0.3s ease-out;
-  will-change: top, left;
-}
-
 .glow-cyan,
 .glow-blue,
 .glow-purple,
