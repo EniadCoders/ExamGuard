@@ -352,7 +352,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.35rem 1.5rem 0;
+  padding: 1.35rem 6.5rem 0 1.5rem;
   position: relative;
   z-index: 1;
 }
@@ -420,7 +420,7 @@
 
 .dashboard-section-card-icon-background {
   position: absolute;
-  top: 1.35rem;
+  top: 0.75rem;
   right: 1.5rem;
   width: 48px;
   height: 48px;
