@@ -353,6 +353,8 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1.35rem 1.5rem 0;
+  position: relative;
+  z-index: 1;
 }
 
 .dashboard-card-title {
@@ -414,6 +416,21 @@
   color: var(--cyber-danger);
   background: rgba(255, 123, 130, 0.07);
   border-color: rgba(255, 123, 130, 0.14);
+}
+
+.dashboard-section-card-icon-background {
+  position: absolute;
+  top: 1.35rem;
+  right: 1.5rem;
+  width: 48px;
+  height: 48px;
+  opacity: 0.08;
+  color: var(--cyber-accent-strong);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 0;
 }
 
 .dashboard-status-badge,

@@ -101,15 +101,20 @@ export function DashboardSectionCard({
   interactive = false,
   bodyClassName,
 }: DashboardSectionCardProps) {
+  const Icon = icon;
   return (
     <DashboardCard
-      className={className}
+      className={cn("relative overflow-hidden", className)}
       tone={tone}
       interactive={interactive}
     >
+      {Icon && (
+        <div className="dashboard-section-card-icon-background">
+          <Icon className="w-full h-full" strokeWidth={1} />
+        </div>
+      )}
       <div className="dashboard-section-card-header">
         <div className="flex min-w-0 items-start gap-3">
-          {icon && <DashboardIconBadge icon={icon} />}
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="dashboard-card-title">{title}</h2>
