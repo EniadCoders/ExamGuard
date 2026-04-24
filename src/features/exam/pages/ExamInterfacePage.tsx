@@ -50,12 +50,84 @@ export function ExamInterface() {
   const [submitted, setSubmitted] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [isFullscreen, setIsFullscreen] = useState(true);
+  const [fullscreenExits, setFullscreenExits] = useState(0);
+
+  const exitFullscreen = async () => {
+    try {
+      const doc = document as any;
+      const exitFs = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+      const fsElement = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+      
+      if (exitFs && fsElement) {
+        await exitFs.call(doc);
+      }
+    } catch (err) {
+      console.warn("Exit fullscreen error:", err);
+    }
+  };
+
+  const requestFullscreen = async () => {
+    try {
+      const el = document.documentElement as any;
+      const requestFs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (requestFs) {
+        await requestFs.call(el, { navigationUI: "hide" });
+      }
+    } catch (err) {
+      console.warn("Fullscreen error:", err);
+    }
+  };
+
+  useEffect(() => {
+    let initialCheck = true;
+    const handleFullscreenChange = () => {
+      const doc = document as any;
+      const fsElement = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+      
+      if (!fsElement) {
+        setIsFullscreen(false);
+        if (!initialCheck) {
+          setFullscreenExits((prev) => {
+            const newCount = prev + 1;
+            console.log(`[Anti-Cheat] Fullscreen exit detected at ${new Date().toISOString()}. Count: ${newCount}`);
+            return newCount;
+          });
+        }
+      } else {
+        setIsFullscreen(true);
+      }
+      initialCheck = false;
+    };
+
+    handleFullscreenChange();
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("mozfullscreenchange", handleFullscreenChange);
+      document.removeEventListener("MSFullscreenChange", handleFullscreenChange);
+    };
+  }, []);
+
   const question = examQuestions[current];
 
   useEffect(() => {
-    const timer = setInterval(() => setTimeLeft((p) => (p > 0 ? p - 1 : 0)), 1000);
+    const timer = setInterval(() => setTimeLeft((p) => {
+      if (p <= 1 && !submitted) {
+        setSubmitted(true);
+        exitFullscreen();
+        return 0;
+      }
+      return p > 0 ? p - 1 : 0;
+    }), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [submitted]);
 
   const formatTime = (s: number) => ({
     h: String(Math.floor(s / 3600)).padStart(2, "0"),
@@ -119,11 +191,37 @@ export function ExamInterface() {
   return (
     <div className="cyber-exam-page relative min-h-screen overflow-hidden bg-white">
       <GridBackground variant="exam" />
+
+      {/* Fullscreen Warning Modal */}
+      {!isFullscreen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(0,0,0,0.85)] backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[rgba(123,241,255,0.2)] bg-[#0A141A] p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)] text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(255,85,85,0.15)]">
+              <AlertTriangle className="h-7 w-7 text-[#FF5555]" />
+            </div>
+            <h2 className="mb-2 text-xl font-bold text-white">Attention</h2>
+            <p className="mb-6 text-sm text-[var(--cyber-muted-text)]">
+              Vous avez quitté le mode plein écran. Veuillez y retourner pour continuer l'examen.
+            </p>
+            <button
+              onClick={requestFullscreen}
+              className="w-full rounded-xl bg-[var(--cyber-accent)] px-4 py-3 text-sm font-bold text-black transition-all hover:bg-[var(--cyber-accent-strong)]"
+            >
+              Reprendre en plein écran
+            </button>
+          </div>
+        </div>
+      )}
+
       {showSubmit && (
         <SubmitModal
           answeredCount={answeredCount}
           total={TOTAL}
-          onConfirm={() => setSubmitted(true)}
+          onConfirm={() => {
+            setShowSubmit(false);
+            setSubmitted(true);
+            exitFullscreen();
+          }}
           onCancel={() => setShowSubmit(false)}
         />
       )}

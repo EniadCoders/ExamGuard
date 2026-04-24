@@ -21,6 +21,7 @@ export function ExamTypeChip({ questionType, type }: ExamTypeChipProps) {
 interface ScoreRingProps {
   score: number;
   size?: "sm" | "md" | "lg";
+  variant?: "percentage" | "out-of-20";
 }
 
 const scoreRingSizes = {
@@ -29,11 +30,13 @@ const scoreRingSizes = {
   lg: { width: 100, stroke: 6, fontSize: "text-2xl" },
 } as const;
 
-export function ScoreRing({ score, size = "md" }: ScoreRingProps) {
+export function ScoreRing({ score, size = "md", variant = "percentage" }: ScoreRingProps) {
   const config = scoreRingSizes[size];
   const radius = (config.width - config.stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
+
+  const scoreOutOf20 = parseFloat(((score / 100) * 20).toFixed(1));
 
   return (
     <div
@@ -62,7 +65,14 @@ export function ScoreRing({ score, size = "md" }: ScoreRingProps) {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className={`font-bold text-black ${config.fontSize}`}>{score}%</span>
+        {variant === "out-of-20" ? (
+          <span className={`font-bold text-black flex items-baseline gap-0.5 ${config.fontSize}`}>
+            {scoreOutOf20}
+            <span className="text-[0.65em] font-medium text-[#666666]">/20</span>
+          </span>
+        ) : (
+          <span className={`font-bold text-black ${config.fontSize}`}>{score}%</span>
+        )}
       </div>
     </div>
   );

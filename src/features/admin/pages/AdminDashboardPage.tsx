@@ -1526,6 +1526,14 @@ export function AdminDashboard() {
   const [showImport, setShowImport] = useState(false);
   const [overviewExamDetails, setOverviewExamDetails] = useState<Exam | null>(null);
 
+  const handleLogoClick = () => {
+    setActiveTab("overview");
+    setShowCreateExam(false);
+    setShowAddStudent(false);
+    setShowImport(false);
+    setOverviewExamDetails(null);
+  };
+
   const tabs = [
     { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
     { id: "exams", label: "Examens", icon: FileText },
@@ -1554,7 +1562,7 @@ export function AdminDashboard() {
       <header className="cyber-topbar sticky top-0 z-40 border-b border-[#E5E5E5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-6 sm:py-0">
           <div className="flex items-center gap-6">
-            <Logo size="md" />
+            <Logo size="md" to="/admin" onClick={handleLogoClick} />
             <div className="hidden sm:block w-px h-6 bg-[#E5E5E5]" />
             <div className="hidden sm:block">
               <h1 className="text-base font-bold text-black">Dashboard Administrateur</h1>

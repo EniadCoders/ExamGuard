@@ -49,7 +49,7 @@ export function AuthPageLayout({ children }: AuthPageLayoutProps) {
 
       <div className="relative mx-auto flex min-h-[calc(100dvh-1rem)] w-full max-w-5xl flex-col items-center justify-center gap-[clamp(0.75rem,1.8vh,1.35rem)] sm:min-h-[calc(100dvh-2rem)] md:h-full md:min-h-0">
         <div className="flex justify-center">
-          <Logo size="xl" className="h-[clamp(2rem,4.4vh,2.85rem)] md:h-[clamp(2.2rem,4.8vh,3.15rem)]" />
+          <Logo size="xl" className="h-[clamp(2rem,4.4vh,2.85rem)] md:h-[clamp(2.2rem,4.8vh,3.15rem)]" to="/" />
         </div>
 
         {children}

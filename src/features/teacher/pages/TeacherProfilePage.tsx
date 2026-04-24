@@ -119,7 +119,7 @@ export function TeacherProfilePage() {
               <span className="text-sm font-medium hidden sm:block">Retour au dashboard</span>
             </button>
             <div className="w-px h-6 bg-[#E5E5E5]" />
-            <Logo size="md" />
+            <Logo size="md" to="/admin" />
           </div>
           <div className="flex items-center gap-2">
             <NotificationPanel role="admin" />

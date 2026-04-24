@@ -76,7 +76,7 @@ export function AuthShell({
           <div className="space-y-10">
             <div className="cyber-brand-block">
               <div className="absolute -inset-5 rounded-[2rem] bg-[radial-gradient(circle,rgba(123,241,255,0.18),transparent_62%)] blur-2xl" />
-              <Logo size="xl" className="relative" />
+              <Logo size="xl" className="relative" to="/" />
             </div>
 
             <div className="space-y-6">
@@ -133,7 +133,7 @@ export function AuthShell({
             <div className="mb-8 flex justify-center lg:hidden">
               <div className="cyber-brand-block">
                 <div className="absolute -inset-5 rounded-[2rem] bg-[radial-gradient(circle,rgba(123,241,255,0.2),transparent_62%)] blur-2xl" />
-                <Logo size="xl" className="relative" />
+                <Logo size="xl" className="relative" to="/" />
               </div>
             </div>
 

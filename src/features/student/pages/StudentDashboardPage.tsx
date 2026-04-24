@@ -37,6 +37,7 @@ import {
   Monitor,
   X,
   Bell,
+  Search,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
@@ -63,6 +64,17 @@ export function StudentDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"dashboard" | "exams" | "results" | "calendar" | "settings">("dashboard");
   const [examFilter, setExamFilter] = useState<"all" | "ongoing" | "upcoming" | "completed">("all");
+  const [examSearchQuery, setExamSearchQuery] = useState("");
+  const [examTypeFilter, setExamTypeFilter] = useState<string>("all");
+
+  const [resultSearchQuery, setResultSearchQuery] = useState("");
+  const [resultStatusFilter, setResultStatusFilter] = useState<string>("all");
+  const [resultScoreFilter, setResultScoreFilter] = useState<string>("all");
+
+  const [calendarSearchQuery, setCalendarSearchQuery] = useState("");
+  const [calendarMonthFilter, setCalendarMonthFilter] = useState<string>("all");
+  const [calendarSubjectFilter, setCalendarSubjectFilter] = useState<string>("all");
+  const [calendarTypeFilter, setCalendarTypeFilter] = useState<string>("all");
   const [selectedResult, setSelectedResult] = useState<number | null>(null);
   const [settingsTab, setSettingsTab] = useState<"profile" | "password" | "notifications" | "security">("profile");
   const [showPassword, setShowPassword] = useState(false);
@@ -77,13 +89,40 @@ export function StudentDashboard() {
     systemUpdates: false,
   });
 
+  const handleLogoClick = () => {
+    setActiveTab("dashboard");
+    setExamFilter("all");
+    setExamSearchQuery("");
+    setExamTypeFilter("all");
+    setResultSearchQuery("");
+    setResultStatusFilter("all");
+    setResultScoreFilter("all");
+    setCalendarSearchQuery("");
+    setCalendarMonthFilter("all");
+    setCalendarSubjectFilter("all");
+    setCalendarTypeFilter("all");
+    setSelectedResult(null);
+    setSettingsTab("profile");
+    setShowExamLock(false);
+    setTargetExamId(null);
+  };
+
   const handleJoinExam = (examId: number) => {
     setTargetExamId(examId);
     setShowExamLock(true);
   };
 
-  const confirmJoinExam = () => {
+  const confirmJoinExam = async () => {
     if (targetExamId) {
+      try {
+        const el = document.documentElement as any;
+        const requestFs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+        if (requestFs) {
+          await requestFs.call(el, { navigationUI: "hide" });
+        }
+      } catch (err) {
+        console.warn("Fullscreen request failed", err);
+      }
       navigate(`/exam/${targetExamId}`);
     }
   };
@@ -93,8 +132,52 @@ export function StudentDashboard() {
   };
 
   const activeExam = allExams.find((e) => e.status === "ongoing");
-  const filteredExams = examFilter === "all" ? allExams : allExams.filter((e) => e.status === examFilter);
   const completedExams = allExams.filter((e) => e.status === "completed");
+
+  const filteredExams = allExams.filter((exam) => {
+    const matchesStatus = examFilter === "all" || exam.status === examFilter;
+    const matchesSearch = !examSearchQuery || exam.title.toLowerCase().includes(examSearchQuery.toLowerCase()) || exam.subject.toLowerCase().includes(examSearchQuery.toLowerCase());
+    const matchesType = examTypeFilter === "all" || exam.types.includes(examTypeFilter);
+    return matchesStatus && matchesSearch && matchesType;
+  });
+
+  const filteredResults = completedExams.filter((exam) => {
+    const matchesSearch = !resultSearchQuery || exam.title.toLowerCase().includes(resultSearchQuery.toLowerCase()) || exam.subject.toLowerCase().includes(resultSearchQuery.toLowerCase());
+    const outOf20 = (exam.score! / 100) * 20;
+    const matchesScore = resultScoreFilter === "all" || 
+      (resultScoreFilter === "0-10" && outOf20 < 10) || 
+      (resultScoreFilter === "10-20" && outOf20 >= 10);
+    const matchesStatus = resultStatusFilter === "all" || 
+      (resultStatusFilter === "success" && outOf20 >= 10) || 
+      (resultStatusFilter === "fail" && outOf20 < 10);
+    return matchesSearch && matchesScore && matchesStatus;
+  });
+
+  const filteredCalendar = calendarEvents.filter((event) => {
+    const examMatch = allExams.find(e => e.title === event.title);
+    const types = examMatch ? examMatch.types : [];
+    const subject = examMatch ? examMatch.subject : "";
+    
+    const matchesSearch = !calendarSearchQuery || event.title.toLowerCase().includes(calendarSearchQuery.toLowerCase()) || event.date.toLowerCase().includes(calendarSearchQuery.toLowerCase()) || event.month.toLowerCase().includes(calendarSearchQuery.toLowerCase());
+    const matchesMonth = calendarMonthFilter === "all" || event.month.toLowerCase() === calendarMonthFilter.toLowerCase();
+    const matchesSubject = calendarSubjectFilter === "all" || subject === calendarSubjectFilter;
+    const matchesType = calendarTypeFilter === "all" || types.includes(calendarTypeFilter);
+    
+    return matchesSearch && matchesMonth && matchesSubject && matchesType;
+  });
+
+  const FilterPill = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
+        active
+          ? "bg-[#00809D] text-white"
+          : "bg-white border border-[#E5E5E5] text-[#666666] hover:text-black hover:border-black shadow-sm"
+      }`}
+    >
+      {children}
+    </button>
+  );
 
   return (
     <div className="cyber-dashboard-page relative min-h-screen overflow-hidden bg-[#FAFAFA]">
@@ -104,7 +187,7 @@ export function StudentDashboard() {
       <header className="cyber-topbar sticky top-0 z-50 bg-white border-b border-[#E5E5E5]">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 sm:px-6 lg:h-16 lg:flex-row lg:items-center lg:justify-between lg:py-0">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
-            <Logo size="sm" />
+            <Logo size="sm" onClick={handleLogoClick} />
             <nav className="flex items-center gap-2 overflow-x-auto pb-1 lg:gap-6 lg:pb-0">
               {[
                 { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
@@ -365,38 +448,52 @@ export function StudentDashboard() {
               </h1>
             </div>
 
-            {/* Filter Bar */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              {[
-                { id: "all", label: "Tous", count: allExams.length },
-                { id: "ongoing", label: "En cours", count: allExams.filter((e) => e.status === "ongoing").length },
-                { id: "upcoming", label: "À venir", count: allExams.filter((e) => e.status === "upcoming").length },
-                { id: "completed", label: "Terminés", count: allExams.filter((e) => e.status === "completed").length },
-              ].map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setExamFilter(filter.id as any)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
-                    examFilter === filter.id
-                      ? "bg-[#00809D] text-white"
-                      : "bg-white border border-[#E5E5E5] text-[#666666] hover:text-black hover:border-black"
-                  }`}
-                >
-                  <span>{filter.label}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                    examFilter === filter.id ? "bg-white text-black" : "bg-[#F5F7FB] text-[#666666]"
-                  }`}>
-                    {filter.count}
-                  </span>
-                </button>
-              ))}
+            {/* Search and Filters */}
+            <div className="space-y-4">
+              <div className="relative w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]" />
+                <input
+                  type="text"
+                  placeholder="Rechercher un examen..."
+                  value={examSearchQuery}
+                  onChange={(e) => setExamSearchQuery(e.target.value)}
+                  className="w-full bg-white border border-[#E5E5E5] rounded-xl pl-11 pr-11 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black shadow-sm"
+                />
+                {examSearchQuery && (
+                  <button onClick={() => setExamSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#666666] hover:text-black">
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 pb-2">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <FilterPill active={examFilter === "all"} onClick={() => setExamFilter("all")}>Tous ({allExams.length})</FilterPill>
+                  <FilterPill active={examFilter === "ongoing"} onClick={() => setExamFilter("ongoing")}>En cours</FilterPill>
+                  <FilterPill active={examFilter === "upcoming"} onClick={() => setExamFilter("upcoming")}>À venir</FilterPill>
+                  <FilterPill active={examFilter === "completed"} onClick={() => setExamFilter("completed")}>Terminés</FilterPill>
+                </div>
+                <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <FilterPill active={examTypeFilter === "all"} onClick={() => setExamTypeFilter("all")}>Tous les types</FilterPill>
+                  <FilterPill active={examTypeFilter === "mcq"} onClick={() => setExamTypeFilter("mcq")}>QCM</FilterPill>
+                  <FilterPill active={examTypeFilter === "code"} onClick={() => setExamTypeFilter("code")}>Code</FilterPill>
+                  <FilterPill active={examTypeFilter === "text"} onClick={() => setExamTypeFilter("text")}>Texte</FilterPill>
+                </div>
+              </div>
             </div>
 
             {/* Exam List */}
-            <div className="grid gap-5">
-              {filteredExams.map((exam) => (
-                <DashboardCard
-                  key={exam.id}
+            {filteredExams.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-white border border-[#E5E5E5] rounded-2xl">
+                <Search className="w-12 h-12 text-[#E5E5E5] mb-4" />
+                <h3 className="text-lg font-bold text-black mb-1">Aucun résultat trouvé</h3>
+                <p className="text-[#666666]">Essayez de modifier vos filtres ou votre recherche.</p>
+              </div>
+            ) : (
+              <div className="grid gap-5">
+                {filteredExams.map((exam) => (
+                  <DashboardCard
+                    key={exam.id}
                   interactive
                   className="p-6"
                 >
@@ -433,7 +530,7 @@ export function StudentDashboard() {
                     <div className="flex flex-col items-start gap-3 lg:ml-4 lg:items-end">
                       {exam.status === "completed" && exam.score !== undefined && (
                         <div className="rounded-2xl border border-[rgba(117,195,214,0.14)] bg-[rgba(11,27,38,0.72)] p-4">
-                          <ScoreRing score={exam.score} size="lg" />
+                          <ScoreRing score={exam.score} size="lg" variant="out-of-20" />
                         </div>
                       )}
                       {exam.status === "ongoing" && (
@@ -455,6 +552,7 @@ export function StudentDashboard() {
                 </DashboardCard>
               ))}
             </div>
+            )}
           </div>
         )}
 
@@ -466,9 +564,49 @@ export function StudentDashboard() {
                 <h1 className="mb-6 text-3xl font-serif text-black sm:text-4xl">
                   Mes Résultats
                 </h1>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {completedExams.map((exam) => (
-                    <button
+
+                {/* Search and Filters */}
+                <div className="space-y-4 mb-6">
+                  <div className="relative w-full">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher un résultat..."
+                      value={resultSearchQuery}
+                      onChange={(e) => setResultSearchQuery(e.target.value)}
+                      className="w-full bg-white border border-[#E5E5E5] rounded-xl pl-11 pr-11 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black shadow-sm"
+                    />
+                    {resultSearchQuery && (
+                      <button onClick={() => setResultSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#666666] hover:text-black">
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 pb-2">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                      <FilterPill active={resultStatusFilter === "all"} onClick={() => setResultStatusFilter("all")}>Tous les statuts</FilterPill>
+                      <FilterPill active={resultStatusFilter === "success"} onClick={() => setResultStatusFilter("success")}>Réussi</FilterPill>
+                      <FilterPill active={resultStatusFilter === "fail"} onClick={() => setResultStatusFilter("fail")}>Échoué</FilterPill>
+                    </div>
+                    <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                      <FilterPill active={resultScoreFilter === "all"} onClick={() => setResultScoreFilter("all")}>Tous les scores</FilterPill>
+                      <FilterPill active={resultScoreFilter === "10-20"} onClick={() => setResultScoreFilter("10-20")}>10 - 20</FilterPill>
+                      <FilterPill active={resultScoreFilter === "0-10"} onClick={() => setResultScoreFilter("0-10")}>0 - 10</FilterPill>
+                    </div>
+                  </div>
+                </div>
+
+                {filteredResults.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-white border border-[#E5E5E5] rounded-2xl">
+                    <Search className="w-12 h-12 text-[#E5E5E5] mb-4" />
+                    <h3 className="text-lg font-bold text-black mb-1">Aucun résultat trouvé</h3>
+                    <p className="text-[#666666]">Essayez de modifier vos filtres ou votre recherche.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {filteredResults.map((exam) => (
+                      <button
                       key={exam.id}
                       onClick={() => setSelectedResult(exam.id)}
                       className="dashboard-card dashboard-card-interactive p-6 text-left"
@@ -509,7 +647,8 @@ export function StudentDashboard() {
                       </div>
                     </button>
                   ))}
-                </div>
+                  </div>
+                )}
               </>
             ) : (
               <div>
@@ -596,9 +735,55 @@ export function StudentDashboard() {
               Calendrier des Examens
             </h1>
 
-            <div className="grid gap-4">
-              {calendarEvents.map((event) => (
-                <DashboardCard
+            {/* Search and Filters */}
+            <div className="space-y-4">
+              <div className="relative w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par examen ou date..."
+                  value={calendarSearchQuery}
+                  onChange={(e) => setCalendarSearchQuery(e.target.value)}
+                  className="w-full bg-white border border-[#E5E5E5] rounded-xl pl-11 pr-11 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black shadow-sm"
+                />
+                {calendarSearchQuery && (
+                  <button onClick={() => setCalendarSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#666666] hover:text-black">
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 pb-2">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <FilterPill active={calendarMonthFilter === "all"} onClick={() => setCalendarMonthFilter("all")}>Tous les mois</FilterPill>
+                  <FilterPill active={calendarMonthFilter === "mars"} onClick={() => setCalendarMonthFilter("mars")}>Mars</FilterPill>
+                  <FilterPill active={calendarMonthFilter === "avril"} onClick={() => setCalendarMonthFilter("avril")}>Avril</FilterPill>
+                </div>
+                <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <FilterPill active={calendarSubjectFilter === "all"} onClick={() => setCalendarSubjectFilter("all")}>Toutes les matières</FilterPill>
+                  {Array.from(new Set(allExams.map(e => e.subject))).slice(0, 3).map(subject => (
+                    <FilterPill key={subject} active={calendarSubjectFilter === subject} onClick={() => setCalendarSubjectFilter(subject)}>{subject}</FilterPill>
+                  ))}
+                </div>
+                <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <FilterPill active={calendarTypeFilter === "all"} onClick={() => setCalendarTypeFilter("all")}>Tous les types</FilterPill>
+                  <FilterPill active={calendarTypeFilter === "mcq"} onClick={() => setCalendarTypeFilter("mcq")}>QCM</FilterPill>
+                  <FilterPill active={calendarTypeFilter === "code"} onClick={() => setCalendarTypeFilter("code")}>Code</FilterPill>
+                </div>
+              </div>
+            </div>
+
+            {filteredCalendar.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-white border border-[#E5E5E5] rounded-2xl">
+                <Search className="w-12 h-12 text-[#E5E5E5] mb-4" />
+                <h3 className="text-lg font-bold text-black mb-1">Aucun résultat trouvé</h3>
+                <p className="text-[#666666]">Essayez de modifier vos filtres ou votre recherche.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {filteredCalendar.map((event) => (
+                  <DashboardCard
                   key={event.id}
                   interactive
                   className="p-6"
@@ -617,8 +802,9 @@ export function StudentDashboard() {
                     />
                   </div>
                 </DashboardCard>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             <DashboardCard className="p-6">
               <div className="flex items-start gap-3">

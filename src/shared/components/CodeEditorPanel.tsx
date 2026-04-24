@@ -157,7 +157,6 @@ export function CodeEditorPanel({
                 onClick={() => setShowLangDropdown((prev) => !prev)}
                 className="flex items-center gap-1.5 rounded-lg border border-[rgba(123,241,255,0.12)] bg-[rgba(11,27,38,0.9)] px-3 py-1.5 text-xs text-slate-300 transition-all hover:bg-[rgba(11,27,38,1)]"
               >
-                <span className="h-2 w-2 rounded-full bg-cyan-300" />
                 {LANGUAGE_LABELS[language]}
                 <ChevronDown className="h-3 w-3 text-slate-500" />
               </button>
@@ -190,7 +189,6 @@ export function CodeEditorPanel({
             </div>
           ) : (
             <div className="flex items-center gap-1.5 rounded-lg border border-[rgba(123,241,255,0.12)] bg-[rgba(11,27,38,0.9)] px-3 py-1.5 text-xs text-slate-400">
-              <span className="h-2 w-2 rounded-full bg-cyan-300" />
               {LANGUAGE_LABELS[language]}
             </div>
           )}
@@ -264,7 +262,7 @@ export function CodeEditorPanel({
           }
           theme="vs-dark"
           options={{
-            fontSize: 13,
+            fontSize: 14,
             fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
             fontLigatures: true,
             minimap: { enabled: false },
@@ -275,9 +273,10 @@ export function CodeEditorPanel({
             lineDecorationsWidth: 0,
             lineNumbersMinChars: 3,
             renderLineHighlight: "gutter",
-            readOnly: readOnly || value.isRunning,
+            readOnly: false,
             tabSize: 4,
             wordWrap: "on",
+            automaticLayout: true,
             padding: { top: 12, bottom: 12 },
             scrollbar: {
               verticalScrollbarSize: 6,

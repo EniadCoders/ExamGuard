@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import examGuardLogo from "@/assets/59a7775f5e017d08337af1cfe4c068b69bdcb460.png";
 import { cn } from "@/shared/lib/cn";
 
@@ -5,6 +6,8 @@ interface LogoProps {
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
   tone?: "light" | "brand";
+  to?: string;
+  onClick?: () => void;
 }
 
 const sizeMap = {
@@ -19,17 +22,19 @@ const toneMap = {
   brand: "",
 };
 
-export function Logo({ size = "md", tone = "light", className = "" }: LogoProps) {
+export function Logo({ size = "md", tone = "light", className = "", to = "/student", onClick }: LogoProps) {
   return (
-    <img
-      src={examGuardLogo}
-      alt="ExamGuard"
-      className={cn(
-        sizeMap[size],
-        toneMap[tone],
-        "w-auto object-contain drop-shadow-[0_0_18px_rgba(123,241,255,0.18)]",
-        className,
-      )}
-    />
+    <Link to={to} className="inline-block cursor-pointer" onClick={onClick}>
+      <img
+        src={examGuardLogo}
+        alt="ExamGuard"
+        className={cn(
+          sizeMap[size],
+          toneMap[tone],
+          "w-auto object-contain drop-shadow-[0_0_18px_rgba(123,241,255,0.18)]",
+          className,
+        )}
+      />
+    </Link>
   );
 }
