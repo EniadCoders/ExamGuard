@@ -837,6 +837,29 @@
   }
 }
 
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    filter: blur(60px) brightness(0.95);
+    transform: scale(1);
+  }
+  25% {
+    opacity: 0.55;
+    filter: blur(65px) brightness(1.05);
+    transform: scale(1.05);
+  }
+  50% {
+    opacity: 0.6;
+    filter: blur(60px) brightness(1.1);
+    transform: scale(1.1);
+  }
+  75% {
+    opacity: 0.5;
+    filter: blur(65px) brightness(1.02);
+    transform: scale(1.04);
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

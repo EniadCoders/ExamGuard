@@ -43,6 +43,9 @@ export function GridBackground({ variant = "default", className }: GridBackgroun
   const colors = variantMap[variant];
   const containerRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const mousePos = useRef({ x: 0, y: 0 });
+  const glowPos = useRef({ x: 0, y: 0 });
+  const isMouseInside = useRef(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -51,30 +54,44 @@ export function GridBackground({ variant = "default", className }: GridBackgroun
 
     let animationFrameId: number;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = e.clientX;
-      const y = e.clientY;
+    // Easing function for smooth trailing
+    const easeOutQuad = (t: number) => 1 - (1 - t) * (1 - t);
 
-      // Use requestAnimationFrame for smooth animation
-      animationFrameId = requestAnimationFrame(() => {
-        glow.style.setProperty("--cursor-x", `${x}px`);
-        glow.style.setProperty("--cursor-y", `${y}px`);
-      });
+    const updateGlowPosition = () => {
+      // Lerp (linear interpolation) with easing for smooth trailing
+      const easing = 0.12; // Lower = smoother trail, higher = snappier
+      glowPos.current.x += (mousePos.current.x - glowPos.current.x) * easing;
+      glowPos.current.y += (mousePos.current.y - glowPos.current.y) * easing;
+
+      // Update CSS variables for position
+      glow.style.setProperty("--cursor-x", `${glowPos.current.x}px`);
+      glow.style.setProperty("--cursor-y", `${glowPos.current.y}px`);
+
+      // Continue animation loop
+      animationFrameId = requestAnimationFrame(updateGlowPosition);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePos.current.x = e.clientX;
+      mousePos.current.y = e.clientY;
     };
 
     const handleMouseLeave = () => {
-      // Fade out the glow when mouse leaves the window
+      isMouseInside.current = false;
       glow.style.opacity = "0";
     };
 
     const handleMouseEnter = () => {
-      // Fade in the glow when mouse enters the window
+      isMouseInside.current = true;
       glow.style.opacity = "1";
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("mouseenter", handleMouseEnter);
+
+    // Start the animation loop
+    animationFrameId = requestAnimationFrame(updateGlowPosition);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
@@ -140,10 +157,10 @@ export function GridBackground({ variant = "default", className }: GridBackgroun
         }}
       />
 
-      {/* Cursor-following glow effect */}
+      {/* Cursor-following glow effect with animation */}
       <div
         ref={glowRef}
-        className="cursor-following-glow"
+        className="cursor-following-glow animate-glow-pulse"
         style={
           {
             "--cursor-x": "0px",
