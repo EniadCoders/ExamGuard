@@ -18,30 +18,20 @@ import {
 } from "@/shared/types/exam";
 import type { CodeAnswer } from "@/shared/types/exam";
 
-const MOCK_OUTPUTS: Record<Language, (code: string) => string> = {
-  java: (code) => {
-    if (code.includes("System.out.println")) {
-      const match = code.match(/System\.out\.println\("([^"]*)"\)/);
-      return match ? `${match[1]}\n` : "Hello, World!\n";
-    }
-    return "Compilation reussie.\nAucune sortie.\n";
-  },
-  python: (code) => {
-    if (code.includes("print(")) {
-      const match = code.match(/print\("([^"]*)"\)/);
-      return match ? `${match[1]}\n` : "Hello, World!\n";
-    }
-    return "Programme execute avec succes.\n";
-  },
-  cpp: () => "Compilation reussie.\nHello, World!\n",
-  javascript: (code) => {
-    if (code.includes("console.log(")) {
-      const match = code.match(/console\.log\("([^"]*)"\)/);
-      return match ? `${match[1]}\n` : "Hello, World!\n";
-    }
-    return "undefined\n";
-  },
-  c: () => "Compilation reussie.\nHello, World!\n",
+const LANGUAGE_IDS: Record<string, number> = {
+  java: 62,
+  python: 71,
+  javascript: 63,
+  c: 50,
+  cpp: 54,
+};
+
+const PISTON_LANGUAGES: Record<string, { language: string; version: string }> = {
+  java: { language: "java", version: "15.0.2" },
+  python: { language: "python", version: "3.10.0" },
+  javascript: { language: "javascript", version: "18.15.0" },
+  c: { language: "c", version: "10.2.0" },
+  cpp: { language: "cpp", version: "10.2.0" },
 };
 
 const STARTER_CODES: Record<Language, string> = {
@@ -101,6 +91,7 @@ export function CodeEditorPanel({
   const [copied, setCopied] = useState(false);
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [outputTab, setOutputTab] = useState<"output" | "console">("output");
+  const [stdin, setStdin] = useState("");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentCode = value.code || starterCode || STARTER_CODES[language] || "";
@@ -113,16 +104,67 @@ export function CodeEditorPanel({
       output: "",
       error: undefined,
     });
-    await new Promise((r) => setTimeout(r, 1200 + Math.random() * 800));
-    const outputFn = MOCK_OUTPUTS[language];
-    const simulatedOutput = outputFn(currentCode);
-    onChange({
-      ...value,
-      isRunning: false,
-      hasRun: true,
-      output: simulatedOutput,
-      error: undefined,
-    });
+    
+    try {
+      const apiKey = import.meta.env.VITE_RAPIDAPI_KEY;
+      
+      if (apiKey) {
+        const response = await fetch("https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
+            "X-RapidAPI-Key": apiKey,
+          },
+          body: JSON.stringify({
+            source_code: currentCode,
+            language_id: LANGUAGE_IDS[language],
+            stdin: stdin,
+          }),
+        });
+        const data = await response.json();
+        const hasError = data.status?.id > 3;
+        onChange({
+          ...value,
+          isRunning: false,
+          hasRun: true,
+          output: data.stdout || "",
+          error: hasError ? (data.compile_output || data.stderr || data.message || data.status?.description) : undefined,
+        });
+        setOutputTab(hasError ? "console" : "output");
+      } else {
+        // Fallback to Piston API (no key required)
+        const response = await fetch("https://emkc.org/api/v2/piston/execute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            language: PISTON_LANGUAGES[language].language,
+            version: PISTON_LANGUAGES[language].version,
+            files: [{ name: "main", content: currentCode }],
+            stdin: stdin,
+          }),
+        });
+        const data = await response.json();
+        const hasError = data.run?.code !== 0 || (data.compile && data.compile.code !== 0);
+        onChange({
+          ...value,
+          isRunning: false,
+          hasRun: true,
+          output: data.run?.stdout || "",
+          error: hasError ? (data.compile?.stderr || data.run?.stderr || data.run?.output || "Erreur d'exécution") : undefined,
+        });
+        setOutputTab(hasError ? "console" : "output");
+      }
+    } catch (error: any) {
+      onChange({
+        ...value,
+        isRunning: false,
+        hasRun: true,
+        output: "",
+        error: error.message || "Erreur réseau lors de l'exécution.",
+      });
+      setOutputTab("console");
+    }
   };
 
   const handleReset = () => {
@@ -333,10 +375,25 @@ export function CodeEditorPanel({
         </div>
 
         <div
-          className="min-h-[72px] max-h-[132px] overflow-y-auto p-3 font-mono text-xs leading-relaxed sm:min-h-[80px] sm:max-h-[140px] sm:p-4"
+          className="min-h-[72px] max-h-[132px] overflow-y-auto p-3 font-mono text-xs leading-relaxed sm:min-h-[80px] sm:max-h-[140px] sm:p-4 flex flex-col gap-2"
           style={{ fontFamily: "'JetBrains Mono', monospace" }}
         >
-          {!value.hasRun && !value.isRunning && (
+          {outputTab === "console" && (
+            <div className="flex flex-col gap-1.5 mb-2 shrink-0">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Entrée (stdin)
+              </label>
+              <textarea
+                value={stdin}
+                onChange={(e) => setStdin(e.target.value)}
+                className="w-full resize-y rounded-lg border border-[rgba(123,241,255,0.12)] bg-[rgba(11,27,38,0.6)] p-2.5 text-slate-300 placeholder-slate-600 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                placeholder="Entrez vos données d'entrée ici (stdin)..."
+                rows={2}
+              />
+            </div>
+          )}
+
+          {!value.hasRun && !value.isRunning && outputTab === "output" && (
             <p className="italic text-slate-600">
               Appuyez sur "Executer" pour voir la sortie du programme...
             </p>
@@ -344,13 +401,19 @@ export function CodeEditorPanel({
           {value.isRunning && (
             <p className="animate-pulse text-slate-500">Execution en cours...</p>
           )}
-          {value.hasRun && value.error && (
-            <pre className="whitespace-pre-wrap text-rose-300">{value.error}</pre>
+          
+          {outputTab === "console" && value.hasRun && value.error && (
+            <div className="flex flex-col gap-1.5 mt-2">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-rose-500/80">Erreur d'exécution / Compilation</label>
+              <pre className="whitespace-pre-wrap text-rose-300">{value.error}</pre>
+            </div>
           )}
-          {value.hasRun && !value.error && value.output && (
+          
+          {outputTab === "output" && value.hasRun && !value.error && value.output && (
             <pre className="whitespace-pre-wrap text-cyan-200">{value.output}</pre>
           )}
-          {value.hasRun && !value.error && !value.output && (
+          
+          {outputTab === "output" && value.hasRun && !value.error && !value.output && (
             <p className="italic text-slate-500">Aucune sortie produite.</p>
           )}
         </div>
