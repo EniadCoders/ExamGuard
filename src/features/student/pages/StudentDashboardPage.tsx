@@ -205,18 +205,10 @@ export function StudentDashboard() {
                       ))}
                     </div>
                   </div>
-                  <div className="flex flex-col items-start gap-4 lg:items-end">
-                    <div className="rounded-2xl border border-[rgba(123,241,255,0.16)] bg-[rgba(8,20,29,0.78)] px-4 py-3 text-left">
-                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--cyber-subtle-text)]">
-                        Session
-                      </p>
-                      <p className="mt-1 text-sm font-medium text-[var(--cyber-text)]">
-                        Surveillance active
-                      </p>
-                    </div>
+                  <div className="flex flex-col items-start lg:self-stretch lg:items-end">
                     <button
                       onClick={() => handleJoinExam(activeExam.id)}
-                      className="cyber-button-primary inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold"
+                      className="cyber-button-primary inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold lg:mt-auto"
                     >
                       <Play className="w-4 h-4" />
                       <span>Reprendre l&apos;examen</span>

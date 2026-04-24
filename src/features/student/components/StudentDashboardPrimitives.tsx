@@ -1,5 +1,3 @@
-import type { LucideIcon } from "lucide-react";
-import { AlignLeft, ClipboardList, Code2 } from "lucide-react";
 import { DashboardTag } from "@/shared/components/dashboard/DashboardCard";
 
 interface ExamTypeChipProps {
@@ -7,17 +5,17 @@ interface ExamTypeChipProps {
   type?: string;
 }
 
-const questionTypeMap: Record<string, { label: string; icon: LucideIcon }> = {
-  mcq: { label: "QCM", icon: ClipboardList },
-  text: { label: "Texte", icon: AlignLeft },
-  code: { label: "Code", icon: Code2 },
+const questionTypeMap: Record<string, { label: string }> = {
+  mcq: { label: "QCM" },
+  text: { label: "Texte" },
+  code: { label: "Code" },
 };
 
 export function ExamTypeChip({ questionType, type }: ExamTypeChipProps) {
   const resolvedType = questionType ?? type ?? "mcq";
   const config = questionTypeMap[resolvedType] ?? questionTypeMap.mcq;
 
-  return <DashboardTag icon={config.icon}>{config.label}</DashboardTag>;
+  return <DashboardTag>{config.label}</DashboardTag>;
 }
 
 interface ScoreRingProps {

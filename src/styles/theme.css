@@ -188,6 +188,10 @@
     font: inherit;
   }
 
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
   code,
   pre,
   kbd,

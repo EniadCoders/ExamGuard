@@ -199,12 +199,10 @@ interface DashboardTagProps {
 
 export function DashboardTag({
   children,
-  icon: Icon,
   className,
 }: DashboardTagProps) {
   return (
     <span className={cn("dashboard-tag", className)}>
-      {Icon && <Icon className="h-3.5 w-3.5" />}
       <span>{children}</span>
     </span>
   );
