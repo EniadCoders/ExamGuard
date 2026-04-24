@@ -974,6 +974,26 @@
   letter-spacing: -0.04em;
 }
 
+.cyber-dashboard-page :is(h1, h2, h3, h4, h5, h6) {
+  font-family: "Chakra Petch", sans-serif !important;
+  font-style: normal;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em;
+}
+
+.cyber-dashboard-page :is(
+  h1,
+  h2,
+  h3,
+  [class~="font-serif"],
+  .dashboard-card-title,
+  .dashboard-section-title
+) {
+  font-family: "Chakra Petch", sans-serif !important;
+  font-style: normal;
+  font-weight: 700 !important;
+}
+
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="bg-white"] {
   background: var(--cyber-surface) !important;
 }
