@@ -32,12 +32,12 @@ const iconToneMap: Record<IconTone, string> = {
   neutral: "dashboard-icon-badge-neutral",
 };
 
-const badgeToneMap: Record<BadgeTone, string> = {
+const statusToneMap: Record<BadgeTone, string> = {
   neutral: "",
-  info: "dashboard-status-badge-info",
-  success: "dashboard-status-badge-success",
-  warning: "dashboard-status-badge-warning",
-  danger: "dashboard-status-badge-danger",
+  info: "dashboard-status-text-info",
+  success: "dashboard-status-text-success",
+  warning: "dashboard-status-text-warning",
+  danger: "dashboard-status-text-danger",
 };
 
 const statusMap: Record<StatusKind, { label: string; tone: BadgeTone }> = {
@@ -157,17 +157,17 @@ export function DashboardStatusBadge({
   className,
 }: DashboardStatusBadgeProps) {
   const resolved = status ? statusMap[status] : undefined;
+  const resolvedTone = tone ?? resolved?.tone ?? "neutral";
 
   return (
     <span
       className={cn(
-        "dashboard-status-badge",
-        badgeToneMap[tone ?? resolved?.tone ?? "neutral"],
+        "dashboard-status-text",
+        statusToneMap[resolvedTone],
         className,
       )}
     >
-      <span className="dashboard-status-dot" />
-      <span>{label ?? resolved?.label}</span>
+      {label ?? resolved?.label}
     </span>
   );
 }
@@ -223,41 +223,31 @@ interface DashboardMetricCardProps {
 }
 
 export function DashboardMetricCard({
-  icon,
   label,
   value,
   change,
   description,
   className,
   interactive = true,
-  iconTone = "default",
   changeTone = "neutral",
 }: DashboardMetricCardProps) {
   return (
     <DashboardCard
       interactive={interactive}
-      className={cn("p-5 sm:p-6", className)}
+      className={cn("metric-card-container", className)}
     >
-      <div className="flex items-start justify-between gap-4">
-        <DashboardIconBadge icon={icon} tone={iconTone} />
+      <div className="metric-card-content">
+        <p className="metric-card-label">{label}</p>
+        <div className="metric-card-value">
+          {value}
+        </div>
         {change ? (
-          <span
-            className={cn(
-              "dashboard-trend-pill",
-              badgeToneMap[changeTone],
-            )}
-          >
+          <span className={cn("metric-card-change", statusToneMap[changeTone])}>
             {change}
           </span>
         ) : null}
-      </div>
-      <div className="mt-6">
-        <p className="dashboard-card-kicker">{label}</p>
-        <div className="mt-2 text-[1.75rem] font-semibold leading-none text-[var(--cyber-text)] sm:text-[2rem]">
-          {value}
-        </div>
         {description ? (
-          <p className="mt-3 text-sm leading-6 text-[var(--cyber-muted-text)]">
+          <p className="metric-card-description">
             {description}
           </p>
         ) : null}
