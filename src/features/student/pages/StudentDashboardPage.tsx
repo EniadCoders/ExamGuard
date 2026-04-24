@@ -164,9 +164,9 @@ export function StudentDashboard() {
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         {/* Welcome Header */}
         {activeTab === "dashboard" && (
-          <div className="cyber-page-intro mb-8">
-            <h1 className="mb-2 text-3xl font-serif text-black sm:text-4xl">Bonjour, Jean</h1>
-            <p className="text-base text-[#666666] sm:text-lg">Bienvenue sur votre tableau de bord</p>
+          <div className="mb-8">
+            <h1 className="mb-2 text-3xl font-bold text-[var(--cyber-text)] sm:text-4xl">Bonjour, Jean</h1>
+            <p className="text-base text-[var(--cyber-muted-text)] sm:text-lg">Bienvenue sur votre tableau de bord</p>
           </div>
         )}
 
