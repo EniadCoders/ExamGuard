@@ -1,5 +1,8 @@
 import { useRef, useState } from "react";
-import Editor from "@monaco-editor/react";
+import Editor, { loader } from "@monaco-editor/react";
+import * as monaco from "monaco-editor";
+
+loader.config({ monaco });
 import {
   AlertCircle,
   Check,
@@ -26,16 +29,92 @@ const LANGUAGE_IDS: Record<string, number> = {
   cpp: 54,
 };
 
-const PISTON_LANGUAGES: Record<string, { language: string; version: string }> = {
-  java: { language: "java", version: "15.0.2" },
-  python: { language: "python", version: "3.10.0" },
-  javascript: { language: "javascript", version: "18.15.0" },
-  c: { language: "c", version: "10.2.0" },
-  cpp: { language: "cpp", version: "10.2.0" },
+const JUDGE0_PUBLIC_URL = "https://ce.judge0.com";
+
+// CodeX API — free, no auth, no whitelist.
+// https://github.com/Jaagrav/CodeX-API
+const CODEX_LANGUAGES: Record<string, string> = {
+  java: "java",
+  python: "py",
+  javascript: "js",
+  c: "c",
+  cpp: "cpp",
 };
 
+// CodeX writes Java to a file called Main.java, so the public class must be Main.
+function normalizeJavaForCodeX(source: string): string {
+  const publicMatch = source.match(/public\s+class\s+([A-Za-z_$][\w$]*)/);
+  if (publicMatch && publicMatch[1] !== "Main") {
+    const original = publicMatch[1];
+    return source
+      .replace(/public\s+class\s+[A-Za-z_$][\w$]*/, "public class Main")
+      .replace(new RegExp(`\\b${original}\\b(?=\\s*\\()`, "g"), "Main");
+  }
+  return source;
+}
+
+async function runWithCodeX(
+  code: string,
+  lang: Language,
+  stdinValue: string,
+): Promise<{ output: string; error?: string }> {
+  const payloadCode = lang === "java" ? normalizeJavaForCodeX(code) : code;
+  const response = await fetch("https://api.codex.jaagrav.in", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      code: payloadCode,
+      language: CODEX_LANGUAGES[lang],
+      input: stdinValue,
+    }),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`CodeX ${response.status}: ${text || response.statusText}`);
+  }
+  const data = await response.json();
+  return {
+    output: data.output || "",
+    error: data.error ? String(data.error).trim() : undefined,
+  };
+}
+
+async function runWithJudge0Public(
+  code: string,
+  lang: Language,
+  stdinValue: string,
+): Promise<{ output: string; error?: string }> {
+  const response = await fetch(
+    `${JUDGE0_PUBLIC_URL}/submissions?base64_encoded=false&wait=true`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_code: code,
+        language_id: LANGUAGE_IDS[lang],
+        stdin: stdinValue,
+      }),
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Judge0 ${response.status}: ${text || response.statusText}`);
+  }
+  const data = await response.json();
+  const hasError = (data.status?.id ?? 0) > 3;
+  return {
+    output: data.stdout || "",
+    error: hasError
+      ? data.compile_output ||
+        data.stderr ||
+        data.message ||
+        data.status?.description
+      : undefined,
+  };
+}
+
 const STARTER_CODES: Record<Language, string> = {
-  java: `public class Solution {
+  java: `public class Main {
     public static void main(String[] args) {
         // Votre code ici
         System.out.println("Hello, World!");
@@ -133,25 +212,28 @@ export function CodeEditorPanel({
         });
         setOutputTab(hasError ? "console" : "output");
       } else {
-        // Fallback to Piston API (no key required)
-        const response = await fetch("https://emkc.org/api/v2/piston/execute", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            language: PISTON_LANGUAGES[language].language,
-            version: PISTON_LANGUAGES[language].version,
-            files: [{ name: "main", content: currentCode }],
-            stdin: stdin,
-          }),
-        });
-        const data = await response.json();
-        const hasError = data.run?.code !== 0 || (data.compile && data.compile.code !== 0);
+        // Free fallbacks: try CodeX (no auth), then Judge0 public CE.
+        let result: { output: string; error?: string };
+        try {
+          result = await runWithCodeX(currentCode, language, stdin);
+        } catch (codexErr) {
+          try {
+            result = await runWithJudge0Public(currentCode, language, stdin);
+          } catch (judgeErr: any) {
+            throw new Error(
+              `Aucun service d'exécution gratuit disponible. ` +
+                `CodeX: ${(codexErr as Error).message}. ` +
+                `Judge0: ${judgeErr.message}.`,
+            );
+          }
+        }
+        const hasError = Boolean(result.error);
         onChange({
           ...value,
           isRunning: false,
           hasRun: true,
-          output: data.run?.stdout || "",
-          error: hasError ? (data.compile?.stderr || data.run?.stderr || data.run?.output || "Erreur d'exécution") : undefined,
+          output: result.output,
+          error: result.error,
         });
         setOutputTab(hasError ? "console" : "output");
       }

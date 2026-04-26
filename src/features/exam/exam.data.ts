@@ -39,7 +39,7 @@ export const mockExamQuestions: Question[] = [
     text: "Ecrivez une fonction Java qui prend un tableau d'entiers en entree et retourne le second plus grand element. Gerez les cas limites (tableau vide, tous les elements identiques).",
     points: 8,
     language: "java",
-    starterCode: `public class Solution {
+    starterCode: `public class Main {
     
     /**
      * Retourne le second plus grand element du tableau.
