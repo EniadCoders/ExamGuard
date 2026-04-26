@@ -42,6 +42,7 @@ import { useNavigate } from "react-router";
 import { NotificationPanel } from "@/shared/components/NotificationPanel";
 import { GridBackground } from "@/shared/components/GridBackground";
 import { Logo } from "@/shared/components/BrandLogo";
+import { ViewAllButton } from "@/shared/components/ViewAllButton";
 import {
   DashboardCard,
   DashboardMetricCard,
@@ -876,14 +877,7 @@ function OverviewTab({
           title="Examens récents"
           subtitle="Sessions planifiées, brouillons et dernières activités"
           icon={FileText}
-          action={
-            <button
-              onClick={onGoToExams}
-              className="text-xs font-medium text-[var(--cyber-muted-text)] transition-colors hover:text-[var(--cyber-text)]"
-            >
-              Voir tout
-            </button>
-          }
+          action={<ViewAllButton onClick={onGoToExams} />}
           bodyClassName="p-0"
         >
           <div>
@@ -960,11 +954,7 @@ function OverviewTab({
         title="Alertes de fraude récentes"
         subtitle="Signalements à examiner en priorité"
         icon={Shield}
-        action={
-          <button className="text-xs font-medium text-[var(--cyber-muted-text)] transition-colors hover:text-[var(--cyber-text)]">
-            Voir tout
-          </button>
-        }
+        action={<ViewAllButton />}
         bodyClassName="p-0"
       >
         <div>
