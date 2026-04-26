@@ -159,6 +159,7 @@ function ToggleSwitch({ defaultChecked = false }: { defaultChecked?: boolean }) 
   return (
     <button
       type="button"
+      data-ui="switch"
       onClick={() => setOn(!on)}
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ${
         on ? "bg-black border-black" : "bg-[#E5E5E5] border-[#CCCCCC]"

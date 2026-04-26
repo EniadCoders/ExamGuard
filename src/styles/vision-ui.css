@@ -163,30 +163,221 @@
 }
 
 .btn-vision,
+.btn-vision-soft,
+.cyber-button-primary,
+.cyber-button-secondary,
+.cyber-button-ghost,
+.dashboard-card-interactive,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]),
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]),
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: rgba(123, 241, 255, 0.18) !important;
+  background:
+    linear-gradient(180deg, rgba(13, 31, 42, 0.72), rgba(7, 17, 25, 0.84)) padding-box !important;
+  color: var(--cyber-text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 12px 30px rgba(0, 0, 0, 0.18);
+  transition:
+    transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
+    background-color 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.btn-vision::before,
+.btn-vision-soft::before,
+.cyber-button-primary::before,
+.cyber-button-secondary::before,
+.cyber-button-ghost::before,
+.dashboard-card-interactive::before,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"])::before,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"])::before,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"])::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background:
+    conic-gradient(
+      from var(--button-border-angle, 0deg),
+      rgba(123, 241, 255, 0.08),
+      rgba(123, 241, 255, 0.78),
+      rgba(61, 216, 233, 0.26),
+      rgba(255, 255, 255, 0.18),
+      rgba(123, 241, 255, 0.08)
+    );
+  opacity: 0.52;
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: button-border-orbit 4.5s linear infinite;
+  animation-play-state: paused;
+}
+
+.btn-vision::after,
+.btn-vision-soft::after,
+.cyber-button-primary::after,
+.cyber-button-secondary::after,
+.cyber-button-ghost::after,
+.dashboard-card-interactive::after,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"])::after,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"])::after,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"])::after {
+  content: "";
+  position: absolute;
+  inset: -35%;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    conic-gradient(
+      from var(--button-border-angle, 0deg),
+      transparent 0 58%,
+      rgba(123, 241, 255, 0.32) 66%,
+      transparent 78% 100%
+    );
+  filter: blur(16px);
+  opacity: 0;
+  pointer-events: none;
+  animation: button-border-orbit 4.5s linear infinite;
+  animation-play-state: paused;
+  transition: opacity 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.btn-vision:hover:not(:disabled),
+.btn-vision-soft:hover:not(:disabled),
+.cyber-button-primary:hover:not(:disabled),
+.cyber-button-secondary:hover:not(:disabled),
+.cyber-button-ghost:hover:not(:disabled),
+.dashboard-card-interactive:hover:not(:disabled),
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled),
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled),
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled) {
+  border-color: rgba(123, 241, 255, 0.36) !important;
+  background:
+    linear-gradient(180deg, rgba(13, 35, 47, 0.78), rgba(7, 18, 27, 0.88)) padding-box !important;
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 1px rgba(123, 241, 255, 0.08),
+    0 18px 42px rgba(0, 0, 0, 0.24),
+    0 0 28px rgba(61, 216, 233, 0.12);
+}
+
+.btn-vision:hover:not(:disabled)::before,
+.btn-vision-soft:hover:not(:disabled)::before,
+.cyber-button-primary:hover:not(:disabled)::before,
+.cyber-button-secondary:hover:not(:disabled)::before,
+.cyber-button-ghost:hover:not(:disabled)::before,
+.dashboard-card-interactive:hover:not(:disabled)::before,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
+.btn-vision:hover:not(:disabled)::after,
+.btn-vision-soft:hover:not(:disabled)::after,
+.cyber-button-primary:hover:not(:disabled)::after,
+.cyber-button-secondary:hover:not(:disabled)::after,
+.cyber-button-ghost:hover:not(:disabled)::after,
+.dashboard-card-interactive:hover:not(:disabled)::after,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after {
+  animation-play-state: running;
+}
+
+.btn-vision:hover:not(:disabled)::before,
+.btn-vision-soft:hover:not(:disabled)::before,
+.cyber-button-primary:hover:not(:disabled)::before,
+.cyber-button-secondary:hover:not(:disabled)::before,
+.cyber-button-ghost:hover:not(:disabled)::before,
+.dashboard-card-interactive:hover:not(:disabled)::before,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before {
+  opacity: 0.95;
+}
+
+.btn-vision:hover:not(:disabled)::after,
+.btn-vision-soft:hover:not(:disabled)::after,
+.cyber-button-primary:hover:not(:disabled)::after,
+.cyber-button-secondary:hover:not(:disabled)::after,
+.cyber-button-ghost:hover:not(:disabled)::after,
+.dashboard-card-interactive:hover:not(:disabled)::after,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after {
+  opacity: 1;
+}
+
+.btn-vision > *,
+.btn-vision-soft > *,
+.cyber-button-primary > *,
+.cyber-button-secondary > *,
+.cyber-button-ghost > *,
+.dashboard-card-interactive > *,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]) > *,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]) > *,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]) > * {
+  position: relative;
+  z-index: 1;
+}
+
+.cyber-button-primary .animate-spin,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]) .animate-spin,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]) .animate-spin {
+  border-color: rgba(238, 252, 255, 0.18) !important;
+  border-top-color: rgba(139, 243, 255, 0.95) !important;
+}
+
+button[data-ui="switch"]::before,
+button[data-ui="switch"]::after {
+  animation: none;
+  content: none;
+}
+
+@keyframes button-border-orbit {
+  to {
+    --button-border-angle: 360deg;
+  }
+}
+
+@property --button-border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.btn-vision,
 .cyber-button-primary {
-  background: linear-gradient(135deg, rgba(61, 216, 233, 0.95) 0%, rgba(123, 241, 255, 0.88) 100%);
-  color: #041117;
-  border: 1px solid rgba(123, 241, 255, 0.3);
-  box-shadow: 0 20px 45px rgba(17, 125, 145, 0.22);
+  color: var(--cyber-text);
+  border: 1px solid rgba(123, 241, 255, 0.22);
 }
 
 .btn-vision:hover,
 .cyber-button-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 24px 50px rgba(17, 125, 145, 0.28);
 }
 
 .btn-vision-soft,
 .cyber-button-secondary {
-  background: rgba(10, 26, 36, 0.84);
   color: var(--cyber-text);
-  border: 1px solid var(--cyber-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(117, 195, 214, 0.18);
 }
 
 .btn-vision-soft:hover,
 .cyber-button-secondary:hover {
-  background: rgba(12, 31, 43, 0.92);
   border-color: rgba(123, 241, 255, 0.28);
 }
 
@@ -1099,9 +1290,11 @@
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="bg-black"],
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="bg-[#00809D]"] {
   background:
-    linear-gradient(135deg, rgba(8, 67, 84, 0.98) 0%, rgba(12, 119, 140, 0.86) 42%, rgba(8, 38, 52, 0.98) 100%) !important;
-  border-color: rgba(123, 241, 255, 0.24) !important;
-  box-shadow: 0 20px 45px rgba(14, 84, 102, 0.22);
+    linear-gradient(180deg, rgba(13, 31, 42, 0.72), rgba(7, 17, 25, 0.84)) padding-box !important;
+  border-color: rgba(123, 241, 255, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 12px 30px rgba(0, 0, 0, 0.18);
 }
 
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="text-black"] {
@@ -1133,7 +1326,7 @@
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="hover:bg-[#222222]"]:hover,
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="hover:bg-black"]:hover {
   background:
-    linear-gradient(135deg, rgba(10, 86, 104, 0.98) 0%, rgba(15, 145, 168, 0.9) 42%, rgba(8, 45, 58, 0.98) 100%) !important;
+    linear-gradient(180deg, rgba(13, 35, 47, 0.78), rgba(7, 18, 27, 0.88)) padding-box !important;
 }
 
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="hover:border-black"]:hover {
