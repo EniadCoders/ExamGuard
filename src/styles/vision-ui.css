@@ -1350,6 +1350,11 @@ button[data-ui="notification-trigger"] [data-ui="notification-badge"] {
   background: rgba(12, 31, 43, 0.9) !important;
 }
 
+:is(.cyber-dashboard-page, .cyber-profile-page) :is(tr, li, div)[class~="hover:bg-[#FAFAFA]"]:hover,
+:is(.cyber-dashboard-page, .cyber-profile-page) :is(tr, li, div)[class~="hover:bg-white"]:hover {
+  background: rgba(12, 31, 43, 0.72) !important;
+}
+
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="hover:bg-[#222222]"]:hover,
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="hover:bg-black"]:hover {
   background:
