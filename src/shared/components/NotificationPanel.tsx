@@ -195,7 +195,8 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
     <div className="relative flex-shrink-0" ref={panelRef}>
       <button
         onClick={() => setOpen((value) => !value)}
-        className={`relative rounded-xl p-2.5 transition-colors ${
+        data-ui="notification-trigger"
+        className={`relative inline-flex items-center justify-center rounded-xl p-2.5 transition-colors ${
           open
             ? "border border-[rgba(123,241,255,0.16)] bg-[rgba(11,27,38,0.88)] text-white"
             : "text-slate-400 hover:bg-[rgba(11,27,38,0.66)] hover:text-slate-200"
@@ -204,7 +205,10 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
       >
         <Bell className="h-5 w-5" />
         {unread > 0 && (
-          <span className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[linear-gradient(135deg,#3dd8e9,#8bf3ff)] px-1 text-[10px] leading-none text-[#041117] ring-2 ring-[#07111a]">
+          <span
+            data-ui="notification-badge"
+            className="absolute -right-1 -top-1 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[linear-gradient(135deg,#3dd8e9,#8bf3ff)] px-1 text-[10px] font-bold leading-none text-[#041117] ring-2 ring-[#07111a]"
+          >
             {unread > 9 ? "9+" : unread}
           </span>
         )}

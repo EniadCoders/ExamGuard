@@ -167,9 +167,9 @@ button.btn-vision-soft,
 button.cyber-button-primary,
 button.cyber-button-secondary,
 button.cyber-button-ghost,
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]),
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]),
-:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]) {
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]),
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]),
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]) {
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -193,9 +193,9 @@ button.btn-vision-soft::before,
 button.cyber-button-primary::before,
 button.cyber-button-secondary::before,
 button.cyber-button-ghost::before,
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"])::before,
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"])::before,
-:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"])::before {
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"])::before,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"])::before,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"])::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -230,9 +230,9 @@ button.btn-vision-soft::after,
 button.cyber-button-primary::after,
 button.cyber-button-secondary::after,
 button.cyber-button-ghost::after,
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"])::after,
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"])::after,
-:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"])::after {
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"])::after,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"])::after,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"])::after {
   content: "";
   position: absolute;
   inset: -35%;
@@ -258,9 +258,9 @@ button.btn-vision-soft:hover:not(:disabled),
 button.cyber-button-primary:hover:not(:disabled),
 button.cyber-button-secondary:hover:not(:disabled),
 button.cyber-button-ghost:hover:not(:disabled),
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled),
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled),
-:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled) {
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled),
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled),
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled) {
   border-color: rgba(123, 241, 255, 0.36) !important;
   background:
     linear-gradient(180deg, rgba(13, 35, 47, 0.78), rgba(7, 18, 27, 0.88)) padding-box !important;
@@ -277,17 +277,17 @@ button.btn-vision-soft:hover:not(:disabled)::before,
 button.cyber-button-primary:hover:not(:disabled)::before,
 button.cyber-button-secondary:hover:not(:disabled)::before,
 button.cyber-button-ghost:hover:not(:disabled)::before,
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
-:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::before,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::before,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::before,
 button.btn-vision:hover:not(:disabled)::after,
 button.btn-vision-soft:hover:not(:disabled)::after,
 button.cyber-button-primary:hover:not(:disabled)::after,
 button.cyber-button-secondary:hover:not(:disabled)::after,
 button.cyber-button-ghost:hover:not(:disabled)::after,
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after,
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after,
-:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after {
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::after,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::after,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::after {
   animation-play-state: running;
 }
 
@@ -296,9 +296,9 @@ button.btn-vision-soft:hover:not(:disabled)::before,
 button.cyber-button-primary:hover:not(:disabled)::before,
 button.cyber-button-secondary:hover:not(:disabled)::before,
 button.cyber-button-ghost:hover:not(:disabled)::before,
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before,
-:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::before {
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::before,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::before,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::before {
   opacity: 0.95;
 }
 
@@ -307,27 +307,27 @@ button.btn-vision-soft:hover:not(:disabled)::after,
 button.cyber-button-primary:hover:not(:disabled)::after,
 button.cyber-button-secondary:hover:not(:disabled)::after,
 button.cyber-button-ghost:hover:not(:disabled)::after,
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after,
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after,
-:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):hover:not(:disabled)::after {
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::after,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::after,
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]):hover:not(:disabled)::after {
   opacity: 1;
 }
 
-button.btn-vision > *,
-button.btn-vision-soft > *,
-button.cyber-button-primary > *,
-button.cyber-button-secondary > *,
-button.cyber-button-ghost > *,
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]) > *,
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]) > *,
-:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]) > * {
+button.btn-vision > :not(.absolute),
+button.btn-vision-soft > :not(.absolute),
+button.cyber-button-primary > :not(.absolute),
+button.cyber-button-secondary > :not(.absolute),
+button.cyber-button-ghost > :not(.absolute),
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]) > :not(.absolute),
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]) > :not(.absolute),
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]) > :not(.absolute) {
   position: relative;
   z-index: 1;
 }
 
 button.cyber-button-primary .animate-spin,
-.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]) .animate-spin,
-.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]) .animate-spin {
+.cyber-auth-main button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]) .animate-spin,
+.cyber-auth-shell button[class*="rounded"]:not([data-ui="switch"]):not([data-ui="notification-trigger"]) .animate-spin {
   border-color: rgba(238, 252, 255, 0.18) !important;
   border-top-color: rgba(139, 243, 255, 0.95) !important;
 }
@@ -336,6 +336,42 @@ button[data-ui="switch"]::before,
 button[data-ui="switch"]::after {
   animation: none;
   content: none;
+}
+
+button[data-ui="notification-trigger"] {
+  overflow: visible !important;
+  isolation: isolate;
+  clip-path: none;
+  -webkit-mask: none;
+  mask: none;
+}
+
+button[data-ui="notification-trigger"]::before,
+button[data-ui="notification-trigger"]::after {
+  content: none !important;
+}
+
+button[data-ui="notification-trigger"] [data-ui="notification-badge"] {
+  position: absolute !important;
+  top: -0.35rem !important;
+  right: -0.35rem !important;
+  z-index: 30 !important;
+  display: flex;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0 0.25rem;
+  background: linear-gradient(135deg, #3dd8e9, #8bf3ff);
+  color: #031018 !important;
+  font-size: 0.625rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow:
+    0 0 0 2px #07111a,
+    0 0 12px rgba(123, 241, 255, 0.35);
+  pointer-events: none;
 }
 
 @keyframes button-border-orbit {
