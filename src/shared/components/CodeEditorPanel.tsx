@@ -167,7 +167,6 @@ export function CodeEditorPanel({
   allowLanguageChange = false,
   onLanguageChange,
 }: CodeEditorPanelProps) {
-  const [copied, setCopied] = useState(false);
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [outputTab, setOutputTab] = useState<"output" | "console">("output");
   const [stdin, setStdin] = useState("");
@@ -258,12 +257,6 @@ export function CodeEditorPanel({
     });
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(currentCode);
-    setCopied(true);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-[rgba(123,241,255,0.16)] bg-[#07131c] shadow-[0_24px_55px_rgba(0,0,0,0.28)]">
@@ -319,17 +312,6 @@ export function CodeEditorPanel({
         </div>
 
         <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start">
-          <button
-            onClick={handleCopy}
-            title="Copier le code"
-            className="rounded-lg p-1.5 text-slate-500 transition-all hover:bg-[rgba(11,27,38,0.82)] hover:text-slate-200"
-          >
-            {copied ? (
-              <Check className="h-3.5 w-3.5 text-emerald-300" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
-          </button>
 
           <button
             onClick={handleReset}

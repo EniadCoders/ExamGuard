@@ -155,8 +155,9 @@ export function ExamResultsView({
 }: ExamResultsViewProps) {
   const navigate = useNavigate();
   const resolvedTotalQuestions = totalQuestions ?? total ?? Math.max(answeredCount, 1);
-  const score = Math.round((answeredCount / resolvedTotalQuestions) * 100 * 0.87);
-  const isPassed = score >= 50;
+  const scorePercentage = (answeredCount / resolvedTotalQuestions) * 100 * 0.87;
+  const scoreOutOf20 = ((scorePercentage / 100) * 20).toFixed(1).replace(/\.0$/, '');
+  const isPassed = scorePercentage >= 50;
   const breakdown = [
     { label: "QCM", pts: 9, maxPts: 9 },
     { label: "Texte", pts: 7, maxPts: 9 },
@@ -194,12 +195,15 @@ export function ExamResultsView({
                     stroke="#8BF3FF"
                     strokeWidth="8"
                     strokeDasharray={circumference}
-                    strokeDashoffset={circumference * (1 - score / 100)}
+                    strokeDashoffset={circumference * (1 - scorePercentage / 100)}
                     strokeLinecap="round"
                   />
                 </svg>
                 <div className="text-center z-10">
-                  <p className="text-3xl font-bold text-black sm:text-4xl">{score}%</p>
+                  <p className="text-2xl font-bold text-black flex items-baseline justify-center gap-0.5 sm:text-3xl">
+                    {scoreOutOf20}
+                    <span className="text-[0.65em] font-medium text-[#666666]">/20</span>
+                  </p>
                   <p className="text-xs text-[#888888] mt-1">{totalPts}/{maxPts} pts</p>
                 </div>
               </div>

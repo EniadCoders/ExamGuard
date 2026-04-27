@@ -390,12 +390,12 @@ export function StudentDashboard() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm text-[var(--cyber-muted-text)]">
                       <span>Moyenne de la classe</span>
-                      <span className="font-semibold text-[var(--cyber-text)]">78%</span>
+                      <span className="font-semibold text-[var(--cyber-text)]">15.6/20</span>
                     </div>
                     <div className="dashboard-divider" />
                     <div className="flex items-center gap-2 text-sm text-[var(--cyber-muted-text)]">
                       <ArrowUp className="w-4 h-4 text-[var(--cyber-accent-strong)]" />
-                      <span>+6% au-dessus de la moyenne</span>
+                      <span>+1.2 pts au-dessus de la moyenne</span>
                     </div>
                   </div>
                 </DashboardSectionCard>
@@ -634,7 +634,7 @@ export function StudentDashboard() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
                           <span>Votre score</span>
-                          <span className="font-semibold text-[var(--cyber-text)]">{exam.score}/{exam.maxScore}</span>
+                          <span className="font-semibold text-[var(--cyber-text)]">{(exam.score! / exam.maxScore! * 20).toFixed(1)}/20</span>
                         </div>
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
                           <span>Classement</span>
@@ -642,7 +642,7 @@ export function StudentDashboard() {
                         </div>
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
                           <span>Moyenne</span>
-                          <span className="font-semibold text-[var(--cyber-text)]">{exam.classAvg}%</span>
+                          <span className="font-semibold text-[var(--cyber-text)]">{(exam.classAvg! / 100 * 20).toFixed(1)}/20</span>
                         </div>
                       </div>
                     </button>
@@ -691,9 +691,9 @@ export function StudentDashboard() {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                           {[
-                            { label: "Note finale", value: `${exam.score}/${exam.maxScore}` },
+                            { label: "Note finale", value: `${(exam.score! / exam.maxScore! * 20).toFixed(1)}/20` },
                             { label: "Classement", value: `#${exam.rank}` },
-                            { label: "Moyenne classe", value: `${exam.classAvg}%` },
+                            { label: "Moyenne classe", value: `${(exam.classAvg! / 100 * 20).toFixed(1)}/20` },
                           ].map((item) => (
                             <div
                               key={item.label}
@@ -711,7 +711,7 @@ export function StudentDashboard() {
                             <div key={type} className="rounded-2xl border border-[rgba(117,195,214,0.12)] bg-[rgba(11,27,38,0.58)] p-5">
                               <div className="flex items-center justify-between mb-3">
                                 <TypeChip type={type} />
-                                <span className="text-sm font-semibold text-[var(--cyber-text)]">85%</span>
+                                <span className="text-sm font-semibold text-[var(--cyber-text)]">17/20</span>
                               </div>
                               <div className="h-2 w-full rounded-full bg-[rgba(117,195,214,0.12)]">
                                 <div className="h-2 rounded-full bg-[var(--cyber-accent)]" style={{ width: "85%" }}></div>

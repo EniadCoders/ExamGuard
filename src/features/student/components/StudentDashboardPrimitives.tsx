@@ -30,7 +30,7 @@ const scoreRingSizes = {
   lg: { width: 100, stroke: 6, fontSize: "text-2xl" },
 } as const;
 
-export function ScoreRing({ score, size = "md", variant = "percentage" }: ScoreRingProps) {
+export function ScoreRing({ score, size = "md", variant = "out-of-20" }: ScoreRingProps) {
   const config = scoreRingSizes[size];
   const radius = (config.width - config.stroke) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -66,7 +66,9 @@ export function ScoreRing({ score, size = "md", variant = "percentage" }: ScoreR
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         {variant === "out-of-20" ? (
-          <span className={`font-bold text-black flex items-baseline gap-0.5 ${config.fontSize}`}>
+          <span className={`font-bold text-black flex items-baseline gap-0.5 ${
+            size === "lg" ? "text-xl" : size === "md" ? "text-base" : "text-xs"
+          }`}>
             {scoreOutOf20}
             <span className="text-[0.65em] font-medium text-[#666666]">/20</span>
           </span>
