@@ -43,6 +43,7 @@ import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
 import { Logo } from "@/shared/components/BrandLogo";
 import { NotificationPanel } from "@/shared/components/NotificationPanel";
+import { ToggleSwitch } from "@/shared/components/ToggleSwitch";
 import {
   DashboardCard,
   DashboardMetricCard,
@@ -82,12 +83,6 @@ export function StudentDashboard() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showExamLock, setShowExamLock] = useState(false);
   const [targetExamId, setTargetExamId] = useState<number | null>(null);
-
-  const [notificationSettings, setNotificationSettings] = useState({
-    examReminders: true,
-    resultNotifications: true,
-    systemUpdates: false,
-  });
 
   const handleLogoClick = () => {
     setActiveTab("dashboard");
@@ -987,36 +982,16 @@ export function StudentDashboard() {
                     </h2>
                     <div className="space-y-5">
                       {[
-                        { key: "examReminders", label: "Rappels d'examen", desc: "Recevoir des notifications avant chaque examen" },
-                        { key: "resultNotifications", label: "Notifications de résultats", desc: "Être averti lorsque les résultats sont publiés" },
-                        { key: "systemUpdates", label: "Mises à jour système", desc: "Recevoir les annonces et mises à jour de la plateforme" },
+                        { key: "examReminders", label: "Rappels d'examen", desc: "Recevoir des notifications avant chaque examen", default: true },
+                        { key: "resultNotifications", label: "Notifications de résultats", desc: "Être averti lorsque les résultats sont publiés", default: true },
+                        { key: "systemUpdates", label: "Mises à jour système", desc: "Recevoir les annonces et mises à jour de la plateforme", default: false },
                       ].map((setting) => (
                         <div key={setting.key} className="flex flex-col gap-4 rounded-xl bg-[#F5F7FB] p-5 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex-1">
                             <p className="font-semibold text-black mb-1">{setting.label}</p>
                             <p className="text-sm text-[#666666]">{setting.desc}</p>
                           </div>
-                          <button
-                            onClick={() =>
-                              setNotificationSettings((prev) => ({
-                                ...prev,
-                                [setting.key]: !prev[setting.key as keyof typeof prev],
-                              }))
-                            }
-                            className={`relative w-12 h-6 rounded-full transition-all ${
-                              notificationSettings[setting.key as keyof typeof notificationSettings]
-                                ? "bg-[#00809D]"
-                                : "bg-[#E5E5E5]"
-                            }`}
-                          >
-                            <div
-                              className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all ${
-                                notificationSettings[setting.key as keyof typeof notificationSettings]
-                                  ? "right-0.5"
-                                  : "left-0.5"
-                              }`}
-                            ></div>
-                          </button>
+                          <ToggleSwitch defaultChecked={setting.default} />
                         </div>
                       ))}
                     </div>
