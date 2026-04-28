@@ -608,11 +608,9 @@ export function StudentDashboard() {
         {/* Results View */}
         {activeTab === "results" && (
           <div className="space-y-6">
-            {selectedResult === null ? (
-              <>
-                <h1 className="mb-6 text-3xl font-serif text-black sm:text-4xl">
-                  Mes Résultats
-                </h1>
+            <h1 className="mb-6 text-3xl font-serif text-black sm:text-4xl">
+              Mes Résultats
+            </h1>
 
                 {/* Search and Filters */}
                 <div className="flex flex-col lg:flex-row items-center gap-4 mb-6">
@@ -711,22 +709,22 @@ export function StudentDashboard() {
                   ))}
                   </div>
                 )}
-              </>
-            ) : (
-              <div>
-                {(() => {
-                  const exam = allExams.find((e) => e.id === selectedResult)!;
-                  return (
-                    <>
-                      <button
-                        onClick={() => setSelectedResult(null)}
-                        className="flex items-center gap-2 text-[#666666] hover:text-black mb-6 transition-colors"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        <span className="font-medium">Retour aux résultats</span>
-                      </button>
+            
+            {/* Modal Overlay for Selected Result */}
+            {selectedResult !== null && (() => {
+              const exam = allExams.find((e) => e.id === selectedResult)!;
+              return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                  <div className="absolute inset-0" onClick={() => setSelectedResult(null)}></div>
+                  <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar rounded-2xl animate-in zoom-in-95 duration-200">
+                    <button
+                      onClick={() => setSelectedResult(null)}
+                      className="absolute top-4 right-4 z-10 p-2 rounded-full bg-[rgba(11,27,38,0.5)] hover:bg-[rgba(117,195,214,0.15)] text-[var(--cyber-muted-text)] hover:text-white transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
 
-                      <DashboardCard className="p-8">
+                    <DashboardCard className="p-8 relative">
                         <div className="flex items-start justify-between mb-8">
                           <div>
                             <div className="mb-3">
@@ -782,11 +780,10 @@ export function StudentDashboard() {
                           ))}
                         </div>
                       </DashboardCard>
-                    </>
-                  );
-                })()}
-              </div>
-            )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
