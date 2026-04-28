@@ -9,6 +9,7 @@ import {
   TrendingUp,
   CalendarDays,
   ChevronRight,
+  ChevronDown,
   Play,
   Award,
   LayoutDashboard,
@@ -83,6 +84,7 @@ export function StudentDashboard() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showExamLock, setShowExamLock] = useState(false);
   const [targetExamId, setTargetExamId] = useState<number | null>(null);
+  const [expandedExam, setExpandedExam] = useState<number | null>(null);
 
   const handleLogoClick = () => {
     setActiveTab("dashboard");
@@ -100,6 +102,7 @@ export function StudentDashboard() {
     setSettingsTab("profile");
     setShowExamLock(false);
     setTargetExamId(null);
+    setExpandedExam(null);
   };
 
   const handleJoinExam = (examId: number) => {
@@ -444,8 +447,8 @@ export function StudentDashboard() {
             </div>
 
             {/* Search and Filters */}
-            <div className="space-y-4">
-              <div className="relative w-full">
+            <div className="flex flex-col lg:flex-row items-center gap-4">
+              <div className="relative w-full lg:flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]" />
                 <input
                   type="text"
@@ -460,19 +463,32 @@ export function StudentDashboard() {
                   </button>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-3 pb-2">
-                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
-                  <FilterPill active={examFilter === "all"} onClick={() => setExamFilter("all")}>Tous ({allExams.length})</FilterPill>
-                  <FilterPill active={examFilter === "ongoing"} onClick={() => setExamFilter("ongoing")}>En cours</FilterPill>
-                  <FilterPill active={examFilter === "upcoming"} onClick={() => setExamFilter("upcoming")}>À venir</FilterPill>
-                  <FilterPill active={examFilter === "completed"} onClick={() => setExamFilter("completed")}>Terminés</FilterPill>
+              <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
+                <div className="relative min-w-[150px]">
+                  <select
+                    value={examFilter}
+                    onChange={(e) => setExamFilter(e.target.value as any)}
+                    className="w-full appearance-none bg-white border border-[#E5E5E5] text-[#666666] font-medium text-sm rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-black shadow-sm cursor-pointer hover:border-black hover:text-black transition-colors"
+                  >
+                    <option value="all">Tous ({allExams.length})</option>
+                    <option value="ongoing">En cours</option>
+                    <option value="upcoming">À venir</option>
+                    <option value="completed">Terminés</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] pointer-events-none" />
                 </div>
-                <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
-                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
-                  <FilterPill active={examTypeFilter === "all"} onClick={() => setExamTypeFilter("all")}>Tous les types</FilterPill>
-                  <FilterPill active={examTypeFilter === "mcq"} onClick={() => setExamTypeFilter("mcq")}>QCM</FilterPill>
-                  <FilterPill active={examTypeFilter === "code"} onClick={() => setExamTypeFilter("code")}>Code</FilterPill>
-                  <FilterPill active={examTypeFilter === "text"} onClick={() => setExamTypeFilter("text")}>Texte</FilterPill>
+                <div className="relative min-w-[150px]">
+                  <select
+                    value={examTypeFilter}
+                    onChange={(e) => setExamTypeFilter(e.target.value)}
+                    className="w-full appearance-none bg-white border border-[#E5E5E5] text-[#666666] font-medium text-sm rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-black shadow-sm cursor-pointer hover:border-black hover:text-black transition-colors"
+                  >
+                    <option value="all">Tous les types</option>
+                    <option value="mcq">QCM</option>
+                    <option value="code">Code</option>
+                    <option value="text">Texte</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -490,7 +506,7 @@ export function StudentDashboard() {
                   <DashboardCard
                     key={exam.id}
                   interactive
-                  className="p-6"
+                  className="p-6 transition-all duration-300"
                 >
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
@@ -538,12 +554,50 @@ export function StudentDashboard() {
                         </button>
                       )}
                       {exam.status === "upcoming" && (
-                        <button className="cyber-button-secondary rounded-xl px-6 py-3 text-sm font-medium">
-                          Détails
+                        <button 
+                          onClick={() => setExpandedExam(expandedExam === exam.id ? null : exam.id)}
+                          className="cyber-button-secondary rounded-xl px-6 py-3 text-sm font-medium"
+                        >
+                          {expandedExam === exam.id ? "Masquer" : "Détails"}
                         </button>
                       )}
                     </div>
                   </div>
+
+                  {/* Expanded Details section */}
+                  {expandedExam === exam.id && exam.status === "upcoming" && (
+                    <div className="mt-6 pt-6 border-t border-[rgba(117,195,214,0.12)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-[rgba(117,195,214,0.08)] text-[var(--cyber-accent-strong)]">
+                          <User className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-[var(--cyber-subtle-text)] uppercase tracking-wider mb-1">Professeur</p>
+                          <p className="text-sm font-medium text-[var(--cyber-text)]">Dr. Alan Turing</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-[rgba(117,195,214,0.08)] text-[var(--cyber-accent-strong)]">
+                          <Building className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-[var(--cyber-subtle-text)] uppercase tracking-wider mb-1">Salle</p>
+                          <p className="text-sm font-medium text-[var(--cyber-text)]">Amphithéâtre B - Bâtiment Sciences</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-[rgba(117,195,214,0.08)] text-[var(--cyber-accent-strong)]">
+                          <BookOpen className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-[var(--cyber-subtle-text)] uppercase tracking-wider mb-1">Matériel Requis</p>
+                          <p className="text-sm font-medium text-[var(--cyber-text)]">Calculatrice autorisée, brouillons</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </DashboardCard>
               ))}
             </div>
@@ -561,8 +615,8 @@ export function StudentDashboard() {
                 </h1>
 
                 {/* Search and Filters */}
-                <div className="space-y-4 mb-6">
-                  <div className="relative w-full">
+                <div className="flex flex-col lg:flex-row items-center gap-4 mb-6">
+                  <div className="relative w-full lg:flex-1">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]" />
                     <input
                       type="text"
@@ -577,17 +631,30 @@ export function StudentDashboard() {
                       </button>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 pb-2">
-                    <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
-                      <FilterPill active={resultStatusFilter === "all"} onClick={() => setResultStatusFilter("all")}>Tous les statuts</FilterPill>
-                      <FilterPill active={resultStatusFilter === "success"} onClick={() => setResultStatusFilter("success")}>Réussi</FilterPill>
-                      <FilterPill active={resultStatusFilter === "fail"} onClick={() => setResultStatusFilter("fail")}>Échoué</FilterPill>
+                  <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
+                    <div className="relative min-w-[150px]">
+                      <select
+                        value={resultStatusFilter}
+                        onChange={(e) => setResultStatusFilter(e.target.value)}
+                        className="w-full appearance-none bg-white border border-[#E5E5E5] text-[#666666] font-medium text-sm rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-black shadow-sm cursor-pointer hover:border-black hover:text-black transition-colors"
+                      >
+                        <option value="all">Tous les statuts</option>
+                        <option value="success">Réussi</option>
+                        <option value="fail">Échoué</option>
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] pointer-events-none" />
                     </div>
-                    <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
-                    <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
-                      <FilterPill active={resultScoreFilter === "all"} onClick={() => setResultScoreFilter("all")}>Toutes les notes</FilterPill>
-                      <FilterPill active={resultScoreFilter === "10-20"} onClick={() => setResultScoreFilter("10-20")}>10 - 20</FilterPill>
-                      <FilterPill active={resultScoreFilter === "0-10"} onClick={() => setResultScoreFilter("0-10")}>0 - 10</FilterPill>
+                    <div className="relative min-w-[150px]">
+                      <select
+                        value={resultScoreFilter}
+                        onChange={(e) => setResultScoreFilter(e.target.value)}
+                        className="w-full appearance-none bg-white border border-[#E5E5E5] text-[#666666] font-medium text-sm rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-black shadow-sm cursor-pointer hover:border-black hover:text-black transition-colors"
+                      >
+                        <option value="all">Toutes les notes</option>
+                        <option value="10-20">10 - 20</option>
+                        <option value="0-10">0 - 10</option>
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] pointer-events-none" />
                     </div>
                   </div>
                 </div>
@@ -731,8 +798,8 @@ export function StudentDashboard() {
             </h1>
 
             {/* Search and Filters */}
-            <div className="space-y-4">
-              <div className="relative w-full">
+            <div className="flex flex-col lg:flex-row items-center gap-4">
+              <div className="relative w-full lg:flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666]" />
                 <input
                   type="text"
@@ -747,24 +814,43 @@ export function StudentDashboard() {
                   </button>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-3 pb-2">
-                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
-                  <FilterPill active={calendarMonthFilter === "all"} onClick={() => setCalendarMonthFilter("all")}>Tous les mois</FilterPill>
-                  <FilterPill active={calendarMonthFilter === "mars"} onClick={() => setCalendarMonthFilter("mars")}>Mars</FilterPill>
-                  <FilterPill active={calendarMonthFilter === "avril"} onClick={() => setCalendarMonthFilter("avril")}>Avril</FilterPill>
+              <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
+                <div className="relative min-w-[140px]">
+                  <select
+                    value={calendarMonthFilter}
+                    onChange={(e) => setCalendarMonthFilter(e.target.value)}
+                    className="w-full appearance-none bg-white border border-[#E5E5E5] text-[#666666] font-medium text-sm rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-black shadow-sm cursor-pointer hover:border-black hover:text-black transition-colors"
+                  >
+                    <option value="all">Tous les mois</option>
+                    <option value="mars">Mars</option>
+                    <option value="avril">Avril</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] pointer-events-none" />
                 </div>
-                <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
-                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
-                  <FilterPill active={calendarSubjectFilter === "all"} onClick={() => setCalendarSubjectFilter("all")}>Toutes les matières</FilterPill>
-                  {Array.from(new Set(allExams.map(e => e.subject))).slice(0, 3).map(subject => (
-                    <FilterPill key={subject} active={calendarSubjectFilter === subject} onClick={() => setCalendarSubjectFilter(subject)}>{subject}</FilterPill>
-                  ))}
+                <div className="relative min-w-[160px]">
+                  <select
+                    value={calendarSubjectFilter}
+                    onChange={(e) => setCalendarSubjectFilter(e.target.value)}
+                    className="w-full appearance-none bg-white border border-[#E5E5E5] text-[#666666] font-medium text-sm rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-black shadow-sm cursor-pointer hover:border-black hover:text-black transition-colors"
+                  >
+                    <option value="all">Toutes les matières</option>
+                    {Array.from(new Set(allExams.map(e => e.subject))).slice(0, 3).map(subject => (
+                      <option key={subject} value={subject}>{subject}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] pointer-events-none" />
                 </div>
-                <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
-                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
-                  <FilterPill active={calendarTypeFilter === "all"} onClick={() => setCalendarTypeFilter("all")}>Tous les types</FilterPill>
-                  <FilterPill active={calendarTypeFilter === "mcq"} onClick={() => setCalendarTypeFilter("mcq")}>QCM</FilterPill>
-                  <FilterPill active={calendarTypeFilter === "code"} onClick={() => setCalendarTypeFilter("code")}>Code</FilterPill>
+                <div className="relative min-w-[140px]">
+                  <select
+                    value={calendarTypeFilter}
+                    onChange={(e) => setCalendarTypeFilter(e.target.value)}
+                    className="w-full appearance-none bg-white border border-[#E5E5E5] text-[#666666] font-medium text-sm rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-black shadow-sm cursor-pointer hover:border-black hover:text-black transition-colors"
+                  >
+                    <option value="all">Tous les types</option>
+                    <option value="mcq">QCM</option>
+                    <option value="code">Code</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666] pointer-events-none" />
                 </div>
               </div>
             </div>
