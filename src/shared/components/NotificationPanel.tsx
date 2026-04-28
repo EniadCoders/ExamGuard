@@ -57,7 +57,7 @@ const studentNotifs: AppNotification[] = [
     id: 4,
     type: "result",
     title: "Note disponible",
-    body: "Votre note pour Base de Donnees est disponible : 91/100.",
+    body: "Votre note pour Base de Donnees est disponible : 18.2/20.",
     time: "28 Mar",
     read: true,
   },

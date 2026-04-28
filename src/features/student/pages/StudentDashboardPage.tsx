@@ -138,13 +138,13 @@ export function StudentDashboard() {
 
   const filteredResults = completedExams.filter((exam) => {
     const matchesSearch = !resultSearchQuery || exam.title.toLowerCase().includes(resultSearchQuery.toLowerCase()) || exam.subject.toLowerCase().includes(resultSearchQuery.toLowerCase());
-    const outOf20 = (exam.score! / 100) * 20;
-    const matchesScore = resultScoreFilter === "all" || 
-      (resultScoreFilter === "0-10" && outOf20 < 10) || 
-      (resultScoreFilter === "10-20" && outOf20 >= 10);
-    const matchesStatus = resultStatusFilter === "all" || 
-      (resultStatusFilter === "success" && outOf20 >= 10) || 
-      (resultStatusFilter === "fail" && outOf20 < 10);
+    const note = exam.score!;
+    const matchesScore = resultScoreFilter === "all" ||
+      (resultScoreFilter === "0-10" && note < 10) ||
+      (resultScoreFilter === "10-20" && note >= 10);
+    const matchesStatus = resultStatusFilter === "all" ||
+      (resultStatusFilter === "success" && note >= 10) ||
+      (resultStatusFilter === "fail" && note < 10);
     return matchesSearch && matchesScore && matchesStatus;
   });
 
@@ -380,7 +380,7 @@ export function StudentDashboard() {
                   icon={TrendingUp}
                 >
                   <div className="flex justify-center mb-4">
-                    <ScoreRing score={84} size="lg" />
+                    <ScoreRing score={16.8} size="lg" />
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm text-[var(--cyber-muted-text)]">
@@ -629,7 +629,7 @@ export function StudentDashboard() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
                           <span>Votre score</span>
-                          <span className="font-semibold text-[var(--cyber-text)]">{(exam.score! / exam.maxScore! * 20).toFixed(1)}/20</span>
+                          <span className="font-semibold text-[var(--cyber-text)]">{exam.score!.toFixed(1)}/20</span>
                         </div>
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
                           <span>Classement</span>
@@ -637,7 +637,7 @@ export function StudentDashboard() {
                         </div>
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
                           <span>Moyenne</span>
-                          <span className="font-semibold text-[var(--cyber-text)]">{(exam.classAvg! / 100 * 20).toFixed(1)}/20</span>
+                          <span className="font-semibold text-[var(--cyber-text)]">{exam.classAvg!.toFixed(1)}/20</span>
                         </div>
                       </div>
                     </button>
@@ -686,9 +686,9 @@ export function StudentDashboard() {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                           {[
-                            { label: "Note finale", value: `${(exam.score! / exam.maxScore! * 20).toFixed(1)}/20` },
+                            { label: "Note finale", value: `${exam.score!.toFixed(1)}/20` },
                             { label: "Classement", value: `#${exam.rank}` },
-                            { label: "Moyenne classe", value: `${(exam.classAvg! / 100 * 20).toFixed(1)}/20` },
+                            { label: "Moyenne classe", value: `${exam.classAvg!.toFixed(1)}/20` },
                           ].map((item) => (
                             <div
                               key={item.label}

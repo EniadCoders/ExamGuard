@@ -34,9 +34,11 @@ export function ScoreRing({ score, size = "md", variant = "out-of-20" }: ScoreRi
   const config = scoreRingSizes[size];
   const radius = (config.width - config.stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
+  const ratio = Math.max(0, Math.min(1, score / 20));
+  const offset = circumference - ratio * circumference;
 
-  const scoreOutOf20 = parseFloat(((score / 100) * 20).toFixed(1));
+  const scoreOutOf20 = parseFloat(score.toFixed(1));
+  const percentage = Math.round(ratio * 100);
 
   return (
     <div
@@ -73,7 +75,7 @@ export function ScoreRing({ score, size = "md", variant = "out-of-20" }: ScoreRi
             <span className="text-[0.65em] font-medium text-[#666666]">/20</span>
           </span>
         ) : (
-          <span className={`font-bold text-black ${config.fontSize}`}>{score}%</span>
+          <span className={`font-bold text-black ${config.fontSize}`}>{percentage}%</span>
         )}
       </div>
     </div>

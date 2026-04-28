@@ -155,9 +155,10 @@ export function ExamResultsView({
 }: ExamResultsViewProps) {
   const navigate = useNavigate();
   const resolvedTotalQuestions = totalQuestions ?? total ?? Math.max(answeredCount, 1);
-  const scorePercentage = (answeredCount / resolvedTotalQuestions) * 100 * 0.87;
-  const scoreOutOf20 = ((scorePercentage / 100) * 20).toFixed(1).replace(/\.0$/, '');
-  const isPassed = scorePercentage >= 50;
+  const scoreOutOf20Raw = (answeredCount / resolvedTotalQuestions) * 20 * 0.87;
+  const scoreOutOf20 = scoreOutOf20Raw.toFixed(1).replace(/\.0$/, '');
+  const scorePercentage = (scoreOutOf20Raw / 20) * 100;
+  const isPassed = scoreOutOf20Raw >= 10;
   const breakdown = [
     { label: "QCM", pts: 9, maxPts: 9 },
     { label: "Texte", pts: 7, maxPts: 9 },

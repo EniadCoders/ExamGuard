@@ -99,26 +99,26 @@ const stats = [
 ];
 
 const recentExams: Exam[] = [
-  { id: 1, title: "Architecture Java EE", subject: "Génie logiciel", duration: 90, date: "09 Avril à 18:00", students: 45, status: "scheduled", questions: 12, description: "Examen couvrant les architectures d'entreprise Java, les patterns JEE, et les frameworks Spring/Hibernate.", passingScore: 60 },
-  { id: 2, title: "Base de données avancées", subject: "Systèmes d'information", duration: 120, date: "10 Avril à 14:00", students: 38, status: "scheduled", questions: 15, description: "Examen sur les bases de données relationnelles avancées, SQL, NoSQL et optimisation.", passingScore: 55 },
-  { id: 3, title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril à 10:00", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité des systèmes d'information et protection des données.", passingScore: 60 },
+  { id: 1, title: "Architecture Java EE", subject: "Génie logiciel", duration: 90, date: "09 Avril à 18:00", students: 45, status: "scheduled", questions: 12, description: "Examen couvrant les architectures d'entreprise Java, les patterns JEE, et les frameworks Spring/Hibernate.", passingScore: 12 },
+  { id: 2, title: "Base de données avancées", subject: "Systèmes d'information", duration: 120, date: "10 Avril à 14:00", students: 38, status: "scheduled", questions: 15, description: "Examen sur les bases de données relationnelles avancées, SQL, NoSQL et optimisation.", passingScore: 11 },
+  { id: 3, title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril à 10:00", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité des systèmes d'information et protection des données.", passingScore: 12 },
 ];
 
 const allExamsData: Exam[] = [
-  { id: 1, title: "Architecture Java EE", subject: "Génie logiciel", duration: 90, date: "09 Avril 2026", students: 45, status: "scheduled", questions: 12, description: "Examen couvrant les architectures d'entreprise Java.", passingScore: 60 },
-  { id: 2, title: "Base de données avancées", subject: "Systèmes d'information", duration: 120, date: "10 Avril 2026", students: 38, status: "scheduled", questions: 15, description: "Examen sur les bases de données.", passingScore: 55 },
-  { id: 3, title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril 2026", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité informatique.", passingScore: 60 },
-  { id: 4, title: "Programmation Web", subject: "Développement", duration: 60, date: "15 Avril 2026", students: 31, status: "draft", questions: 10, description: "HTML, CSS, JavaScript et frameworks modernes.", passingScore: 50 },
-  { id: 5, title: "Intelligence Artificielle", subject: "IA & ML", duration: 150, date: "18 Avril 2026", students: 28, status: "scheduled", questions: 20, description: "Machine learning, réseaux de neurones et IA appliquée.", passingScore: 65 },
+  { id: 1, title: "Architecture Java EE", subject: "Génie logiciel", duration: 90, date: "09 Avril 2026", students: 45, status: "scheduled", questions: 12, description: "Examen couvrant les architectures d'entreprise Java.", passingScore: 12 },
+  { id: 2, title: "Base de données avancées", subject: "Systèmes d'information", duration: 120, date: "10 Avril 2026", students: 38, status: "scheduled", questions: 15, description: "Examen sur les bases de données.", passingScore: 11 },
+  { id: 3, title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril 2026", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité informatique.", passingScore: 12 },
+  { id: 4, title: "Programmation Web", subject: "Développement", duration: 60, date: "15 Avril 2026", students: 31, status: "draft", questions: 10, description: "HTML, CSS, JavaScript et frameworks modernes.", passingScore: 10 },
+  { id: 5, title: "Intelligence Artificielle", subject: "IA & ML", duration: 150, date: "18 Avril 2026", students: 28, status: "scheduled", questions: 20, description: "Machine learning, réseaux de neurones et IA appliquée.", passingScore: 13 },
 ];
 
 const allStudentsData: Student[] = [
-  { id: 1, name: "Marie Dubois", email: "marie.dubois@univ.fr", exams: 12, avg: 87, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-001" },
-  { id: 2, name: "Thomas Martin", email: "thomas.martin@univ.fr", exams: 10, avg: 92, status: "active", lastActive: "Il y a 5 min", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-002" },
-  { id: 3, name: "Sophie Bernard", email: "sophie.bernard@univ.fr", exams: 15, avg: 78, status: "inactive", lastActive: "Il y a 2 jours", department: "Cybersécurité", year: "M2", studentId: "ETU-2024-003" },
-  { id: 4, name: "Lucas Petit", email: "lucas.petit@univ.fr", exams: 8, avg: 85, status: "active", lastActive: "Il y a 1 heure", department: "IA & Data", year: "L3", studentId: "ETU-2024-004" },
-  { id: 5, name: "Emma Rousseau", email: "emma.rousseau@univ.fr", exams: 11, avg: 91, status: "active", lastActive: "Il y a 30 min", department: "Réseaux", year: "M1", studentId: "ETU-2024-005" },
-  { id: 6, name: "Hugo Lefebvre", email: "hugo.lefebvre@univ.fr", exams: 7, avg: 73, status: "inactive", lastActive: "Il y a 5 jours", department: "Informatique", year: "L3", studentId: "ETU-2024-006" },
+  { id: 1, name: "Marie Dubois", email: "marie.dubois@univ.fr", exams: 12, avg: 17.4, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-001" },
+  { id: 2, name: "Thomas Martin", email: "thomas.martin@univ.fr", exams: 10, avg: 18.4, status: "active", lastActive: "Il y a 5 min", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-002" },
+  { id: 3, name: "Sophie Bernard", email: "sophie.bernard@univ.fr", exams: 15, avg: 15.6, status: "inactive", lastActive: "Il y a 2 jours", department: "Cybersécurité", year: "M2", studentId: "ETU-2024-003" },
+  { id: 4, name: "Lucas Petit", email: "lucas.petit@univ.fr", exams: 8, avg: 17.0, status: "active", lastActive: "Il y a 1 heure", department: "IA & Data", year: "L3", studentId: "ETU-2024-004" },
+  { id: 5, name: "Emma Rousseau", email: "emma.rousseau@univ.fr", exams: 11, avg: 18.2, status: "active", lastActive: "Il y a 30 min", department: "Réseaux", year: "M1", studentId: "ETU-2024-005" },
+  { id: 6, name: "Hugo Lefebvre", email: "hugo.lefebvre@univ.fr", exams: 7, avg: 14.6, status: "inactive", lastActive: "Il y a 5 jours", department: "Informatique", year: "L3", studentId: "ETU-2024-006" },
 ];
 
 type DirectoryRecord = {
@@ -155,11 +155,11 @@ const activityFeed = [
 ];
 
 const analyticsData = [
-  { subject: "Java EE", avg: 82, passing: 78, students: 45 },
-  { subject: "BDD", avg: 76, passing: 68, students: 38 },
-  { subject: "Sécurité", avg: 88, passing: 85, students: 52 },
-  { subject: "Web", avg: 91, passing: 89, students: 31 },
-  { subject: "IA", avg: 79, passing: 71, students: 28 },
+  { subject: "Java EE", avg: 16.4, passing: 15.6, students: 45 },
+  { subject: "BDD", avg: 15.2, passing: 13.6, students: 38 },
+  { subject: "Sécurité", avg: 17.6, passing: 17.0, students: 52 },
+  { subject: "Web", avg: 18.2, passing: 17.8, students: 31 },
+  { subject: "IA", avg: 15.8, passing: 14.2, students: 28 },
 ];
 
 const trendData = [
@@ -258,11 +258,11 @@ function ModalBase({ children, onClose, title, wide = false }: {
 // ─── Exam Details Modal ────────────────────────────────────────────────────────
 function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () => void; onEdit: () => void }) {
   const participants = [
-    { name: "Marie Dubois", score: 87, status: "completed" },
-    { name: "Thomas Martin", score: 92, status: "completed" },
-    { name: "Sophie Bernard", score: 78, status: "completed" },
-    { name: "Lucas Petit", score: 85, status: "completed" },
-    { name: "Emma Rousseau", score: 91, status: "completed" },
+    { name: "Marie Dubois", score: 17.4, status: "completed" },
+    { name: "Thomas Martin", score: 18.4, status: "completed" },
+    { name: "Sophie Bernard", score: 15.6, status: "completed" },
+    { name: "Lucas Petit", score: 17.0, status: "completed" },
+    { name: "Emma Rousseau", score: 18.2, status: "completed" },
   ];
 
   return (
@@ -296,7 +296,7 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
             { icon: Clock, label: "Durée", value: `${exam.duration} min` },
             { icon: Users, label: "Étudiants", value: `${exam.students}` },
             { icon: Hash, label: "Questions", value: `${exam.questions}` },
-            { icon: CheckSquare, label: "Score min.", value: `${exam.passingScore ?? 60}%` },
+            { icon: CheckSquare, label: "Note min.", value: `${exam.passingScore ?? 12}/20` },
           ].map((item) => (
             <div key={item.label} className="bg-white border border-[#E5E5E5] rounded-xl p-4 text-center">
               <item.icon className="w-5 h-5 text-[#888888] mx-auto mb-2" />
@@ -331,7 +331,7 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
                   <span className="text-sm text-black">{p.name}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-sm font-bold text-black">{p.score}/100</span>
+                  <span className="text-sm font-bold text-black">{p.score}/20</span>
                   <CheckCircle2 className="w-4 h-4 text-[#888888]" />
                 </div>
               </div>
@@ -472,7 +472,7 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
   const [date, setDate] = useState(exam.date);
   const [status, setStatus] = useState(exam.status);
   const [description, setDescription] = useState(exam.description ?? "");
-  const [passingScore, setPassingScore] = useState(exam.passingScore ?? 60);
+  const [passingScore, setPassingScore] = useState(exam.passingScore ?? 12);
 
   return (
     <ModalBase title={`Éditer — ${exam.title}`} onClose={onClose}>
@@ -512,8 +512,8 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
               className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Score de passage (%)</label>
-            <input type="number" value={passingScore} onChange={e => setPassingScore(Number(e.target.value))} min={0} max={100}
+            <label className="block text-sm font-medium text-black mb-2">Note de passage (/20)</label>
+            <input type="number" value={passingScore} onChange={e => setPassingScore(Number(e.target.value))} min={0} max={20} step={0.5}
               className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
           </div>
         </div>
@@ -551,7 +551,7 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [examDuration, setExamDuration] = useState(90);
   const [examDate, setExamDate] = useState("");
   const [examDesc, setExamDesc] = useState("");
-  const [passingScore, setPassingScore] = useState(60);
+  const [passingScore, setPassingScore] = useState(12);
 
   return (
     <ModalBase title="Créer un nouvel examen" onClose={onClose}>
@@ -596,8 +596,8 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
               className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Score de passage (%)</label>
-            <input type="number" value={passingScore} onChange={e => setPassingScore(Number(e.target.value))} min={0} max={100}
+            <label className="block text-sm font-medium text-black mb-2">Note de passage (/20)</label>
+            <input type="number" value={passingScore} onChange={e => setPassingScore(Number(e.target.value))} min={0} max={20} step={0.5}
               className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
           </div>
         </div>
@@ -801,10 +801,10 @@ function AddStudentModal({ onClose, onAdded }: { onClose: () => void; onAdded?: 
 // ─── Student Details Modal ─────────────────────────────────────────────────────
 function StudentDetailsModal({ student, onClose, onEdit }: { student: Student; onClose: () => void; onEdit: () => void }) {
   const examHistory = [
-    { exam: "Architecture Java EE", date: "09 Avr", score: 87, status: "passed" },
-    { exam: "Base de données", date: "15 Mar", score: 92, status: "passed" },
-    { exam: "Sécurité informatique", date: "20 Fév", score: 78, status: "passed" },
-    { exam: "Algorithmique", date: "05 Fév", score: 65, status: "passed" },
+    { exam: "Architecture Java EE", date: "09 Avr", score: 17.4, status: "passed" },
+    { exam: "Base de données", date: "15 Mar", score: 18.4, status: "passed" },
+    { exam: "Sécurité informatique", date: "20 Fév", score: 15.6, status: "passed" },
+    { exam: "Algorithmique", date: "05 Fév", score: 13.0, status: "passed" },
   ];
 
   return (
@@ -837,7 +837,7 @@ function StudentDetailsModal({ student, onClose, onEdit }: { student: Student; o
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             { label: "Examens passés", value: student.exams.toString(), icon: FileText },
-            { label: "Moyenne générale", value: `${student.avg}%`, icon: TrendingUp },
+            { label: "Moyenne générale", value: `${student.avg}/20`, icon: TrendingUp },
             { label: "Dernière activité", value: student.lastActive, icon: Clock },
           ].map((item) => (
             <div key={item.label} className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
@@ -859,11 +859,11 @@ function StudentDetailsModal({ student, onClose, onEdit }: { student: Student; o
                   <p className="text-xs text-[#888888]">{e.date}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-sm font-bold text-black">{e.score}/100</span>
+                  <span className="text-sm font-bold text-black">{e.score}/20</span>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    e.score >= 60 ? "bg-black text-white" : "bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]"
+                    e.score >= 10 ? "bg-black text-white" : "bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]"
                   }`}>
-                    {e.score >= 60 ? "Admis" : "Refusé"}
+                    {e.score >= 10 ? "Admis" : "Refusé"}
                   </span>
                 </div>
               </div>
@@ -1429,9 +1429,9 @@ function StudentsTab() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-black">{student.avg}%</span>
+                      <span className="text-sm font-bold text-black">{student.avg}/20</span>
                       <div className="w-16 h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden">
-                        <div className="h-full bg-black rounded-full" style={{ width: `${student.avg}%` }} />
+                        <div className="h-full bg-black rounded-full" style={{ width: `${(student.avg / 20) * 100}%` }} />
                       </div>
                     </div>
                   </td>
@@ -1512,7 +1512,7 @@ function AnalyticsTab() {
           <BarChart data={analyticsData} barGap={4}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(117, 195, 214, 0.12)" vertical={false} />
             <XAxis dataKey="subject" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[50, 100]} />
+            <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[10, 20]} />
             <Tooltip
               contentStyle={{ background: "rgba(11, 27, 38, 0.95)", border: "1px solid rgba(123, 241, 255, 0.25)", borderRadius: "12px", fontSize: 12, color: "#E5F4FF", boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)" }}
                 labelStyle={{ color: "#E5F4FF" }}
@@ -1595,7 +1595,7 @@ function AnalyticsTab() {
                 <p className="text-xs text-[#888888]">{student.department} · {student.exams} examens</p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold text-black">{student.avg}%</p>
+                <p className="text-sm font-bold text-black">{student.avg}/20</p>
                 <p className="text-xs text-[#888888]">Moyenne</p>
               </div>
             </div>
@@ -1689,8 +1689,8 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
               className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Score de passage par défaut (%)</label>
-            <input type="number" defaultValue={60} min={0} max={100}
+            <label className="block text-sm font-medium text-black mb-2">Note de passage par défaut (/20)</label>
+            <input type="number" defaultValue={12} min={0} max={20} step={0.5}
               className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
           </div>
           <div>
