@@ -121,6 +121,24 @@ const allStudentsData: Student[] = [
   { id: 6, name: "Hugo Lefebvre", email: "hugo.lefebvre@univ.fr", exams: 7, avg: 73, status: "inactive", lastActive: "Il y a 5 jours", department: "Informatique", year: "L3", studentId: "ETU-2024-006" },
 ];
 
+type DirectoryRecord = {
+  apogee: string;
+  name: string;
+  email: string;
+  department: string;
+  filiere: string;
+  year: string;
+};
+
+const universityDirectory: DirectoryRecord[] = [
+  { apogee: "21000123", name: "Yassine El Amrani",   email: "yassine.elamrani@univ.ma",   department: "Informatique",     filiere: "Génie Informatique",        year: "3ème année" },
+  { apogee: "21000245", name: "Salma Benali",        email: "salma.benali@univ.ma",       department: "Génie logiciel",   filiere: "Ingénierie du Logiciel",    year: "4ème année" },
+  { apogee: "21000388", name: "Othmane Idrissi",     email: "othmane.idrissi@univ.ma",    department: "Cybersécurité",    filiere: "Sécurité des SI",            year: "5ème année" },
+  { apogee: "21000412", name: "Imane Tazi",          email: "imane.tazi@univ.ma",         department: "IA & Data",        filiere: "Data Science & IA",          year: "2ème année" },
+  { apogee: "21000567", name: "Reda Mansouri",       email: "reda.mansouri@univ.ma",      department: "Réseaux",          filiere: "Réseaux & Télécoms",         year: "1ère année" },
+  { apogee: "21000601", name: "Khadija Lahlou",      email: "khadija.lahlou@univ.ma",     department: "Informatique",     filiere: "Génie Informatique",        year: "5ème année" },
+];
+
 const fraudAlerts = [
   { id: 1, student: "Marie Dubois", initials: "MD", exam: "Réseaux & Sécurité", type: "Changement d'onglet multiple", time: "Il y a 2 min", severity: "high" },
   { id: 2, student: "Thomas Martin", initials: "TM", exam: "Algorithmique Avancée", type: "Détection de mouvement suspect", time: "Il y a 5 min", severity: "medium" },
@@ -616,61 +634,150 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
 // ─── Add Student Modal ─────────────────────────────────────────────────────────
 function AddStudentModal({ onClose, onAdded }: { onClose: () => void; onAdded?: () => void }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [studentId, setStudentId] = useState("");
-  const [department, setDepartment] = useState("Informatique");
-  const [year, setYear] = useState("L3");
+  const [method, setMethod] = useState<"email" | "apogee">("email");
+  const [query, setQuery] = useState("");
+  const [match, setMatch] = useState<DirectoryRecord | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const trimmed = query.trim().toLowerCase();
+  const suggestions = trimmed.length === 0
+    ? []
+    : universityDirectory.filter(r =>
+        method === "email"
+          ? r.email.toLowerCase().includes(trimmed)
+          : r.apogee.includes(trimmed),
+      ).slice(0, 6);
+
+  const handleMethodChange = (next: "email" | "apogee") => {
+    setMethod(next);
+    setQuery("");
+    setMatch(null);
+    setShowSuggestions(false);
+  };
+
+  const handleSelect = (record: DirectoryRecord) => {
+    setMatch(record);
+    setQuery(method === "email" ? record.email : record.apogee);
+    setShowSuggestions(false);
+  };
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    setMatch(null);
+    setShowSuggestions(true);
+  };
 
   return (
     <ModalBase title="Ajouter un étudiant" onClose={onClose}>
       <div className="p-6 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-black mb-2">Nom complet *</label>
-          <input value={name} onChange={e => setName(e.target.value)}
-            placeholder="Ex: Marie Dubois"
-            className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">Adresse email *</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-            placeholder="marie.dubois@univ.fr"
-            className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">Numéro étudiant</label>
-          <input value={studentId} onChange={e => setStudentId(e.target.value)}
-            placeholder="ETU-2024-XXX"
-            className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Département</label>
-            <select value={department} onChange={e => setDepartment(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
-              <option>Informatique</option>
-              <option>Génie logiciel</option>
-              <option>Cybersécurité</option>
-              <option>IA & Data</option>
-              <option>Réseaux</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Année</label>
-            <select value={year} onChange={e => setYear(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
-              <option>L1</option>
-              <option>L2</option>
-              <option>L3</option>
-              <option>M1</option>
-              <option>M2</option>
-            </select>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#888888] mb-2">Méthode d'identification</p>
+          <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#F5F5F5] p-1">
+            {([
+              { key: "email", label: "Adresse email", icon: Mail },
+              { key: "apogee", label: "N° d'Apogée", icon: Hash },
+            ] as const).map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => handleMethodChange(key)}
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  method === key
+                    ? "bg-black text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
+                    : "text-[#444444] hover:bg-white"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </button>
+            ))}
           </div>
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-black mb-2">
+            {method === "email" ? "Adresse email universitaire" : "Numéro d'Apogée"} *
+          </label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
+            <input
+              type={method === "email" ? "email" : "text"}
+              value={query}
+              onChange={e => handleQueryChange(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              placeholder={method === "email" ? "prenom.nom@univ.ma" : "Ex: 21000123"}
+              className="w-full pl-10 pr-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
+            />
+            {showSuggestions && suggestions.length > 0 && (
+              <ul className="absolute z-10 mt-1 w-full max-h-72 overflow-y-auto rounded-xl border border-[#E5E5E5] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+                {suggestions.map(r => (
+                  <li key={r.apogee}>
+                    <button
+                      type="button"
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => handleSelect(r)}
+                      className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-[#F5F5F5] transition-colors"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black flex-shrink-0">
+                        <span className="text-xs font-bold text-white">
+                          {r.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-black truncate">{r.name}</p>
+                        <p className="text-xs text-[#666666] truncate">
+                          {method === "email" ? r.email : `N° Apogée · ${r.apogee}`} — {r.department}
+                        </p>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {showSuggestions && query.trim() && suggestions.length === 0 && (
+              <div className="absolute z-10 mt-1 w-full rounded-xl border border-[#E5E5E5] bg-white px-4 py-3 text-sm text-[#666666] shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+                <span className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-[#888888]" /> Aucun étudiant correspondant.</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {match && (
+          <div className="rounded-xl border border-[#E5E5E5] bg-white p-5 space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black flex-shrink-0">
+                <span className="text-sm font-bold text-white">
+                  {match.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-black">{match.name}</h3>
+                <p className="text-xs text-[#888888] mt-0.5">N° Apogée · {match.apogee}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { icon: Mail, label: "Email", value: match.email },
+                { icon: BookOpen, label: "Département", value: match.department },
+                { icon: Hash, label: "Filière", value: match.filiere },
+                { icon: Info, label: "Année", value: match.year },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-start gap-3 px-3 py-2.5 bg-[#F8F8F8] rounded-lg border border-[#E5E5E5]">
+                  <Icon className="w-4 h-4 text-[#666666] mt-0.5 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wide text-[#888888]">{label}</p>
+                    <p className="text-sm text-black truncate">{value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
           <p className="text-xs text-[#666666] flex items-start gap-2">
             <Info className="w-3.5 h-3.5 text-[#888888] flex-shrink-0 mt-0.5" />
-            Un email d'activation sera envoyé automatiquement à l'étudiant avec ses identifiants de connexion.
+            Les informations sont récupérées depuis l'annuaire universitaire. Un email d'activation sera envoyé à l'étudiant après ajout.
           </p>
         </div>
       </div>
@@ -680,7 +787,7 @@ function AddStudentModal({ onClose, onAdded }: { onClose: () => void; onAdded?: 
         </button>
         <button
           onClick={() => { onAdded?.(); onClose(); }}
-          disabled={!name.trim() || !email.trim()}
+          disabled={!match}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
         >
           <UserPlus className="w-4 h-4" />
