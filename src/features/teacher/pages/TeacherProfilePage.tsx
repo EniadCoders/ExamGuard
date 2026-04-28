@@ -96,10 +96,23 @@ export function TeacherProfilePage() {
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = "";
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      showToast("Format de fichier non pris en charge. Utilisez JPG ou PNG.", "error");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      showToast("Image trop volumineuse. Taille maximale : 2 Mo.", "error");
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = (ev) => setProfileImage(ev.target?.result as string);
+    reader.onload = (ev) => {
+      setProfileImage(ev.target?.result as string);
+      showToast("Photo de profil mise à jour.");
+    };
     reader.readAsDataURL(file);
   };
 
@@ -148,19 +161,28 @@ export function TeacherProfilePage() {
           <div className="lg:col-span-1 space-y-4">
             {/* Avatar card */}
             <DashboardCard interactive className="p-6 flex flex-col items-center gap-4">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-2xl border border-[rgba(117,195,214,0.14)] bg-[rgba(11,27,38,0.72)] flex items-center justify-center overflow-hidden">
-                  {profileImage
-                    ? <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
-                    : <span className="text-2xl font-bold text-[var(--cyber-text)]">PD</span>
-                  }
-                </div>
+              <div className="relative group">
                 <button
+                  type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-[var(--cyber-accent)] flex items-center justify-center border-2 border-[rgba(6,15,22,0.95)] hover:bg-[var(--cyber-accent-strong)] transition-colors"
+                  aria-label="Changer la photo de profil"
+                  className="relative w-28 h-28 rounded-full border-2 border-[rgba(123,241,255,0.35)] bg-[rgba(11,27,38,0.72)] flex items-center justify-center overflow-hidden transition-all hover:border-[rgba(123,241,255,0.7)] focus:outline-none focus:ring-2 focus:ring-[rgba(123,241,255,0.5)] focus:ring-offset-2 focus:ring-offset-[rgba(6,15,22,0.95)] shadow-[0_0_0_4px_rgba(11,27,38,0.6),0_8px_24px_rgba(0,0,0,0.45)]"
                 >
-                  <Camera className="w-3.5 h-3.5 text-[var(--primary-foreground)]" />
+                  {profileImage
+                    ? <img src={profileImage} alt="Profil" className="w-full h-full object-cover" />
+                    : <span className="text-3xl font-bold text-[var(--cyber-text)]">PD</span>
+                  }
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[rgba(6,15,22,0.72)] opacity-0 transition-opacity group-hover:opacity-100">
+                    <Camera className="w-5 h-5 text-white" />
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-white">Changer</span>
+                  </div>
                 </button>
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--cyber-accent-strong)] border-[3px] border-[rgba(6,15,22,0.95)] shadow-[0_0_12px_rgba(123,241,255,0.55)]"
+                >
+                  <Camera className="w-4 h-4 text-[#0B1B26]" />
+                </span>
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
               </div>
               <div className="text-center">
@@ -168,15 +190,25 @@ export function TeacherProfilePage() {
                 <p className="mt-0.5 text-xs text-[var(--cyber-muted-text)]">{title}</p>
                 <p className="text-xs text-[var(--cyber-subtle-text)]">{department}</p>
               </div>
-              {profileImage && (
+              <div className="flex w-full flex-col gap-2">
                 <button
-                  onClick={() => setProfileImage(null)}
-                  className="text-xs text-[var(--cyber-subtle-text)] hover:text-[var(--cyber-text)] transition-colors flex items-center gap-1"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[rgba(123,241,255,0.35)] bg-[rgba(11,27,38,0.5)] px-3 py-2 text-xs font-medium text-[var(--cyber-text)] hover:bg-[rgba(11,27,38,0.75)] hover:border-[rgba(123,241,255,0.6)] transition-colors"
                 >
-                  <Trash2 className="w-3 h-3" />
-                  Supprimer la photo
+                  <Camera className="w-3.5 h-3.5" />
+                  {profileImage ? "Changer la photo" : "Téléverser une photo"}
                 </button>
-              )}
+                {profileImage && (
+                  <button
+                    onClick={() => setProfileImage(null)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-transparent px-3 py-2 text-xs font-medium text-[var(--cyber-subtle-text)] hover:text-[#FFB3B8] hover:border-[rgba(255,123,130,0.4)] hover:bg-[rgba(255,123,130,0.08)] transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Supprimer la photo
+                  </button>
+                )}
+                <p className="text-[10px] text-[var(--cyber-subtle-text)] text-center mt-1">JPG ou PNG · max. 2 Mo</p>
+              </div>
             </DashboardCard>
 
             {/* Nav */}
