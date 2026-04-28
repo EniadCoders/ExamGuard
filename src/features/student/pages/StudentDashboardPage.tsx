@@ -39,6 +39,7 @@ import {
   X,
   Bell,
   Search,
+  Camera,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
@@ -938,6 +939,34 @@ export function StudentDashboard() {
                     <h2 className="text-2xl font-serif text-black mb-6">
                       Informations du profil
                     </h2>
+                    
+                    {/* Profile Picture Section */}
+                    <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-[#E5E5E5] mb-6">
+                      <div className="relative group">
+                        <div className="w-24 h-24 rounded-full bg-[#F5F7FB] border-2 border-[#E5E5E5] flex items-center justify-center overflow-hidden">
+                          <User className="w-10 h-10 text-[#666666]" />
+                        </div>
+                        <label className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity duration-200">
+                          <Camera className="w-6 h-6" />
+                          <input type="file" className="hidden" accept="image/*" />
+                        </label>
+                      </div>
+                      <div className="text-center sm:text-left">
+                        <h3 className="text-lg font-bold text-black">Photo de profil</h3>
+                        <p className="text-sm text-[#666666] mt-1 mb-3">
+                          JPG, GIF ou PNG. Taille maximale de 800 Ko.
+                        </p>
+                        <div className="flex items-center justify-center sm:justify-start gap-3">
+                          <label className="px-4 py-2 bg-[#F5F7FB] hover:bg-[#E5E5E5] text-black text-sm font-semibold rounded-lg transition-colors border border-[#E5E5E5] cursor-pointer">
+                            Changer
+                            <input type="file" className="hidden" accept="image/*" />
+                          </label>
+                          <button className="px-4 py-2 text-red-600 hover:bg-red-50 text-sm font-semibold rounded-lg transition-colors">
+                            Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <label className="block text-sm font-medium text-black mb-2">Prénom</label>
