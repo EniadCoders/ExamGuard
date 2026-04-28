@@ -1616,7 +1616,8 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="space-y-6 lg:col-span-2">
       {/* Profile card CTA */}
       <DashboardCard tone="accent" className="p-6">
         <div className="flex items-center justify-between gap-4">
@@ -1729,6 +1730,88 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
           </div>
         )}
       </div>
+      </div>
+
+      {/* Right sidebar */}
+      <aside className="space-y-6 lg:col-span-1">
+        <DashboardSectionCard title="État du système" icon={Activity}>
+          <div className="space-y-3">
+            {[
+              { label: "API ExamGuard", status: "ok", value: "Opérationnel" },
+              { label: "Service de surveillance", status: "ok", value: "Opérationnel" },
+              { label: "Stockage vidéo", status: "warn", value: "78% utilisé" },
+              { label: "Détection IA", status: "ok", value: "Opérationnel" },
+            ].map(item => (
+              <div key={item.label} className="flex items-center justify-between gap-3 rounded-lg bg-[rgba(11,27,38,0.5)] border border-[rgba(117,195,214,0.14)] px-3 py-2.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`h-2 w-2 rounded-full flex-shrink-0 ${item.status === "ok" ? "bg-[#4ADE80] shadow-[0_0_6px_rgba(74,222,128,0.6)]" : "bg-[#FCD34D] shadow-[0_0_6px_rgba(252,211,77,0.6)]"}`} />
+                  <span className="text-sm text-[var(--cyber-text)] truncate">{item.label}</span>
+                </div>
+                <span className="text-xs text-[var(--cyber-muted-text)] flex-shrink-0">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </DashboardSectionCard>
+
+        <DashboardSectionCard title="Activité récente" icon={Clock}>
+          <ul className="space-y-3">
+            {[
+              { icon: UserPlus, text: "12 étudiants ajoutés cette semaine", time: "Il y a 2 h" },
+              { icon: FileText, text: "3 examens planifiés", time: "Hier" },
+              { icon: Shield, text: "Politique de surveillance mise à jour", time: "Il y a 3 j" },
+              { icon: Download, text: "Export du rapport mensuel", time: "Il y a 5 j" },
+            ].map((item, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgba(11,27,38,0.7)] border border-[rgba(117,195,214,0.18)] flex-shrink-0">
+                  <item.icon className="h-4 w-4 text-[var(--cyber-accent-strong)]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-[var(--cyber-text)] leading-snug">{item.text}</p>
+                  <p className="text-xs text-[var(--cyber-subtle-text)] mt-0.5">{item.time}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </DashboardSectionCard>
+
+        <DashboardSectionCard title="Conseils de sécurité" icon={AlertCircle}>
+          <ul className="space-y-2.5 text-sm text-[var(--cyber-muted-text)]">
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[var(--cyber-accent-strong)] mt-0.5 flex-shrink-0" />
+              Activez la détection faciale pour les examens à fort enjeu.
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[var(--cyber-accent-strong)] mt-0.5 flex-shrink-0" />
+              Vérifiez les sessions actives au moins une fois par mois.
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[var(--cyber-accent-strong)] mt-0.5 flex-shrink-0" />
+              Renouvelez votre mot de passe tous les 90 jours.
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[var(--cyber-accent-strong)] mt-0.5 flex-shrink-0" />
+              Restreignez les IP aux réseaux institutionnels en période d'examen.
+            </li>
+          </ul>
+        </DashboardSectionCard>
+
+        <DashboardSectionCard title="Support" icon={Info}>
+          <div className="space-y-3">
+            <div className="rounded-lg bg-[rgba(11,27,38,0.5)] border border-[rgba(117,195,214,0.14)] px-3 py-2.5">
+              <p className="text-xs text-[var(--cyber-subtle-text)]">Version</p>
+              <p className="text-sm font-medium text-[var(--cyber-text)]">ExamGuard v2.4.1</p>
+            </div>
+            <div className="rounded-lg bg-[rgba(11,27,38,0.5)] border border-[rgba(117,195,214,0.14)] px-3 py-2.5">
+              <p className="text-xs text-[var(--cyber-subtle-text)]">Contact</p>
+              <p className="text-sm font-medium text-[var(--cyber-text)]">support@examguard.io</p>
+            </div>
+            <button className="cyber-button-secondary w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium">
+              <BookOpen className="w-4 h-4" />
+              Centre d'aide
+            </button>
+          </div>
+        </DashboardSectionCard>
+      </aside>
     </div>
   );
 }
