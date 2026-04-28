@@ -585,7 +585,7 @@ export function StudentDashboard() {
                     </div>
                     <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
                     <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                      <FilterPill active={resultScoreFilter === "all"} onClick={() => setResultScoreFilter("all")}>Tous les scores</FilterPill>
+                      <FilterPill active={resultScoreFilter === "all"} onClick={() => setResultScoreFilter("all")}>Toutes les notes</FilterPill>
                       <FilterPill active={resultScoreFilter === "10-20"} onClick={() => setResultScoreFilter("10-20")}>10 - 20</FilterPill>
                       <FilterPill active={resultScoreFilter === "0-10"} onClick={() => setResultScoreFilter("0-10")}>0 - 10</FilterPill>
                     </div>
@@ -628,7 +628,7 @@ export function StudentDashboard() {
                       <div className="dashboard-divider mb-4" />
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
-                          <span>Votre score</span>
+                          <span>Votre note</span>
                           <span className="font-semibold text-[var(--cyber-text)]">{exam.score!.toFixed(1)}/20</span>
                         </div>
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
@@ -680,7 +680,7 @@ export function StudentDashboard() {
                           </div>
                           <div className="text-right">
                             <ScoreRing score={exam.score!} size="lg" />
-                            <p className="mt-2 text-sm text-[var(--cyber-muted-text)]">Votre score</p>
+                            <p className="mt-2 text-sm text-[var(--cyber-muted-text)]">Votre note</p>
                           </div>
                         </div>
 

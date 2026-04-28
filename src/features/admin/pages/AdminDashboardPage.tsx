@@ -1505,7 +1505,7 @@ function AnalyticsTab() {
       {/* Performance by Subject */}
       <DashboardSectionCard
         title="Performance par matière"
-        subtitle="Comparaison de la moyenne et du score de passage"
+        subtitle="Comparaison de la moyenne et de la note de passage"
         icon={BarChart3}
       >
         <ResponsiveContainer width="100%" height={240}>
@@ -1521,7 +1521,7 @@ function AnalyticsTab() {
             />
             <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
             <Bar dataKey="avg" name="Moyenne" fill="#3DD8E9" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="passing" name="Score de passage" fill="#1D4556" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="passing" name="Note de passage" fill="#1D4556" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </DashboardSectionCard>
