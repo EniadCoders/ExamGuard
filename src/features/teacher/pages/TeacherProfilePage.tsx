@@ -16,7 +16,7 @@ import {
   Hash,
   Trash2,
   Lock,
-  X,
+  X as XIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
@@ -463,7 +463,7 @@ export function TeacherProfilePage() {
                           onClick={() => showToast("Session déconnectée avec succès.")}
                           className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E5E5] bg-white hover:bg-[#F5F5F5] text-xs font-medium text-black transition-colors"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <XIcon className="w-3.5 h-3.5" />
                           Révoquer
                         </button>
                       )}

@@ -852,12 +852,14 @@ function ImportDataModal({ onClose }: { onClose: () => void }) {
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 function OverviewTab({
   onGoToExams,
+  onGoToAnalytics,
   onExamDetails,
   onCreateExam,
   onAddStudent,
   onImportData,
 }: {
   onGoToExams: () => void;
+  onGoToAnalytics: () => void;
   onExamDetails: (exam: Exam) => void;
   onCreateExam: () => void;
   onAddStudent: () => void;
@@ -957,7 +959,7 @@ function OverviewTab({
         title="Alertes de fraude récentes"
         subtitle="Signalements à examiner en priorité"
         icon={Shield}
-        action={<ViewAllButton />}
+        action={<ViewAllButton onClick={onGoToAnalytics} />}
         bodyClassName="p-0"
       >
         <div>
@@ -1623,6 +1625,7 @@ export function AdminDashboard() {
         {activeTab === "overview" && (
           <OverviewTab
             onGoToExams={() => setActiveTab("exams")}
+            onGoToAnalytics={() => setActiveTab("analytics")}
             onExamDetails={(exam) => setOverviewExamDetails(exam)}
             onCreateExam={() => setShowCreateExam(true)}
             onAddStudent={() => setShowAddStudent(true)}
