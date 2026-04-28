@@ -1299,8 +1299,10 @@ function AnalyticsTab() {
             <XAxis dataKey="subject" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[50, 100]} />
             <Tooltip
-              contentStyle={{ background: "white", border: "1px solid #E5E5E5", borderRadius: "12px", fontSize: 12 }}
-              cursor={{ fill: "#F5F5F5" }}
+              contentStyle={{ background: "rgba(11, 27, 38, 0.95)", border: "1px solid rgba(123, 241, 255, 0.25)", borderRadius: "12px", fontSize: 12, color: "#E5F4FF", boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)" }}
+                labelStyle={{ color: "#E5F4FF" }}
+                itemStyle={{ color: "#8BF3FF" }}
+              cursor={{ fill: "rgba(123, 241, 255, 0.08)" }}
             />
             <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
             <Bar dataKey="avg" name="Moyenne" fill="#3DD8E9" radius={[4, 4, 0, 0]} />
@@ -1322,7 +1324,9 @@ function AnalyticsTab() {
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[75, 95]} />
               <Tooltip
-                contentStyle={{ background: "white", border: "1px solid #E5E5E5", borderRadius: "12px", fontSize: 12 }}
+                contentStyle={{ background: "rgba(11, 27, 38, 0.95)", border: "1px solid rgba(123, 241, 255, 0.25)", borderRadius: "12px", fontSize: 12, color: "#E5F4FF", boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)" }}
+                labelStyle={{ color: "#E5F4FF" }}
+                itemStyle={{ color: "#8BF3FF" }}
               />
               <Line type="monotone" dataKey="success" name="Réussite %" stroke="#8BF3FF" strokeWidth={2} dot={{ fill: "#8BF3FF", r: 3 }} />
             </LineChart>
@@ -1340,8 +1344,10 @@ function AnalyticsTab() {
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: "white", border: "1px solid #E5E5E5", borderRadius: "12px", fontSize: 12 }}
-                cursor={{ fill: "#F5F5F5" }}
+                contentStyle={{ background: "rgba(11, 27, 38, 0.95)", border: "1px solid rgba(123, 241, 255, 0.25)", borderRadius: "12px", fontSize: 12, color: "#E5F4FF", boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)" }}
+                labelStyle={{ color: "#E5F4FF" }}
+                itemStyle={{ color: "#8BF3FF" }}
+                cursor={{ fill: "rgba(123, 241, 255, 0.08)" }}
               />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
               <Bar dataKey="exams" name="Examens" fill="#3DD8E9" radius={[4, 4, 0, 0]} />
