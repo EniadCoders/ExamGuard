@@ -183,7 +183,7 @@ export function StudentDashboard() {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 sm:px-6 lg:h-16 lg:flex-row lg:items-center lg:justify-between lg:py-0">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
             <Logo size="sm" onClick={handleLogoClick} />
-            <nav className="flex items-center gap-2 overflow-x-auto pb-1 lg:gap-6 lg:pb-0">
+            <nav className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1 lg:gap-6">
               {[
                 { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
                 { id: "exams", label: "Mes Examens", icon: FileText },
@@ -461,14 +461,14 @@ export function StudentDashboard() {
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-3 pb-2">
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
                   <FilterPill active={examFilter === "all"} onClick={() => setExamFilter("all")}>Tous ({allExams.length})</FilterPill>
                   <FilterPill active={examFilter === "ongoing"} onClick={() => setExamFilter("ongoing")}>En cours</FilterPill>
                   <FilterPill active={examFilter === "upcoming"} onClick={() => setExamFilter("upcoming")}>À venir</FilterPill>
                   <FilterPill active={examFilter === "completed"} onClick={() => setExamFilter("completed")}>Terminés</FilterPill>
                 </div>
                 <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
                   <FilterPill active={examTypeFilter === "all"} onClick={() => setExamTypeFilter("all")}>Tous les types</FilterPill>
                   <FilterPill active={examTypeFilter === "mcq"} onClick={() => setExamTypeFilter("mcq")}>QCM</FilterPill>
                   <FilterPill active={examTypeFilter === "code"} onClick={() => setExamTypeFilter("code")}>Code</FilterPill>
@@ -578,13 +578,13 @@ export function StudentDashboard() {
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-3 pb-2">
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
                       <FilterPill active={resultStatusFilter === "all"} onClick={() => setResultStatusFilter("all")}>Tous les statuts</FilterPill>
                       <FilterPill active={resultStatusFilter === "success"} onClick={() => setResultStatusFilter("success")}>Réussi</FilterPill>
                       <FilterPill active={resultStatusFilter === "fail"} onClick={() => setResultStatusFilter("fail")}>Échoué</FilterPill>
                     </div>
                     <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
                       <FilterPill active={resultScoreFilter === "all"} onClick={() => setResultScoreFilter("all")}>Toutes les notes</FilterPill>
                       <FilterPill active={resultScoreFilter === "10-20"} onClick={() => setResultScoreFilter("10-20")}>10 - 20</FilterPill>
                       <FilterPill active={resultScoreFilter === "0-10"} onClick={() => setResultScoreFilter("0-10")}>0 - 10</FilterPill>
@@ -748,20 +748,20 @@ export function StudentDashboard() {
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-3 pb-2">
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
                   <FilterPill active={calendarMonthFilter === "all"} onClick={() => setCalendarMonthFilter("all")}>Tous les mois</FilterPill>
                   <FilterPill active={calendarMonthFilter === "mars"} onClick={() => setCalendarMonthFilter("mars")}>Mars</FilterPill>
                   <FilterPill active={calendarMonthFilter === "avril"} onClick={() => setCalendarMonthFilter("avril")}>Avril</FilterPill>
                 </div>
                 <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
                   <FilterPill active={calendarSubjectFilter === "all"} onClick={() => setCalendarSubjectFilter("all")}>Toutes les matières</FilterPill>
                   {Array.from(new Set(allExams.map(e => e.subject))).slice(0, 3).map(subject => (
                     <FilterPill key={subject} active={calendarSubjectFilter === subject} onClick={() => setCalendarSubjectFilter(subject)}>{subject}</FilterPill>
                   ))}
                 </div>
                 <div className="w-px h-6 bg-[#E5E5E5] hidden sm:block"></div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1">
                   <FilterPill active={calendarTypeFilter === "all"} onClick={() => setCalendarTypeFilter("all")}>Tous les types</FilterPill>
                   <FilterPill active={calendarTypeFilter === "mcq"} onClick={() => setCalendarTypeFilter("mcq")}>QCM</FilterPill>
                   <FilterPill active={calendarTypeFilter === "code"} onClick={() => setCalendarTypeFilter("code")}>Code</FilterPill>
