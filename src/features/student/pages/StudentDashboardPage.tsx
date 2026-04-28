@@ -717,24 +717,17 @@ export function StudentDashboard() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
                   <div className="absolute inset-0" onClick={() => setSelectedResult(null)}></div>
                   <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar rounded-2xl animate-in zoom-in-95 duration-200">
-                    <button
-                      onClick={() => setSelectedResult(null)}
-                      className="absolute top-4 right-4 z-10 p-2 rounded-full bg-[rgba(11,27,38,0.5)] hover:bg-[rgba(117,195,214,0.15)] text-[var(--cyber-muted-text)] hover:text-white transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-
-                    <DashboardCard className="p-8 relative">
-                        <div className="flex items-start justify-between mb-8">
+                    <DashboardCard className="p-5 sm:p-6 relative">
+                        <div className="flex items-start justify-between mb-5">
                           <div>
-                            <div className="mb-3">
+                            <div className="mb-2">
                               <DashboardStatusBadge status="completed" />
                             </div>
-                            <h1 className="text-3xl font-serif text-black mb-2">
+                            <h1 className="text-2xl font-serif text-black mb-1">
                               {exam.title}
                             </h1>
-                            <p className="text-lg text-[#666666] mb-4">{exam.subject}</p>
-                            <div className="flex flex-wrap items-center gap-4">
+                            <p className="text-base text-[#666666] mb-3">{exam.subject}</p>
+                            <div className="flex flex-wrap items-center gap-3">
                               <DashboardMetaItem icon={CalendarDays}>
                                 {exam.date}
                               </DashboardMetaItem>
@@ -744,12 +737,12 @@ export function StudentDashboard() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <ScoreRing score={exam.score!} size="lg" />
-                            <p className="mt-2 text-sm text-[var(--cyber-muted-text)]">Votre note</p>
+                            <ScoreRing score={exam.score!} size="md" />
+                            <p className="mt-1 text-xs text-[var(--cyber-muted-text)]">Votre note</p>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                           {[
                             { label: "Note finale", value: `${exam.score!.toFixed(1)}/20` },
                             { label: "Classement", value: `#${exam.rank}` },
@@ -757,27 +750,29 @@ export function StudentDashboard() {
                           ].map((item) => (
                             <div
                               key={item.label}
-                              className="rounded-2xl border border-[rgba(117,195,214,0.12)] bg-[rgba(11,27,38,0.58)] p-5"
+                              className="rounded-2xl border border-[rgba(117,195,214,0.12)] bg-[rgba(11,27,38,0.58)] p-4"
                             >
-                              <p className="text-sm text-[var(--cyber-muted-text)] mb-2">{item.label}</p>
-                              <p className="text-2xl font-semibold text-[var(--cyber-text)] sm:text-3xl">{item.value}</p>
+                              <p className="text-xs text-[var(--cyber-muted-text)] mb-1">{item.label}</p>
+                              <p className="text-xl font-semibold text-[var(--cyber-text)] sm:text-2xl">{item.value}</p>
                             </div>
                           ))}
                         </div>
 
-                        <div className="space-y-4">
-                          <h3 className="text-xl font-bold text-black">Détails par type de question</h3>
-                          {exam.types.map((type) => (
-                            <div key={type} className="rounded-2xl border border-[rgba(117,195,214,0.12)] bg-[rgba(11,27,38,0.58)] p-5">
-                              <div className="flex items-center justify-between mb-3">
-                                <TypeChip type={type} />
-                                <span className="text-sm font-semibold text-[var(--cyber-text)]">17/20</span>
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-bold text-black">Détails par type</h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {exam.types.map((type) => (
+                              <div key={type} className="rounded-2xl border border-[rgba(117,195,214,0.12)] bg-[rgba(11,27,38,0.58)] p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <TypeChip type={type} />
+                                  <span className="text-sm font-semibold text-[var(--cyber-text)]">17/20</span>
+                                </div>
+                                <div className="h-1.5 w-full rounded-full bg-[rgba(117,195,214,0.12)]">
+                                  <div className="h-1.5 rounded-full bg-[var(--cyber-accent)]" style={{ width: "85%" }}></div>
+                                </div>
                               </div>
-                              <div className="h-2 w-full rounded-full bg-[rgba(117,195,214,0.12)]">
-                                <div className="h-2 rounded-full bg-[var(--cyber-accent)]" style={{ width: "85%" }}></div>
-                              </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       </DashboardCard>
                   </div>
