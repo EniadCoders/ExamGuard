@@ -188,7 +188,38 @@
     font: inherit;
   }
 
-  button:not(:disabled) {
+  html, body, * {
+    cursor: default;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  label[for],
+  label:has(input, select, textarea) {
+    cursor: pointer;
+  }
+
+  input, textarea, [contenteditable="true"], [contenteditable="true"] * {
+    cursor: text;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  select,
+  input[type="checkbox"], input[type="radio"], input[type="range"],
+  input[type="color"], input[type="file"], input[type="button"],
+  input[type="submit"], input[type="reset"] {
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  a, a * {
     cursor: pointer;
   }
 
