@@ -343,6 +343,93 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
   );
 }
 
+// ─── Fraud Alert Details Modal ────────────────────────────────────────────────
+type FraudAlert = {
+  id: number;
+  student: string;
+  initials: string;
+  exam: string;
+  type: string;
+  time: string;
+  severity: string;
+};
+
+function FraudAlertDetailsModal({ alert, onClose, onAction }: { alert: FraudAlert; onClose: () => void; onAction: (action: string) => void }) {
+  const isHigh = alert.severity === "high";
+  return (
+    <ModalBase title="Détails de l'alerte" onClose={onClose}>
+      <div className="p-6 space-y-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black">
+              <span className="text-sm font-bold text-white">{alert.initials}</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-black">{alert.student}</h3>
+              <p className="text-sm text-[#666666]">{alert.exam}</p>
+            </div>
+          </div>
+          <span className={`px-3 py-1.5 rounded-lg text-xs font-medium flex-shrink-0 ${
+            isHigh ? "bg-[#FFE5E7] text-[#B91C1C] border border-[#FCA5A5]" : "bg-[#FFF4E0] text-[#92400E] border border-[#FCD34D]"
+          }`}>
+            {isHigh ? "Sévérité élevée" : "Sévérité moyenne"}
+          </span>
+        </div>
+
+        <div className="bg-[#F8F8F8] rounded-xl p-4 border border-[#E5E5E5]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#888888] mb-2">Anomalie détectée</p>
+          <p className="text-sm text-[#222222] leading-relaxed">{alert.type}</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="flex items-center gap-3 px-4 py-3 bg-[#F5F5F5] rounded-xl">
+            <Clock className="w-4 h-4 text-[#666666]" />
+            <div>
+              <p className="text-xs text-[#888888]">Détectée</p>
+              <p className="text-sm font-medium text-black">{alert.time}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3 bg-[#F5F5F5] rounded-xl">
+            <Shield className="w-4 h-4 text-[#666666]" />
+            <div>
+              <p className="text-xs text-[#888888]">Examen concerné</p>
+              <p className="text-sm font-medium text-black">{alert.exam}</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-bold text-black mb-2">Actions recommandées</h4>
+          <ul className="space-y-2 text-sm text-[#444444]">
+            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-[#666666] mt-0.5 flex-shrink-0" /> Vérifier l'enregistrement vidéo de la session.</li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-[#666666] mt-0.5 flex-shrink-0" /> Contacter l'étudiant pour clarification.</li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-[#666666] mt-0.5 flex-shrink-0" /> Documenter la décision prise.</li>
+          </ul>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <button onClick={onClose} className="px-4 py-2 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
+          Fermer
+        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => onAction("dismissed")}
+            className="px-4 py-2 rounded-xl border-2 border-black text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
+          >
+            Ignorer
+          </button>
+          <button
+            onClick={() => onAction("escalated")}
+            className="px-4 py-2 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors"
+          >
+            Escalader le cas
+          </button>
+        </div>
+      </div>
+    </ModalBase>
+  );
+}
+
 // ─── Edit Exam Modal ──────────────────────────────────────────────────────────
 function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => void; onSave: (e: Exam) => void }) {
   const [title, setTitle] = useState(exam.title);
@@ -854,6 +941,7 @@ function OverviewTab({
   onGoToExams,
   onGoToAnalytics,
   onExamDetails,
+  onAlertReview,
   onCreateExam,
   onAddStudent,
   onImportData,
@@ -861,6 +949,7 @@ function OverviewTab({
   onGoToExams: () => void;
   onGoToAnalytics: () => void;
   onExamDetails: (exam: Exam) => void;
+  onAlertReview: (alert: FraudAlert) => void;
   onCreateExam: () => void;
   onAddStudent: () => void;
   onImportData: () => void;
@@ -979,7 +1068,10 @@ function OverviewTab({
                 <p className="text-sm text-[var(--cyber-muted-text)]">{alert.exam} • {alert.type}</p>
                 <p className="mt-1 text-xs text-[var(--cyber-subtle-text)]">{alert.time}</p>
               </div>
-              <button className="cyber-button-secondary rounded-xl px-4 py-2 text-xs font-medium">
+              <button
+                onClick={() => onAlertReview(alert)}
+                className="cyber-button-secondary rounded-xl px-4 py-2 text-xs font-medium"
+              >
                 Examiner
               </button>
             </div>
@@ -1526,6 +1618,7 @@ export function AdminDashboard() {
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [overviewExamDetails, setOverviewExamDetails] = useState<Exam | null>(null);
+  const [reviewAlert, setReviewAlert] = useState<FraudAlert | null>(null);
 
   const handleLogoClick = () => {
     setActiveTab("overview");
@@ -1533,6 +1626,7 @@ export function AdminDashboard() {
     setShowAddStudent(false);
     setShowImport(false);
     setOverviewExamDetails(null);
+    setReviewAlert(null);
   };
 
   const tabs = [
@@ -1556,6 +1650,13 @@ export function AdminDashboard() {
           exam={overviewExamDetails}
           onClose={() => setOverviewExamDetails(null)}
           onEdit={() => { setOverviewExamDetails(null); setActiveTab("exams"); }}
+        />
+      )}
+      {reviewAlert && (
+        <FraudAlertDetailsModal
+          alert={reviewAlert}
+          onClose={() => setReviewAlert(null)}
+          onAction={() => setReviewAlert(null)}
         />
       )}
 
@@ -1633,6 +1734,7 @@ export function AdminDashboard() {
             onGoToExams={() => setActiveTab("exams")}
             onGoToAnalytics={() => setActiveTab("analytics")}
             onExamDetails={(exam) => setOverviewExamDetails(exam)}
+            onAlertReview={(alert) => setReviewAlert(alert)}
             onCreateExam={() => setShowCreateExam(true)}
             onAddStudent={() => setShowAddStudent(true)}
             onImportData={() => setShowImport(true)}
