@@ -15,6 +15,8 @@ import {
   Globe,
   Hash,
   Trash2,
+  Lock,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
