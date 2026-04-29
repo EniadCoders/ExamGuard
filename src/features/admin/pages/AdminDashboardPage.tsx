@@ -112,6 +112,9 @@ const allExamsData: Exam[] = [
   { id: 6, title: "Algorithmique Avancée", subject: "Informatique", duration: 120, date: "02 Avril 2026 à 09:00", students: 42, status: "completed", questions: 18, description: "Structures de données, complexité et algorithmes de graphes.", passingScore: 12 },
 ];
 
+const defaultModules = ["Génie logiciel", "Systèmes d'information", "Cybersécurité", "Développement", "IA & ML", "Réseaux"];
+const teacherModules = Array.from(new Set([...defaultModules, ...allExamsData.map(e => e.subject)]));
+
 const allStudentsData: Student[] = [
   { id: 1, name: "Marie Dubois", email: "marie.dubois@univ.fr", exams: 12, avg: 17.4, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-001" },
   { id: 2, name: "Thomas Martin", email: "thomas.martin@univ.fr", exams: 10, avg: 18.4, status: "active", lastActive: "Il y a 5 min", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-002" },
@@ -519,16 +522,16 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Matière</label>
-            <select value={subject} onChange={e => setSubject(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
-              <option>Génie logiciel</option>
-              <option>Systèmes d'information</option>
-              <option>Cybersécurité</option>
-              <option>Développement</option>
-              <option>IA & ML</option>
-              <option>Réseaux</option>
-            </select>
+            <label className="block text-sm font-medium text-black mb-2">Module</label>
+            <input
+              list="exam-modules"
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+              placeholder="Sélectionner ou créer un module"
+              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+            <datalist id="exam-modules">
+              {teacherModules.map(m => <option key={m} value={m} />)}
+            </datalist>
           </div>
           <div>
             <label className="block text-sm font-medium text-black mb-2">Statut</label>
@@ -536,7 +539,6 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
               className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
               <option value="draft">Brouillon</option>
               <option value="scheduled">Planifié</option>
-              <option value="completed">Terminé</option>
             </select>
           </div>
         </div>
@@ -603,16 +605,16 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Matière *</label>
-            <select value={examSubject} onChange={e => setExamSubject(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
-              <option>Génie logiciel</option>
-              <option>Systèmes d'information</option>
-              <option>Cybersécurité</option>
-              <option>Développement</option>
-              <option>IA & ML</option>
-              <option>Réseaux</option>
-            </select>
+            <label className="block text-sm font-medium text-black mb-2">Module *</label>
+            <input
+              list="exam-modules"
+              value={examSubject}
+              onChange={e => setExamSubject(e.target.value)}
+              placeholder="Sélectionner ou créer un module"
+              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+            <datalist id="exam-modules">
+              {teacherModules.map(m => <option key={m} value={m} />)}
+            </datalist>
           </div>
           <div>
             <label className="block text-sm font-medium text-black mb-2">Durée (min) *</label>
@@ -1264,7 +1266,7 @@ function AnalyticsTab() {
 
       {/* Performance by Subject */}
       <DashboardSectionCard
-        title="Performance par matière"
+        title="Performance par module"
         subtitle="Comparaison de la moyenne et de la note de passage"
         icon={BarChart3}
       >

@@ -879,7 +879,7 @@ export function StudentDashboard() {
                     onChange={(e) => setCalendarSubjectFilter(e.target.value)}
                     className="w-full appearance-none bg-white border border-[#E5E5E5] text-[#666666] font-medium text-sm rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-black shadow-sm cursor-pointer hover:border-black hover:text-black transition-colors"
                   >
-                    <option value="all">Toutes les matières</option>
+                    <option value="all">Tous les modules</option>
                     {Array.from(new Set(allExams.map(e => e.subject))).slice(0, 3).map(subject => (
                       <option key={subject} value={subject}>{subject}</option>
                     ))}
