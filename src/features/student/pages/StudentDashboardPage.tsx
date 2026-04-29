@@ -40,6 +40,10 @@ import {
   Bell,
   Search,
   Camera,
+  Hash,
+  Plus,
+  Loader2,
+  Copy,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
@@ -86,6 +90,10 @@ export function StudentDashboard() {
   const [showExamLock, setShowExamLock] = useState(false);
   const [targetExamId, setTargetExamId] = useState<number | null>(null);
   const [expandedExam, setExpandedExam] = useState<number | null>(null);
+  const [showJoinCode, setShowJoinCode] = useState(false);
+  const [examCode, setExamCode] = useState("");
+  const [joinStep, setJoinStep] = useState<"input" | "loading" | "success" | "error">("input");
+  const [joinError, setJoinError] = useState("");
 
   const handleLogoClick = () => {
     setActiveTab("dashboard");
@@ -214,6 +222,20 @@ export function StudentDashboard() {
           </div>
 
           <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-4">
+            <button
+              onClick={() => { setShowJoinCode(true); setJoinStep("input"); setExamCode(""); setJoinError(""); }}
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-[#00809D] hover:bg-[#006B82] text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Rejoindre</span>
+            </button>
+            <button
+              onClick={() => { setShowJoinCode(true); setJoinStep("input"); setExamCode(""); setJoinError(""); }}
+              className="sm:hidden p-2 bg-[#00809D] hover:bg-[#006B82] text-white rounded-xl transition-all"
+              title="Rejoindre un examen"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
             <NotificationPanel role="student" />
 
             <div className="flex items-center gap-3 pl-3 border-l border-[#E5E5E5]">
@@ -1182,6 +1204,215 @@ export function StudentDashboard() {
           </div>
         )}
       </main>
+
+      {/* Join Exam Code Modal */}
+      {showJoinCode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[#E5E5E5] bg-white shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5E5] bg-[#FAFAFA]">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#00809D] flex items-center justify-center">
+                  <Hash className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-lg font-bold text-black">Rejoindre un examen</h2>
+              </div>
+              <button
+                onClick={() => setShowJoinCode(false)}
+                className="p-1.5 rounded-lg hover:bg-[#E5E5E5] transition-colors"
+              >
+                <X className="w-5 h-5 text-[#666666]" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              {joinStep === "input" && (
+                <div className="space-y-5">
+                  <p className="text-sm text-[#666666]">
+                    Entrez le code d'examen fourni par votre enseignant pour vous inscrire à l'examen.
+                  </p>
+
+                  {/* Code Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">
+                      Code d'examen
+                    </label>
+                    <div className="relative">
+                      <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#999999]" />
+                      <input
+                        type="text"
+                        value={examCode}
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "");
+                          setExamCode(val);
+                          setJoinError("");
+                        }}
+                        placeholder="EXG-2024-A7F3"
+                        maxLength={13}
+                        className="w-full pl-12 pr-4 py-3.5 bg-[#F5F7FB] border-2 border-[#E5E5E5] rounded-xl text-black text-lg font-mono tracking-wider focus:outline-none focus:border-[#00809D] focus:ring-2 focus:ring-[#00809D]/20 transition-all placeholder:text-[#CCCCCC] placeholder:tracking-wider"
+                        autoFocus
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-[#999999]">
+                      Format : EXG-XXXX-XXXX
+                    </p>
+                  </div>
+
+                  {/* Error */}
+                  {joinError && (
+                    <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+                      <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                      <p className="text-sm text-red-600">{joinError}</p>
+                    </div>
+                  )}
+
+                  {/* Info */}
+                  <div className="flex items-start gap-3 px-4 py-3 bg-[#F0F9FB] border border-[#00809D]/15 rounded-xl">
+                    <BookOpen className="w-4 h-4 text-[#00809D] mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-[#666666]">
+                      Le code d'examen est unique et fourni par votre enseignant. Il vous permet de vous inscrire à un examen spécifique.
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-1">
+                    <button
+                      onClick={() => setShowJoinCode(false)}
+                      className="flex-1 px-4 py-3 bg-white border border-[#E5E5E5] text-black font-medium rounded-xl hover:bg-[#F5F5F5] transition-all"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!examCode.trim()) {
+                          setJoinError("Veuillez entrer un code d'examen.");
+                          return;
+                        }
+                        if (!/^EXG-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(examCode)) {
+                          setJoinError("Format invalide. Le code doit être au format EXG-XXXX-XXXX.");
+                          return;
+                        }
+                        setJoinStep("loading");
+                        setTimeout(() => {
+                          setJoinStep("success");
+                        }, 1500);
+                      }}
+                      disabled={!examCode.trim()}
+                      className="flex-1 px-4 py-3 bg-[#00809D] hover:bg-[#006B82] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <Search className="w-4 h-4" />
+                      Vérifier
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {joinStep === "loading" && (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="w-14 h-14 rounded-full bg-[#F0F9FB] flex items-center justify-center mb-4">
+                    <Loader2 className="w-7 h-7 text-[#00809D] animate-spin" />
+                  </div>
+                  <p className="text-sm font-medium text-black">Vérification du code...</p>
+                  <p className="text-xs text-[#999999] mt-1">{examCode}</p>
+                </div>
+              )}
+
+              {joinStep === "success" && (
+                <div className="space-y-5">
+                  <div className="flex flex-col items-center text-center py-4">
+                    <div className="w-16 h-16 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center mb-4">
+                      <CheckCircle2 className="w-8 h-8 text-green-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-black mb-1">Inscription réussie !</h3>
+                    <p className="text-sm text-[#666666]">Vous avez été inscrit à l'examen avec succès.</p>
+                  </div>
+
+                  {/* Exam Preview Card */}
+                  <div className="bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-black">Architecture Java EE</h4>
+                      <span className="px-2.5 py-1 bg-[#00809D]/10 text-[#00809D] text-xs font-semibold rounded-lg">À venir</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-[#666666]">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        <span>15 Mai 2024</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>09:00 — 2h00</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5" />
+                        <span>Prof. Martin</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" />
+                        <span>42 inscrits</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-xs text-[#999999]">Code :</span>
+                      <code className="px-2 py-0.5 bg-white border border-[#E5E5E5] rounded text-xs font-mono text-black">{examCode}</code>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(examCode)}
+                        className="p-1 hover:bg-white rounded transition-colors"
+                        title="Copier le code"
+                      >
+                        <Copy className="w-3 h-3 text-[#999999]" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowJoinCode(false)}
+                      className="flex-1 px-4 py-3 bg-white border border-[#E5E5E5] text-black font-medium rounded-xl hover:bg-[#F5F5F5] transition-all"
+                    >
+                      Fermer
+                    </button>
+                    <button
+                      onClick={() => { setShowJoinCode(false); setActiveTab("exams"); }}
+                      className="flex-1 px-4 py-3 bg-[#00809D] hover:bg-[#006B82] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Voir mes examens
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {joinStep === "error" && (
+                <div className="space-y-5">
+                  <div className="flex flex-col items-center text-center py-4">
+                    <div className="w-16 h-16 rounded-full bg-red-50 border-2 border-red-200 flex items-center justify-center mb-4">
+                      <X className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-black mb-1">Code introuvable</h3>
+                    <p className="text-sm text-[#666666]">Le code <code className="font-mono bg-[#F5F5F5] px-1.5 py-0.5 rounded">{examCode}</code> ne correspond à aucun examen.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowJoinCode(false)}
+                      className="flex-1 px-4 py-3 bg-white border border-[#E5E5E5] text-black font-medium rounded-xl hover:bg-[#F5F5F5] transition-all"
+                    >
+                      Fermer
+                    </button>
+                    <button
+                      onClick={() => { setJoinStep("input"); setExamCode(""); setJoinError(""); }}
+                      className="flex-1 px-4 py-3 bg-[#00809D] hover:bg-[#006B82] text-white font-bold rounded-xl transition-all"
+                    >
+                      Réessayer
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Exam Lock Modal */}
       {showExamLock && (
