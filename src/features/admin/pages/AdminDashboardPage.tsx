@@ -927,7 +927,8 @@ function OverviewTab({
           >
             <div className="space-y-2">
               <QuickActionButton icon={Plus} label="Créer un examen" onClick={onCreateExam} />
-              <QuickActionButton icon={Upload} label="Importer données" onClick={onImportData} />
+              <QuickActionButton icon={FileText} label="Consulter les examens" onClick={onGoToExams} />
+              <QuickActionButton icon={BarChart3} label="Voir les analytiques" onClick={onGoToAnalytics} />
             </div>
           </DashboardSectionCard>
 
