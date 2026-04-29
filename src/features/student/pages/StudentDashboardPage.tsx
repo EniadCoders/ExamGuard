@@ -276,9 +276,44 @@ export function StudentDashboard() {
 
         {/* Dashboard View */}
         {activeTab === "dashboard" && (
-          <div className="space-y-8">
-            {/* Active Exam CTA */}
-            {activeExam && (
+          allExams.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center animate-in fade-in duration-700 slide-in-from-bottom-4 mt-4 bg-white border border-[#E5E5E5] rounded-3xl shadow-sm">
+              <div className="relative mb-8">
+                <div className="absolute inset-0 bg-[#00809D] blur-3xl opacity-20 rounded-full animate-pulse"></div>
+                <div className="relative w-32 h-32 bg-[#F5F7FB] rounded-3xl border border-[#E5E5E5] flex items-center justify-center shadow-lg rotate-3 transition-transform hover:rotate-6">
+                  <Hash className="w-12 h-12 text-[#00809D]" />
+                </div>
+                <div className="absolute -top-4 -right-4 w-12 h-12 bg-[#00809D] rounded-xl flex items-center justify-center shadow-lg -rotate-12 animate-bounce" style={{ animationDuration: '3s' }}>
+                  <Plus className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              
+              <h2 className="text-3xl font-bold text-black mb-4">
+                Aucun examen pour le moment
+              </h2>
+              
+              <p className="text-lg text-[#666666] max-w-lg mx-auto mb-10 leading-relaxed">
+                Vous n'êtes inscrit à aucun examen. Pour commencer, vous devez rejoindre un examen en utilisant le code fourni par votre enseignant.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#F5F7FB] border border-[#E5E5E5] rounded-2xl p-2 pl-6 pr-2 shadow-sm">
+                <span className="text-sm font-medium text-[#666666]">
+                  Étape 1 : Cliquez sur le bouton
+                </span>
+                <div className="hidden sm:block w-8 h-px bg-[#E5E5E5]"></div>
+                <button
+                  onClick={() => { setShowJoinCode(true); setJoinStep("input"); setExamCode(""); setJoinError(""); }}
+                  className="flex items-center gap-2 px-6 py-3 bg-[#00809D] hover:bg-[#006B82] text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Rejoindre un examen</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {/* Active Exam CTA */}
+              {activeExam && (
               <DashboardCard tone="accent" className="p-7 sm:p-8">
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1">
@@ -458,6 +493,7 @@ export function StudentDashboard() {
               </div>
             </div>
           </div>
+          )
         )}
 
         {/* Exams View */}
@@ -517,7 +553,24 @@ export function StudentDashboard() {
             </div>
 
             {/* Exam List */}
-            {filteredExams.length === 0 ? (
+            {allExams.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white border border-[#E5E5E5] rounded-3xl shadow-sm animate-in fade-in">
+                <div className="w-20 h-20 bg-[#F5F7FB] rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+                  <Hash className="w-8 h-8 text-[#00809D]" />
+                </div>
+                <h3 className="text-xl font-bold text-black mb-2">Prêt à passer un examen ?</h3>
+                <p className="text-[#666666] max-w-md mx-auto mb-8">
+                  Rejoignez votre premier examen en utilisant le code fourni par votre professeur.
+                </p>
+                <button
+                  onClick={() => { setShowJoinCode(true); setJoinStep("input"); setExamCode(""); setJoinError(""); }}
+                  className="flex items-center gap-2 px-6 py-3 bg-[#00809D] hover:bg-[#006B82] text-white font-bold rounded-xl transition-all shadow-md"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Rejoindre un examen</span>
+                </button>
+              </div>
+            ) : filteredExams.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-white border border-[#E5E5E5] rounded-2xl">
                 <Search className="w-12 h-12 text-[#E5E5E5] mb-4" />
                 <h3 className="text-lg font-bold text-black mb-1">Aucun résultat trouvé</h3>
