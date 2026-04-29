@@ -353,13 +353,15 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
           Fermer
         </button>
         <div className="flex gap-3">
-          <button
-            onClick={onEdit}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-black text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
-          >
-            <Edit3 className="w-4 h-4" />
-            Éditer
-          </button>
+          {exam.status !== "completed" && (
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-black text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
+            >
+              <Edit3 className="w-4 h-4" />
+              Éditer
+            </button>
+          )}
           <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors">
             <Download className="w-4 h-4" />
             Exporter
@@ -1093,13 +1095,15 @@ function ExamsTab({ onCreateExam }: { onCreateExam: () => void }) {
               </div>
               <div className="dashboard-divider mb-4" />
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => { setEditingExam(exam); setShowEdit(true); }}
-                  className="cyber-button-secondary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  Éditer
-                </button>
+                {exam.status !== "completed" && (
+                  <button
+                    onClick={() => { setEditingExam(exam); setShowEdit(true); }}
+                    className="cyber-button-secondary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    Éditer
+                  </button>
+                )}
                 <button
                   onClick={() => { setSelectedExam(exam); setShowDetails(true); }}
                   className="cyber-button-primary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
