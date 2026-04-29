@@ -109,6 +109,7 @@ const allExamsData: Exam[] = [
   { id: 3, title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril 2026", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité informatique.", passingScore: 12 },
   { id: 4, title: "Programmation Web", subject: "Développement", duration: 60, date: "15 Avril 2026", students: 31, status: "draft", questions: 10, description: "HTML, CSS, JavaScript et frameworks modernes.", passingScore: 10 },
   { id: 5, title: "Intelligence Artificielle", subject: "IA & ML", duration: 150, date: "18 Avril 2026", students: 28, status: "scheduled", questions: 20, description: "Machine learning, réseaux de neurones et IA appliquée.", passingScore: 13 },
+  { id: 6, title: "Algorithmique Avancée", subject: "Informatique", duration: 120, date: "02 Avril 2026 à 09:00", students: 42, status: "completed", questions: 18, description: "Structures de données, complexité et algorithmes de graphes.", passingScore: 12 },
 ];
 
 const allStudentsData: Student[] = [
@@ -238,13 +239,8 @@ function ModalBase({ children, onClose, title, wide = false }: {
 
 // ─── Exam Details Modal ────────────────────────────────────────────────────────
 function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () => void; onEdit: () => void }) {
-  const participants = [
-    { name: "Marie Dubois", score: 17.4, status: "completed" },
-    { name: "Thomas Martin", score: 18.4, status: "completed" },
-    { name: "Sophie Bernard", score: 15.6, status: "completed" },
-    { name: "Lucas Petit", score: 17.0, status: "completed" },
-    { name: "Emma Rousseau", score: 18.2, status: "completed" },
-  ];
+  const rosterCount = Math.min(exam.students, allStudentsData.length);
+  const roster = allStudentsData.slice(0, rosterCount).map(s => ({ name: s.name, score: s.avg }));
 
   return (
     <ModalBase title="Détails de l'examen" onClose={onClose} wide>
@@ -296,29 +292,61 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
           </div>
         </div>
 
-        {/* Participants */}
-        <div>
-          <h4 className="text-sm font-bold text-black mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Derniers participants
-          </h4>
-          <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] rounded-xl overflow-hidden">
-            {participants.map((p, i) => (
-              <div key={i} className="flex items-center justify-between px-4 py-3 hover:bg-[#FAFAFA] transition-colors">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-black flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">{p.name.split(" ").map(n => n[0]).join("")}</span>
+        {/* Roster — invitees for scheduled, participants with scores for completed, hidden for draft */}
+        {exam.status === "scheduled" && (
+          <div>
+            <h4 className="text-sm font-bold text-black mb-3 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Étudiants invités
+            </h4>
+            <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] rounded-xl overflow-hidden">
+              {roster.map((p, i) => (
+                <div key={i} className="flex items-center justify-between px-4 py-3 hover:bg-[#FAFAFA] transition-colors">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-black flex items-center justify-center">
+                      <span className="text-xs font-bold text-white">{p.name.split(" ").map(n => n[0]).join("")}</span>
+                    </div>
+                    <span className="text-sm text-black">{p.name}</span>
                   </div>
-                  <span className="text-sm text-black">{p.name}</span>
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]">
+                    Invitation envoyée
+                  </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-sm font-bold text-black">{p.score}/20</span>
-                  <CheckCircle2 className="w-4 h-4 text-[#888888]" />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {exam.status === "completed" && (
+          <div>
+            <h4 className="text-sm font-bold text-black mb-3 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Participants ({roster.length})
+            </h4>
+            <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] rounded-xl overflow-hidden">
+              {roster.map((p, i) => (
+                <div key={i} className="flex items-center justify-between px-4 py-3 hover:bg-[#FAFAFA] transition-colors">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-black flex items-center justify-center">
+                      <span className="text-xs font-bold text-white">{p.name.split(" ").map(n => n[0]).join("")}</span>
+                    </div>
+                    <span className="text-sm text-black">{p.name}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-bold text-black">{p.score}/20</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      p.score >= (exam.passingScore ?? 12)
+                        ? "bg-black text-white"
+                        : "bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]"
+                    }`}>
+                      {p.score >= (exam.passingScore ?? 12) ? "Admis" : "Refusé"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <button onClick={onClose} className="px-4 py-2 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
