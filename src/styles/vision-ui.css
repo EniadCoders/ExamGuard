@@ -1332,6 +1332,10 @@ button[data-ui="notification-trigger"] [data-ui="notification-badge"] {
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="text-[#888888]"],
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="text-[#AAABAC]"],
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="text-[#333333]"],
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="text-[#444444]"],
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="text-[#555555]"],
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="text-[#777777]"],
+:is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="text-[#999999]"],
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="text-[#CCCCCC]"] {
   color: var(--cyber-muted-text) !important;
 }
