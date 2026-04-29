@@ -36,6 +36,7 @@ import {
   CheckSquare,
   AlertCircle,
   User,
+  Send,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { NotificationPanel } from "@/shared/components/NotificationPanel";
@@ -508,7 +509,6 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
   const [subject, setSubject] = useState(exam.subject);
   const [duration, setDuration] = useState(exam.duration);
   const [date, setDate] = useState(frDateToIso(exam.date));
-  const [status, setStatus] = useState(exam.status);
   const [description, setDescription] = useState(exam.description ?? "");
   const [passingScore, setPassingScore] = useState(exam.passingScore ?? 12);
 
@@ -520,27 +520,17 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
           <input value={title} onChange={e => setTitle(e.target.value)}
             className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Module</label>
-            <input
-              list="exam-modules"
-              value={subject}
-              onChange={e => setSubject(e.target.value)}
-              placeholder="Sélectionner ou créer un module"
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
-            <datalist id="exam-modules">
-              {teacherModules.map(m => <option key={m} value={m} />)}
-            </datalist>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Statut</label>
-            <select value={status} onChange={e => setStatus(e.target.value as any)}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
-              <option value="draft">Brouillon</option>
-              <option value="scheduled">Planifié</option>
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-black mb-2">Module</label>
+          <input
+            list="exam-modules"
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            placeholder="Sélectionner ou créer un module"
+            className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+          <datalist id="exam-modules">
+            {teacherModules.map(m => <option key={m} value={m} />)}
+          </datalist>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -570,7 +560,7 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
           Annuler
         </button>
         <button
-          onClick={() => { onSave({ ...exam, title, subject, duration, date: isoToFrDate(date), status, description, passingScore }); onClose(); }}
+          onClick={() => { onSave({ ...exam, title, subject, duration, date: isoToFrDate(date), description, passingScore }); onClose(); }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors"
         >
           <Save className="w-4 h-4" />
@@ -582,88 +572,386 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
 }
 
 // ─── Create Exam Modal ─────────────────────────────────────────────────────────
-function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreated?: () => void }) {
-  const [examTitle, setExamTitle] = useState("");
-  const [examSubject, setExamSubject] = useState("Génie logiciel");
-  const [examDuration, setExamDuration] = useState(90);
-  const [examDate, setExamDate] = useState("");
-  const [examDesc, setExamDesc] = useState("");
-  const [passingScore, setPassingScore] = useState(12);
+type DraftQuestion =
+  | { id: number; type: "mcq"; text: string; points: number; options: string[]; correct: number }
+  | { id: number; type: "text"; text: string; points: number }
+  | { id: number; type: "code"; text: string; points: number; language: string };
+
+function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => void; onCreated?: (exam: Exam) => void; initialExam?: Exam }) {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [examTitle, setExamTitle] = useState(initialExam?.title ?? "");
+  const [examSubject, setExamSubject] = useState(initialExam?.subject ?? "");
+  const [examDuration, setExamDuration] = useState(initialExam?.duration ?? 90);
+  const [examDate, setExamDate] = useState(initialExam ? frDateToIso(initialExam.date) : "");
+  const [examDesc, setExamDesc] = useState(initialExam?.description ?? "");
+  const [passingScore, setPassingScore] = useState(initialExam?.passingScore ?? 12);
+  const [selectedStudents, setSelectedStudents] = useState<number[]>([]);
+  const [launchMode, setLaunchMode] = useState<"auto" | "manual">("auto");
+  const [studentSearch, setStudentSearch] = useState("");
+  const [importedFileName, setImportedFileName] = useState("");
+  const [questions, setQuestions] = useState<DraftQuestion[]>([]);
+
+  const step1Complete = examTitle.trim() !== "" && examSubject.trim() !== "" && examDuration > 0 && examDate !== "";
+  const filteredStudents = allStudentsData.filter(s =>
+    s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+    s.email.toLowerCase().includes(studentSearch.toLowerCase())
+  );
+  const allSelected = filteredStudents.length > 0 && filteredStudents.every(s => selectedStudents.includes(s.id));
+
+  const toggleStudent = (id: number) =>
+    setSelectedStudents(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = () =>
+    setSelectedStudents(allSelected ? selectedStudents.filter(id => !filteredStudents.some(s => s.id === id))
+                                    : Array.from(new Set([...selectedStudents, ...filteredStudents.map(s => s.id)])));
+
+  const addQuestion = (type: DraftQuestion["type"]) => {
+    const id = Date.now();
+    if (type === "mcq") setQuestions(prev => [...prev, { id, type, text: "", points: 1, options: ["", "", "", ""], correct: 0 }]);
+    else if (type === "text") setQuestions(prev => [...prev, { id, type, text: "", points: 1 }]);
+    else setQuestions(prev => [...prev, { id, type, text: "", points: 1, language: "java" }]);
+  };
+  const updateQuestion = (id: number, patch: Partial<DraftQuestion>) =>
+    setQuestions(prev => prev.map(q => q.id === id ? { ...q, ...patch } as DraftQuestion : q));
+  const removeQuestion = (id: number) => setQuestions(prev => prev.filter(q => q.id !== id));
+
+  const buildExam = (status: "draft" | "scheduled"): Exam => ({
+    id: initialExam?.id ?? Date.now(),
+    title: examTitle.trim() || "Examen sans titre",
+    subject: examSubject.trim() || "Non spécifié",
+    duration: examDuration,
+    date: examDate ? isoToFrDate(examDate) : "",
+    students: selectedStudents.length,
+    status,
+    questions: questions.length,
+    description: examDesc,
+    passingScore,
+  });
+  const saveAsDraft = () => { onCreated?.(buildExam("draft")); onClose(); };
+  const schedule = () => { onCreated?.(buildExam("scheduled")); onClose(); };
 
   return (
-    <ModalBase title="Créer un nouvel examen" onClose={onClose}>
-      <div className="p-6 space-y-5">
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">Titre de l'examen *</label>
-          <input
-            type="text"
-            value={examTitle}
-            onChange={(e) => setExamTitle(e.target.value)}
-            placeholder="Ex: Architecture Java EE"
-            className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <ModalBase title={
+      step === 1 ? `${initialExam ? "Éditer" : "Créer"} un examen — 1/3 Détails`
+      : step === 2 ? `${initialExam ? "Éditer" : "Créer"} un examen — 2/3 Étudiants`
+      : `${initialExam ? "Éditer" : "Créer"} un examen — 3/3 Questions`
+    } onClose={onClose} wide>
+      {step === 1 && (
+        <div className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Module *</label>
+            <label className="block text-sm font-medium text-black mb-2">Titre de l'examen *</label>
             <input
-              list="exam-modules"
-              value={examSubject}
-              onChange={e => setExamSubject(e.target.value)}
-              placeholder="Sélectionner ou créer un module"
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
-            <datalist id="exam-modules">
-              {teacherModules.map(m => <option key={m} value={m} />)}
-            </datalist>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Durée (min) *</label>
-            <input
-              type="number"
-              value={examDuration}
-              onChange={(e) => setExamDuration(Number(e.target.value))}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all"
+              type="text"
+              value={examTitle}
+              onChange={(e) => setExamTitle(e.target.value)}
+              placeholder="Ex: Architecture Java EE"
+              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
             />
           </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Date et heure</label>
-            <input type="datetime-local" value={examDate} onChange={e => setExamDate(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-black mb-2">Module *</label>
+              <input
+                list="exam-modules"
+                value={examSubject}
+                onChange={e => setExamSubject(e.target.value)}
+                placeholder="Sélectionner ou créer un module"
+                className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+              <datalist id="exam-modules">
+                {teacherModules.map(m => <option key={m} value={m} />)}
+              </datalist>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-black mb-2">Durée (min) *</label>
+              <input
+                type="number"
+                value={examDuration}
+                onChange={(e) => setExamDuration(Number(e.target.value))}
+                className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-black mb-2">Date et heure *</label>
+              <input type="datetime-local" value={examDate} onChange={e => setExamDate(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-black mb-2">Note de passage (/20)</label>
+              <input type="number" value={passingScore} onChange={e => setPassingScore(Number(e.target.value))} min={0} max={20} step={0.5}
+                className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Note de passage (/20)</label>
-            <input type="number" value={passingScore} onChange={e => setPassingScore(Number(e.target.value))} min={0} max={20} step={0.5}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
+            <label className="block text-sm font-medium text-black mb-2">Description</label>
+            <textarea value={examDesc} onChange={e => setExamDesc(e.target.value)} rows={3}
+              placeholder="Description de l'examen, objectifs pédagogiques..."
+              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all resize-none" />
+          </div>
+          <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
+            <p className="text-xs text-[#666666] flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-[#888888] flex-shrink-0" />
+              {step1Complete
+                ? "Tous les champs sont remplis — passez à l'étape suivante pour inviter les étudiants."
+                : "Champs incomplets : l'examen sera enregistré comme brouillon."}
+            </p>
           </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">Description</label>
-          <textarea value={examDesc} onChange={e => setExamDesc(e.target.value)} rows={3}
-            placeholder="Description de l'examen, objectifs pédagogiques..."
-            className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all resize-none" />
-        </div>
+      )}
 
-        <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
-          <p className="text-xs text-[#666666] flex items-center gap-2">
-            <Info className="w-3.5 h-3.5 text-[#888888] flex-shrink-0" />
-            L'examen sera créé en mode brouillon. Vous pourrez ajouter des questions et planifier l'examen par la suite.
-          </p>
+      {step === 2 && (
+        <div className="p-6 space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">Importer une liste (JSON ou Excel)</label>
+            <label className="flex items-center gap-3 px-4 py-3 bg-white border border-dashed border-[#CCCCCC] rounded-xl cursor-pointer hover:border-black transition-colors">
+              <Upload className="w-4 h-4 text-[#666666]" />
+              <span className="text-sm text-[#666666] flex-1 truncate">
+                {importedFileName || "Glissez un fichier .json / .xlsx ou cliquez pour sélectionner"}
+              </span>
+              <input
+                type="file"
+                accept=".json,.xlsx,.xls,.csv"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) setImportedFileName(file.name);
+                }}
+              />
+            </label>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-[#E5E5E5]" />
+            <span className="text-xs text-[#888888] uppercase tracking-wide">ou sélectionnez manuellement</span>
+            <div className="flex-1 h-px bg-[#E5E5E5]" />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-black">Étudiants à inviter ({selectedStudents.length})</label>
+              <button onClick={toggleAll} className="text-xs font-medium text-black hover:underline">
+                {allSelected ? "Tout désélectionner" : "Tout sélectionner"}
+              </button>
+            </div>
+            <div className="relative mb-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
+              <input
+                type="text"
+                value={studentSearch}
+                onChange={e => setStudentSearch(e.target.value)}
+                placeholder="Rechercher un étudiant..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
+              />
+            </div>
+            <div className="max-h-64 overflow-y-auto rounded-xl border border-[#E5E5E5] divide-y divide-[#E5E5E5]">
+              {filteredStudents.map(s => {
+                const checked = selectedStudents.includes(s.id);
+                return (
+                  <label key={s.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#FAFAFA] cursor-pointer">
+                    <input type="checkbox" checked={checked} onChange={() => toggleStudent(s.id)} className="w-4 h-4 accent-black" />
+                    <div className="w-7 h-7 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-white">{s.name.split(" ").map(n => n[0]).join("")}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-black truncate">{s.name}</p>
+                      <p className="text-xs text-[#666666] truncate">{s.email}</p>
+                    </div>
+                  </label>
+                );
+              })}
+              {filteredStudents.length === 0 && (
+                <p className="px-4 py-6 text-center text-sm text-[#666666]">Aucun étudiant trouvé.</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">Mode de lancement</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {([
+                { key: "auto", label: "Lancement automatique", desc: "L'examen démarre à la date prévue." },
+                { key: "manual", label: "Lancement manuel", desc: "Vous démarrez l'examen via un clic le jour J." },
+              ] as const).map(({ key, label, desc }) => (
+                <button
+                  key={key}
+                  onClick={() => setLaunchMode(key)}
+                  className={`text-left p-4 rounded-xl border-2 transition-all ${
+                    launchMode === key ? "bg-black border-black text-white" : "bg-white border-[#E5E5E5] hover:border-[#CCCCCC]"
+                  }`}
+                >
+                  <p className={`text-sm font-medium ${launchMode === key ? "text-white" : "text-black"}`}>{label}</p>
+                  <p className={`text-xs mt-1 ${launchMode === key ? "text-white/80" : "text-[#666666]"}`}>{desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
+            <p className="text-xs text-[#666666] flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-[#888888] flex-shrink-0" />
+              {selectedStudents.length > 0 || importedFileName
+                ? `Étape suivante : créer les questions de l'examen.`
+                : "Sélectionnez au moins un étudiant ou importez un fichier."}
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
-        <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
-          Annuler
-        </button>
+      )}
+
+      {step === 3 && (
+        <div className="p-6 space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">Ajouter une question</label>
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => addQuestion("mcq")} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#E5E5E5] hover:border-black text-sm font-medium text-black transition-colors">
+                <Plus className="w-4 h-4" /> QCM
+              </button>
+              <button onClick={() => addQuestion("text")} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#E5E5E5] hover:border-black text-sm font-medium text-black transition-colors">
+                <Plus className="w-4 h-4" /> Texte
+              </button>
+              <button onClick={() => addQuestion("code")} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#E5E5E5] hover:border-black text-sm font-medium text-black transition-colors">
+                <Plus className="w-4 h-4" /> Code
+              </button>
+            </div>
+          </div>
+
+          {questions.length === 0 && (
+            <div className="bg-[#F8F8F8] border border-dashed border-[#CCCCCC] rounded-xl p-6 text-center">
+              <p className="text-sm text-[#666666]">Aucune question ajoutée pour le moment.</p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {questions.map((q, idx) => (
+              <div key={q.id} className="border border-[#E5E5E5] rounded-xl p-4 space-y-3 bg-white">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-black text-white uppercase">{q.type}</span>
+                    <span className="text-sm font-medium text-black">Question {idx + 1}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={q.points}
+                      onChange={e => updateQuestion(q.id, { points: Number(e.target.value) })}
+                      min={0}
+                      step={0.5}
+                      className="w-20 px-2 py-1 text-sm bg-white border border-[#E5E5E5] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                    <span className="text-xs text-[#666666]">pts</span>
+                    <button onClick={() => removeQuestion(q.id)} className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors" title="Supprimer">
+                      <X className="w-4 h-4 text-[#666666]" />
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  value={q.text}
+                  onChange={e => updateQuestion(q.id, { text: e.target.value })}
+                  rows={2}
+                  placeholder="Énoncé de la question..."
+                  className="w-full px-3 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                />
+                {q.type === "mcq" && (
+                  <div className="space-y-2">
+                    {q.options.map((opt, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          checked={q.correct === i}
+                          onChange={() => updateQuestion(q.id, { correct: i })}
+                          className="w-4 h-4 accent-black"
+                        />
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={e => {
+                            const next = [...q.options];
+                            next[i] = e.target.value;
+                            updateQuestion(q.id, { options: next });
+                          }}
+                          placeholder={`Option ${i + 1}`}
+                          className="flex-1 px-3 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+                    ))}
+                    <p className="text-xs text-[#888888]">Cochez la bonne réponse.</p>
+                  </div>
+                )}
+                {q.type === "code" && (
+                  <div>
+                    <label className="block text-xs text-[#666666] mb-1">Langage</label>
+                    <select
+                      value={q.language}
+                      onChange={e => updateQuestion(q.id, { language: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-black"
+                    >
+                      <option value="java">Java</option>
+                      <option value="python">Python</option>
+                      <option value="cpp">C++</option>
+                      <option value="javascript">JavaScript</option>
+                      <option value="c">C</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
+            <p className="text-xs text-[#666666] flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-[#888888] flex-shrink-0" />
+              {questions.length === 0
+                ? "Vous pouvez enregistrer comme brouillon et créer les questions plus tard."
+                : `${questions.length} question(s) — total : ${questions.reduce((s, q) => s + q.points, 0)} pts.`}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <button
-          onClick={() => { onCreated?.(); onClose(); }}
-          disabled={!examTitle.trim()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+          onClick={step === 1 ? onClose : () => setStep((step - 1) as 1 | 2)}
+          className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          Créer l'examen
+          {step === 1 ? "Annuler" : "Retour"}
         </button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={saveAsDraft}
+            className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
+          >
+            Enregistrer comme brouillon
+          </button>
+          {step === 1 && (
+            <button
+              onClick={() => setStep(2)}
+              disabled={!step1Complete}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+            >
+              Suivant
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+          {step === 2 && (
+            <button
+              onClick={() => setStep(3)}
+              disabled={selectedStudents.length === 0 && !importedFileName}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+            >
+              Suivant
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+          {step === 3 && (
+            <button
+              onClick={schedule}
+              disabled={selectedStudents.length === 0 && !importedFileName}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+            >
+              <Send className="w-4 h-4" />
+              Planifier et envoyer invitations
+            </button>
+          )}
+        </div>
       </div>
     </ModalBase>
   );
@@ -1001,10 +1289,9 @@ function OverviewTab({
 }
 
 // ─── Exams Tab ─────────────────────────────────────────────────────────────────
-function ExamsTab({ onCreateExam }: { onCreateExam: () => void }) {
+function ExamsTab({ onCreateExam, exams, setExams }: { onCreateExam: () => void; exams: Exam[]; setExams: React.Dispatch<React.SetStateAction<Exam[]>> }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [exams, setExams] = useState<Exam[]>(allExamsData);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -1025,7 +1312,14 @@ function ExamsTab({ onCreateExam }: { onCreateExam: () => void }) {
           onEdit={() => { setShowDetails(false); setEditingExam(selectedExam); setShowEdit(true); }}
         />
       )}
-      {showEdit && editingExam && (
+      {showEdit && editingExam && editingExam.status === "draft" && (
+        <CreateExamModal
+          initialExam={editingExam}
+          onClose={() => setShowEdit(false)}
+          onCreated={(updated) => setExams(prev => prev.map(e => e.id === updated.id ? updated : e))}
+        />
+      )}
+      {showEdit && editingExam && editingExam.status !== "draft" && (
         <EditExamModal
           exam={editingExam}
           onClose={() => setShowEdit(false)}
@@ -1586,6 +1880,7 @@ export function AdminDashboard() {
   const [showImport, setShowImport] = useState(false);
   const [overviewExamDetails, setOverviewExamDetails] = useState<Exam | null>(null);
   const [reviewAlert, setReviewAlert] = useState<FraudAlert | null>(null);
+  const [exams, setExams] = useState<Exam[]>(allExamsData);
 
   const handleLogoClick = () => {
     setActiveTab("overview");
@@ -1608,7 +1903,12 @@ export function AdminDashboard() {
       <GridBackground variant="dashboard" />
       <div className="relative z-10">
       {/* Global modals */}
-      {showCreateExam && <CreateExamModal onClose={() => setShowCreateExam(false)} />}
+      {showCreateExam && (
+        <CreateExamModal
+          onClose={() => setShowCreateExam(false)}
+          onCreated={(newExam) => { setExams(prev => [newExam, ...prev]); setActiveTab("exams"); }}
+        />
+      )}
       {showImport && <ImportDataModal onClose={() => setShowImport(false)} />}
       {overviewExamDetails && (
         <ExamDetailsModal
@@ -1704,7 +2004,7 @@ export function AdminDashboard() {
             onImportData={() => setShowImport(true)}
           />
         )}
-        {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} />}
+        {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} exams={exams} setExams={setExams} />}
         {activeTab === "students" && <StudentsTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "settings" && <SettingsTab onGoToProfile={() => navigate("/admin/profile")} />}
