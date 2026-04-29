@@ -1277,7 +1277,7 @@ function AnalyticsTab() {
             />
             <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
             <Bar dataKey="avg" name="Moyenne" fill="#3DD8E9" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="passing" name="Note de passage" fill="#1D4556" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="passing" name="Note de passage" fill="#F4A261" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </DashboardSectionCard>
