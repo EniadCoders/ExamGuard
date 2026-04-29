@@ -20,7 +20,6 @@ import {
   Settings,
   Zap,
   CheckCircle2,
-  Trash2,
   Info,
   Save,
   Search,
@@ -119,24 +118,6 @@ const allStudentsData: Student[] = [
   { id: 4, name: "Lucas Petit", email: "lucas.petit@univ.fr", exams: 8, avg: 17.0, status: "active", lastActive: "Il y a 1 heure", department: "IA & Data", year: "L3", studentId: "ETU-2024-004" },
   { id: 5, name: "Emma Rousseau", email: "emma.rousseau@univ.fr", exams: 11, avg: 18.2, status: "active", lastActive: "Il y a 30 min", department: "Réseaux", year: "M1", studentId: "ETU-2024-005" },
   { id: 6, name: "Hugo Lefebvre", email: "hugo.lefebvre@univ.fr", exams: 7, avg: 14.6, status: "inactive", lastActive: "Il y a 5 jours", department: "Informatique", year: "L3", studentId: "ETU-2024-006" },
-];
-
-type DirectoryRecord = {
-  apogee: string;
-  name: string;
-  email: string;
-  department: string;
-  filiere: string;
-  year: string;
-};
-
-const universityDirectory: DirectoryRecord[] = [
-  { apogee: "21000123", name: "Yassine El Amrani",   email: "yassine.elamrani@univ.ma",   department: "Informatique",     filiere: "Génie Informatique",        year: "3ème année" },
-  { apogee: "21000245", name: "Salma Benali",        email: "salma.benali@univ.ma",       department: "Génie logiciel",   filiere: "Ingénierie du Logiciel",    year: "4ème année" },
-  { apogee: "21000388", name: "Othmane Idrissi",     email: "othmane.idrissi@univ.ma",    department: "Cybersécurité",    filiere: "Sécurité des SI",            year: "5ème année" },
-  { apogee: "21000412", name: "Imane Tazi",          email: "imane.tazi@univ.ma",         department: "IA & Data",        filiere: "Data Science & IA",          year: "2ème année" },
-  { apogee: "21000567", name: "Reda Mansouri",       email: "reda.mansouri@univ.ma",      department: "Réseaux",          filiere: "Réseaux & Télécoms",         year: "1ère année" },
-  { apogee: "21000601", name: "Khadija Lahlou",      email: "khadija.lahlou@univ.ma",     department: "Informatique",     filiere: "Génie Informatique",        year: "5ème année" },
 ];
 
 const fraudAlerts = [
@@ -656,174 +637,9 @@ function CreateExamModal({ onClose, onCreated }: { onClose: () => void; onCreate
   );
 }
 
-// ─── Add Student Modal ─────────────────────────────────────────────────────────
-function AddStudentModal({ onClose, onAdded }: { onClose: () => void; onAdded?: () => void }) {
-  const [method, setMethod] = useState<"email" | "apogee">("email");
-  const [query, setQuery] = useState("");
-  const [match, setMatch] = useState<DirectoryRecord | null>(null);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  const trimmed = query.trim().toLowerCase();
-  const suggestions = trimmed.length === 0
-    ? []
-    : universityDirectory.filter(r =>
-        method === "email"
-          ? r.email.toLowerCase().includes(trimmed)
-          : r.apogee.includes(trimmed),
-      ).slice(0, 6);
-
-  const handleMethodChange = (next: "email" | "apogee") => {
-    setMethod(next);
-    setQuery("");
-    setMatch(null);
-    setShowSuggestions(false);
-  };
-
-  const handleSelect = (record: DirectoryRecord) => {
-    setMatch(record);
-    setQuery(method === "email" ? record.email : record.apogee);
-    setShowSuggestions(false);
-  };
-
-  const handleQueryChange = (value: string) => {
-    setQuery(value);
-    setMatch(null);
-    setShowSuggestions(true);
-  };
-
-  return (
-    <ModalBase title="Ajouter un étudiant" onClose={onClose}>
-      <div className="p-6 space-y-5">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#888888] mb-2">Méthode d'identification</p>
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#F5F5F5] p-1">
-            {([
-              { key: "email", label: "Adresse email", icon: Mail },
-              { key: "apogee", label: "N° d'Apogée", icon: Hash },
-            ] as const).map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => handleMethodChange(key)}
-                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  method === key
-                    ? "bg-black text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
-                    : "text-[#444444] hover:bg-white"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">
-            {method === "email" ? "Adresse email universitaire" : "Numéro d'Apogée"} *
-          </label>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
-            <input
-              type={method === "email" ? "email" : "text"}
-              value={query}
-              onChange={e => handleQueryChange(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-              placeholder={method === "email" ? "prenom.nom@univ.ma" : "Ex: 21000123"}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
-            />
-            {showSuggestions && suggestions.length > 0 && (
-              <ul className="absolute z-10 mt-1 w-full max-h-72 overflow-y-auto rounded-xl border border-[#E5E5E5] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
-                {suggestions.map(r => (
-                  <li key={r.apogee}>
-                    <button
-                      type="button"
-                      onMouseDown={e => e.preventDefault()}
-                      onClick={() => handleSelect(r)}
-                      className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-[#F5F5F5] transition-colors"
-                    >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black flex-shrink-0">
-                        <span className="text-xs font-bold text-white">
-                          {r.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-black truncate">{r.name}</p>
-                        <p className="text-xs text-[#666666] truncate">
-                          {method === "email" ? r.email : `N° Apogée · ${r.apogee}`} — {r.department}
-                        </p>
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {showSuggestions && query.trim() && suggestions.length === 0 && (
-              <div className="absolute z-10 mt-1 w-full rounded-xl border border-[#E5E5E5] bg-white px-4 py-3 text-sm text-[#666666] shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
-                <span className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-[#888888]" /> Aucun étudiant correspondant.</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {match && (
-          <div className="rounded-xl border border-[#E5E5E5] bg-white p-5 space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black flex-shrink-0">
-                <span className="text-sm font-bold text-white">
-                  {match.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-black">{match.name}</h3>
-                <p className="text-xs text-[#888888] mt-0.5">N° Apogée · {match.apogee}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                { icon: Mail, label: "Email", value: match.email },
-                { icon: BookOpen, label: "Département", value: match.department },
-                { icon: Hash, label: "Filière", value: match.filiere },
-                { icon: Info, label: "Année", value: match.year },
-              ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-start gap-3 px-3 py-2.5 bg-[#F8F8F8] rounded-lg border border-[#E5E5E5]">
-                  <Icon className="w-4 h-4 text-[#666666] mt-0.5 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-wide text-[#888888]">{label}</p>
-                    <p className="text-sm text-black truncate">{value}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
-          <p className="text-xs text-[#666666] flex items-start gap-2">
-            <Info className="w-3.5 h-3.5 text-[#888888] flex-shrink-0 mt-0.5" />
-            Les informations sont récupérées depuis l'annuaire universitaire. Un email d'activation sera envoyé à l'étudiant après ajout.
-          </p>
-        </div>
-      </div>
-      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
-        <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
-          Annuler
-        </button>
-        <button
-          onClick={() => { onAdded?.(); onClose(); }}
-          disabled={!match}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
-        >
-          <UserPlus className="w-4 h-4" />
-          Ajouter l'étudiant
-        </button>
-      </div>
-    </ModalBase>
-  );
-}
 
 // ─── Student Details Modal ─────────────────────────────────────────────────────
-function StudentDetailsModal({ student, onClose, onEdit }: { student: Student; onClose: () => void; onEdit: () => void }) {
+function StudentDetailsModal({ student, onClose }: { student: Student; onClose: () => void }) {
   const examHistory = [
     { exam: "Architecture Java EE", date: "09 Avr", score: 17.4, status: "passed" },
     { exam: "Base de données", date: "15 Mar", score: 18.4, status: "passed" },
@@ -900,72 +716,11 @@ function StudentDetailsModal({ student, onClose, onEdit }: { student: Student; o
           Fermer
         </button>
         <div className="flex gap-3">
-          <button onClick={onEdit} className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-black text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
-            <Edit3 className="w-4 h-4" />
-            Modifier
-          </button>
           <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors">
             <Download className="w-4 h-4" />
             Rapport
           </button>
         </div>
-      </div>
-    </ModalBase>
-  );
-}
-
-// ─── Edit Student Modal ─────────────────────────────────────────────────────────
-function EditStudentModal({ student, onClose, onSave }: { student: Student; onClose: () => void; onSave: (s: Student) => void }) {
-  const [name, setName] = useState(student.name);
-  const [email, setEmail] = useState(student.email);
-  const [department, setDepartment] = useState(student.department ?? "Informatique");
-  const [year, setYear] = useState(student.year ?? "L3");
-
-  return (
-    <ModalBase title={`Modifier — ${student.name}`} onClose={onClose}>
-      <div className="p-6 space-y-5">
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">Nom complet</label>
-          <input value={name} onChange={e => setName(e.target.value)}
-            className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-            className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Département</label>
-            <select value={department} onChange={e => setDepartment(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
-              <option>Informatique</option>
-              <option>Génie logiciel</option>
-              <option>Cybersécurité</option>
-              <option>IA & Data</option>
-              <option>Réseaux</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Année</label>
-            <select value={year} onChange={e => setYear(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
-              <option>L1</option><option>L2</option><option>L3</option><option>M1</option><option>M2</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
-        <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
-          Annuler
-        </button>
-        <button
-          onClick={() => { onSave({ ...student, name, email, department, year }); onClose(); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
-        >
-          <Save className="w-4 h-4" />
-          Enregistrer
-        </button>
       </div>
     </ModalBase>
   );
@@ -1076,7 +831,6 @@ function OverviewTab({
   onExamDetails,
   onAlertReview,
   onCreateExam,
-  onAddStudent,
   onImportData,
 }: {
   onGoToExams: () => void;
@@ -1084,7 +838,6 @@ function OverviewTab({
   onExamDetails: (exam: Exam) => void;
   onAlertReview: (alert: FraudAlert) => void;
   onCreateExam: () => void;
-  onAddStudent: () => void;
   onImportData: () => void;
 }) {
   return (
@@ -1146,7 +899,6 @@ function OverviewTab({
           >
             <div className="space-y-2">
               <QuickActionButton icon={Plus} label="Créer un examen" onClick={onCreateExam} />
-              <QuickActionButton icon={UserPlus} label="Ajouter un étudiant" onClick={onAddStudent} />
               <QuickActionButton icon={Upload} label="Importer données" onClick={onImportData} />
             </div>
           </DashboardSectionCard>
@@ -1337,13 +1089,10 @@ function ExamsTab({ onCreateExam }: { onCreateExam: () => void }) {
 
 // ─── Students Tab ─────────────────────────────────────────────────────────────
 function StudentsTab() {
-  const [students, setStudents] = useState<Student[]>(allStudentsData);
+  const students = allStudentsData;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
-  const [showAdd, setShowAdd] = useState(false);
 
   const filtered = students.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1356,23 +1105,8 @@ function StudentsTab() {
         <StudentDetailsModal
           student={selectedStudent}
           onClose={() => setShowDetails(false)}
-          onEdit={() => { setShowDetails(false); setEditingStudent(selectedStudent); setShowEdit(true); }}
         />
       )}
-      {showEdit && editingStudent && (
-        <EditStudentModal
-          student={editingStudent}
-          onClose={() => setShowEdit(false)}
-          onSave={(updated) => setStudents(prev => prev.map(s => s.id === updated.id ? updated : s))}
-        />
-      )}
-      {showAdd && (
-        <AddStudentModal
-          onClose={() => setShowAdd(false)}
-          onAdded={() => {}}
-        />
-      )}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex-1 w-full sm:max-w-md">
@@ -1387,13 +1121,6 @@ function StudentsTab() {
             />
           </div>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-black hover:bg-[#222222] rounded-xl text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
-        >
-          <UserPlus className="w-4 h-4" />
-          Ajouter étudiant
-        </button>
       </div>
 
       {/* Students Table */}
@@ -1461,16 +1188,6 @@ function StudentsTab() {
                         title="Voir les détails"
                       >
                         <Eye className="w-4 h-4 text-[#666666]" />
-                      </button>
-                      <button
-                        onClick={() => { setEditingStudent(student); setShowEdit(true); }}
-                        className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors"
-                        title="Modifier"
-                      >
-                        <Edit3 className="w-4 h-4 text-[#666666]" />
-                      </button>
-                      <button className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors" title="Supprimer">
-                        <Trash2 className="w-4 h-4 text-[#CCCCCC] hover:text-black transition-colors" />
                       </button>
                     </div>
                   </td>
@@ -1831,7 +1548,6 @@ export function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [showCreateExam, setShowCreateExam] = useState(false);
-  const [showAddStudent, setShowAddStudent] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [overviewExamDetails, setOverviewExamDetails] = useState<Exam | null>(null);
   const [reviewAlert, setReviewAlert] = useState<FraudAlert | null>(null);
@@ -1839,7 +1555,6 @@ export function AdminDashboard() {
   const handleLogoClick = () => {
     setActiveTab("overview");
     setShowCreateExam(false);
-    setShowAddStudent(false);
     setShowImport(false);
     setOverviewExamDetails(null);
     setReviewAlert(null);
@@ -1859,7 +1574,6 @@ export function AdminDashboard() {
       <div className="relative z-10">
       {/* Global modals */}
       {showCreateExam && <CreateExamModal onClose={() => setShowCreateExam(false)} />}
-      {showAddStudent && <AddStudentModal onClose={() => setShowAddStudent(false)} />}
       {showImport && <ImportDataModal onClose={() => setShowImport(false)} />}
       {overviewExamDetails && (
         <ExamDetailsModal
@@ -1952,7 +1666,6 @@ export function AdminDashboard() {
             onExamDetails={(exam) => setOverviewExamDetails(exam)}
             onAlertReview={(alert) => setReviewAlert(alert)}
             onCreateExam={() => setShowCreateExam(true)}
-            onAddStudent={() => setShowAddStudent(true)}
             onImportData={() => setShowImport(true)}
           />
         )}
