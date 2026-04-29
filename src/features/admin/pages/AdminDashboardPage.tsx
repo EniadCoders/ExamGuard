@@ -465,11 +465,35 @@ function FraudAlertDetailsModal({ alert, onClose, onAction }: { alert: FraudAler
 }
 
 // ─── Edit Exam Modal ──────────────────────────────────────────────────────────
+const FR_MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+function frDateToIso(input: string): string {
+  if (!input) return "";
+  const m = input.match(/^\s*(\d{1,2})\s+([A-Za-zÀ-ÿ]+)(?:\s+(\d{4}))?(?:\s*(?:à\s*)?(\d{1,2}):(\d{2}))?/);
+  if (!m) return "";
+  const day = m[1].padStart(2, "0");
+  const monthIdx = FR_MONTHS.findIndex(name => name.toLowerCase() === m[2].toLowerCase());
+  if (monthIdx < 0) return "";
+  const year = m[3] ?? String(new Date().getFullYear());
+  const hours = (m[4] ?? "00").padStart(2, "0");
+  const minutes = m[5] ?? "00";
+  return `${year}-${String(monthIdx + 1).padStart(2, "0")}-${day}T${hours}:${minutes}`;
+}
+
+function isoToFrDate(iso: string): string {
+  if (!iso) return "";
+  const [datePart, timePart] = iso.split("T");
+  const [y, mo, d] = datePart.split("-");
+  if (!y || !mo || !d) return iso;
+  const base = `${d} ${FR_MONTHS[Number(mo) - 1]} ${y}`;
+  return timePart ? `${base} à ${timePart.slice(0, 5)}` : base;
+}
+
 function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => void; onSave: (e: Exam) => void }) {
   const [title, setTitle] = useState(exam.title);
   const [subject, setSubject] = useState(exam.subject);
   const [duration, setDuration] = useState(exam.duration);
-  const [date, setDate] = useState(exam.date);
+  const [date, setDate] = useState(frDateToIso(exam.date));
   const [status, setStatus] = useState(exam.status);
   const [description, setDescription] = useState(exam.description ?? "");
   const [passingScore, setPassingScore] = useState(exam.passingScore ?? 12);
@@ -518,8 +542,8 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-black mb-2">Date planifiée</label>
-          <input value={date} onChange={e => setDate(e.target.value)}
+          <label className="block text-sm font-medium text-black mb-2">Date et heure</label>
+          <input type="datetime-local" value={date} onChange={e => setDate(e.target.value)}
             className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
         </div>
         <div>
@@ -533,7 +557,7 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
           Annuler
         </button>
         <button
-          onClick={() => { onSave({ ...exam, title, subject, duration, date, status, description, passingScore }); onClose(); }}
+          onClick={() => { onSave({ ...exam, title, subject, duration, date: isoToFrDate(date), status, description, passingScore }); onClose(); }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors"
         >
           <Save className="w-4 h-4" />
@@ -896,7 +920,6 @@ function EditStudentModal({ student, onClose, onSave }: { student: Student; onCl
   const [email, setEmail] = useState(student.email);
   const [department, setDepartment] = useState(student.department ?? "Informatique");
   const [year, setYear] = useState(student.year ?? "L3");
-  const [status, setStatus] = useState(student.status);
 
   return (
     <ModalBase title={`Modifier — ${student.name}`} onClose={onClose}>
@@ -931,26 +954,13 @@ function EditStudentModal({ student, onClose, onSave }: { student: Student; onCl
             </select>
           </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">Statut</label>
-          <div className="flex gap-3">
-            {(["active", "inactive"] as const).map(s => (
-              <button key={s} onClick={() => setStatus(s)}
-                className={`flex-1 py-3 rounded-xl text-sm font-medium border-2 transition-all ${
-                  status === s ? "bg-black border-black text-white" : "bg-white border-[#E5E5E5] text-[#666666] hover:border-[#CCCCCC]"
-                }`}>
-                {s === "active" ? "Actif" : "Inactif"}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
       <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
         <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors">
           Annuler
         </button>
         <button
-          onClick={() => { onSave({ ...student, name, email, department, year, status }); onClose(); }}
+          onClick={() => { onSave({ ...student, name, email, department, year }); onClose(); }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
         >
           <Save className="w-4 h-4" />
