@@ -18,17 +18,17 @@ type AccountType = "student" | "teacher";
 type StudentIdentifierType = "apogee" | "cne";
 
 const umpSchools = [
-  "Ecole Nationale de l'Intelligence Artificielle et du Digital de Berkane (ENIAD)",
-  "Ecole Nationale des Sciences Appliquees d'Oujda (ENSAO)",
-  "Ecole Nationale de Commerce et de Gestion d'Oujda (ENCGO)",
-  "Ecole Superieure de Technologie d'Oujda (ESTO)",
-  "Ecole Superieure de Technologie de Nador (ESTN)",
-  "Ecole Superieure de l'Education et de la Formation d'Oujda (ESEFO)",
-  "Faculte de Medecine et de Pharmacie d'Oujda (FMPO)",
-  "Faculte des Sciences d'Oujda (FSO)",
-  "Faculte des Lettres et Sciences Humaines d'Oujda (FLSHO)",
-  "Faculte des Sciences Juridiques, Economiques et Sociales d'Oujda (FSJESO)",
-  "Faculte Pluridisciplinaire de Nador (FPN)",
+  "École Nationale de l'Intelligence Artificielle et du Digital de Berkane (ENIAD)",
+  "École Nationale des Sciences Appliquées d'Oujda (ENSAO)",
+  "École Nationale de Commerce et de Gestion d'Oujda (ENCGO)",
+  "École Supérieure de Technologie d'Oujda (ESTO)",
+  "École Supérieure de Technologie de Nador (ESTN)",
+  "École Supérieure de l'Éducation et de la Formation d'Oujda (ESEFO)",
+  "Faculté de Médecine et de Pharmacie d'Oujda (FMPO)",
+  "Faculté des Sciences d'Oujda (FSO)",
+  "Faculté des Lettres et Sciences Humaines d'Oujda (FLSHO)",
+  "Faculté des Sciences Juridiques, Économiques et Sociales d'Oujda (FSJESO)",
+  "Faculté Pluridisciplinaire de Nador (FPN)",
 ];
 
 export function SignUpPage() {
@@ -64,17 +64,17 @@ export function SignUpPage() {
       !department.trim() ||
       !studentIdentifier.trim()
     ) {
-      setError("Please complete all required fields.");
+      setError("Veuillez compléter tous les champs obligatoires.");
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must contain at least 8 characters.");
+      setError("Le mot de passe doit contenir au moins 8 caractères.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("Les mots de passe ne correspondent pas.");
       return;
     }
 
@@ -89,21 +89,21 @@ export function SignUpPage() {
     setError("");
 
     if (!fullName.trim() || !email.trim() || !institution.trim()) {
-      setError("Please complete your name, email, and institution.");
+      setError("Veuillez renseigner votre nom, votre email et votre établissement.");
       return;
     }
 
-    const subject = encodeURIComponent("Teacher account request");
+    const subject = encodeURIComponent("Demande de création de compte professeur");
     const body = encodeURIComponent(
       [
-        "Teacher account request",
+        "Demande de création de compte professeur",
         "",
-        `Full name: ${fullName.trim()}`,
+        `Nom complet: ${fullName.trim()}`,
         `Email: ${email.trim()}`,
-        `Institution: ${institution.trim()}`,
+        `Établissement: ${institution.trim()}`,
         "",
         "Message:",
-        message.trim() || "No additional details provided.",
+        message.trim() || "Aucun détail supplémentaire.",
       ].join("\n"),
     );
 
@@ -125,11 +125,11 @@ export function SignUpPage() {
         {step === "form" ? (
           <>
             <AuthHeading
-              title="Create Account"
+              title="Création de compte"
               description={
                 accountType === "student"
-                  ? "Set up your ExamGuard access with the secure student authentication flow."
-                  : "Teacher accounts are created by ExamGuard support. Send a request and we will contact you."
+                  ? "Créez votre accès ExamGuard avec le formulaire étudiant sécurisé."
+                  : "Les comptes professeurs sont créés par le support ExamGuard. Envoyez une demande et nous vous contacterons."
               }
             />
 
@@ -146,7 +146,7 @@ export function SignUpPage() {
                     : "text-[var(--cyber-muted-text)] hover:bg-[rgba(123,241,255,0.08)] hover:text-white"
                 }`}
               >
-                Student
+                Étudiant
               </button>
               <button
                 type="button"
@@ -160,7 +160,7 @@ export function SignUpPage() {
                     : "text-[var(--cyber-muted-text)] hover:bg-[rgba(123,241,255,0.08)] hover:text-white"
                 }`}
               >
-                Teacher
+                Professeur
               </button>
             </div>
 
@@ -169,14 +169,14 @@ export function SignUpPage() {
                 <div className="grid gap-[clamp(0.62rem,1.2vh,0.9rem)] sm:grid-cols-2">
                   <div>
                   <label className={authLabelClass} htmlFor="sign-up-name">
-                    Full name
+                    Nom complet
                   </label>
                   <input
                     id="sign-up-name"
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your full name"
+                    placeholder="Votre nom complet"
                     required
                     className={authFieldClass}
                   />
@@ -184,7 +184,7 @@ export function SignUpPage() {
 
                   <div>
                     <label className={authLabelClass} htmlFor="sign-up-email">
-                      Email address
+                      Adresse email
                     </label>
                     <input
                       id="sign-up-email"
@@ -199,7 +199,7 @@ export function SignUpPage() {
 
                   <div className="sm:col-span-2">
                     <label className={authLabelClass} htmlFor="sign-up-school">
-                      School
+                      École
                     </label>
                     <select
                       id="sign-up-school"
@@ -208,7 +208,7 @@ export function SignUpPage() {
                       required
                       className={authFieldClass}
                     >
-                      <option value="">Select your UMP school</option>
+                      <option value="">Sélectionnez votre école UMP</option>
                       {umpSchools.map((schoolName) => (
                         <option key={schoolName} value={schoolName}>
                           {schoolName}
@@ -219,14 +219,14 @@ export function SignUpPage() {
 
                   <div>
                     <label className={authLabelClass} htmlFor="sign-up-program">
-                      Program
+                      Filière
                     </label>
                     <input
                       id="sign-up-program"
                       type="text"
                       value={program}
                       onChange={(e) => setProgram(e.target.value)}
-                      placeholder="Your program"
+                      placeholder="Votre filière"
                       required
                       className={authFieldClass}
                     />
@@ -234,14 +234,14 @@ export function SignUpPage() {
 
                   <div>
                     <label className={authLabelClass} htmlFor="sign-up-department">
-                      Department
+                      Département
                     </label>
                     <input
                       id="sign-up-department"
                       type="text"
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      placeholder="Your department"
+                      placeholder="Votre département"
                       required
                       className={authFieldClass}
                     />
@@ -249,7 +249,7 @@ export function SignUpPage() {
 
                   <div>
                     <label className={authLabelClass} htmlFor="student-id-type">
-                      Student ID type
+                      Type d'identifiant
                     </label>
                     <select
                       id="student-id-type"
@@ -275,8 +275,8 @@ export function SignUpPage() {
                       onChange={(e) => setStudentIdentifier(e.target.value)}
                       placeholder={
                         studentIdentifierType === "apogee"
-                          ? "Your APOGEE number"
-                          : "Your CNE / Massar code"
+                          ? "Votre numéro APOGEE"
+                          : "Votre code CNE / Massar"
                       }
                       required
                       className={authFieldClass}
@@ -285,7 +285,7 @@ export function SignUpPage() {
 
                   <div>
                     <label className={authLabelClass} htmlFor="sign-up-password">
-                      Password
+                      Mot de passe
                     </label>
                     <div className="relative">
                       <input
@@ -293,7 +293,7 @@ export function SignUpPage() {
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Create a secure password"
+                        placeholder="Créez un mot de passe sécurisé"
                         required
                         className={`${authFieldClass} pr-11 sm:pr-12`}
                       />
@@ -301,7 +301,7 @@ export function SignUpPage() {
                         type="button"
                         onClick={() => setShowPassword((value) => !value)}
                         className={passwordToggleButtonClass}
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                       >
                         {showPassword ? (
                           <EyeOff className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
@@ -314,7 +314,7 @@ export function SignUpPage() {
 
                   <div>
                     <label className={authLabelClass} htmlFor="sign-up-confirm-password">
-                      Confirm password
+                      Confirmer le mot de passe
                     </label>
                     <div className="relative">
                       <input
@@ -322,7 +322,7 @@ export function SignUpPage() {
                         type={showConfirmPassword ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Repeat your password"
+                        placeholder="Repetez votre mot de passe"
                         required
                         className={`${authFieldClass} pr-11 sm:pr-12`}
                       />
@@ -330,7 +330,7 @@ export function SignUpPage() {
                         type="button"
                         onClick={() => setShowConfirmPassword((value) => !value)}
                         className={passwordToggleButtonClass}
-                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        aria-label={showConfirmPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
@@ -358,7 +358,7 @@ export function SignUpPage() {
                   ) : (
                     <span className="inline-flex items-center gap-2">
                       <UserPlus className="h-[clamp(0.9rem,1.55vh,1rem)] w-[clamp(0.9rem,1.55vh,1rem)]" />
-                      Create account
+                      Créer le compte
                     </span>
                   )}
                 </button>
@@ -366,19 +366,19 @@ export function SignUpPage() {
             ) : (
               <form onSubmit={handleTeacherContact} className="flex flex-col gap-[clamp(0.62rem,1.2vh,0.9rem)]">
                 <div className="rounded-[0.95rem] border border-[rgba(123,241,255,0.16)] bg-[rgba(11,27,38,0.58)] px-4 py-3 text-[clamp(0.72rem,1.12vh,0.84rem)] leading-[1.45] text-[var(--cyber-muted-text)] md:rounded-[1.05rem]">
-                  Teachers should not use the standard sign up form. Contact us and our support team will create the account.
+                  Les professeurs ne doivent pas utiliser le formulaire d'inscription standard. Contactez-nous et notre support créera le compte.
                 </div>
 
                 <div>
                   <label className={authLabelClass} htmlFor="teacher-name">
-                    Full name
+                    Nom complet
                   </label>
                   <input
                     id="teacher-name"
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your full name"
+                    placeholder="Votre nom complet"
                     required
                     className={authFieldClass}
                   />
@@ -386,7 +386,7 @@ export function SignUpPage() {
 
                 <div>
                   <label className={authLabelClass} htmlFor="teacher-email">
-                    Email address
+                    Adresse email
                   </label>
                   <input
                     id="teacher-email"
@@ -401,14 +401,14 @@ export function SignUpPage() {
 
                 <div>
                   <label className={authLabelClass} htmlFor="teacher-institution">
-                    Institution
+                    Établissement
                   </label>
                   <input
                     id="teacher-institution"
                     type="text"
                     value={institution}
                     onChange={(e) => setInstitution(e.target.value)}
-                    placeholder="School or organization"
+                    placeholder="École ou organisation"
                     required
                     className={authFieldClass}
                   />
@@ -422,7 +422,7 @@ export function SignUpPage() {
                     id="teacher-message"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Add any details for support"
+                    placeholder="Ajoutez les détails utiles pour le support"
                     rows={3}
                     className={`${authFieldClass} min-h-[5.5rem] resize-none py-[clamp(0.75rem,1.25vh,0.9rem)] leading-[1.45]`}
                   />
@@ -437,7 +437,7 @@ export function SignUpPage() {
                 <button type="submit" className={authPrimaryButtonClass}>
                   <span className="inline-flex items-center gap-2">
                     <Send className="h-[clamp(0.9rem,1.55vh,1rem)] w-[clamp(0.9rem,1.55vh,1rem)]" />
-                    Contact support
+                    Contacter le support
                   </span>
                 </button>
               </form>
@@ -445,13 +445,13 @@ export function SignUpPage() {
 
             <div className={`space-y-[clamp(0.28rem,0.7vh,0.45rem)] text-center ${authFooterTextClass}`}>
               <p className="text-[var(--cyber-muted-text)]">
-                Already have an account?{" "}
+                Vous avez déjà un compte ?{" "}
                 <button
                   type="button"
                   className={authTextLinkClass}
                   onClick={() => navigate("/")}
                 >
-                  Log in
+                  Se connecter
                 </button>
               </p>
             </div>
@@ -459,11 +459,11 @@ export function SignUpPage() {
         ) : (
           <>
             <AuthHeading
-              title={accountType === "student" ? "Account ready" : "Request prepared"}
+              title={accountType === "student" ? "Compte prêt" : "Demande préparée"}
               description={
                 accountType === "student"
-                  ? "Your access has been prepared. Continue to the login flow to enter the platform."
-                  : "Your email app should open with a message addressed to support@examguard.com."
+                  ? "Votre accès est préparé. Continuez vers la connexion pour entrer dans la plateforme."
+                  : "Votre application email devrait s'ouvrir avec un message adressé à support@examguard.com."
               }
             />
 
@@ -498,7 +498,7 @@ export function SignUpPage() {
                 className={authPrimaryButtonClass}
               >
                 <span className="inline-flex items-center gap-2">
-                  Go to login
+                  Aller à la connexion
                   <ArrowRight className="h-[clamp(0.9rem,1.55vh,1rem)] w-[clamp(0.9rem,1.55vh,1rem)]" />
                 </span>
               </button>
@@ -521,7 +521,7 @@ export function SignUpPage() {
                 }}
                 className={authSecondaryButtonClass}
               >
-                {accountType === "student" ? "Edit details" : "Edit request"}
+                {accountType === "student" ? "Modifier les informations" : "Modifier la demande"}
               </button>
             </div>
           </>

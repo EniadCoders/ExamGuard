@@ -41,8 +41,8 @@ export function LoginPage() {
     <AuthPageLayout>
       <AuthCard>
         <AuthHeading
-          title="Log In"
-          description="Enter your account details below."
+          title="Connexion"
+          description="Saisissez vos informations de compte."
         />
 
         <div className="grid grid-cols-2 gap-[clamp(0.4rem,0.8vh,0.55rem)] sm:grid-cols-4">
@@ -50,7 +50,7 @@ export function LoginPage() {
                 type="button"
                 className={authProviderButtonClass}
                 onClick={() => console.log("Secure access provider clicked")}
-                aria-label="Secure access"
+                aria-label="Accès sécurisé"
               >
                 <ShieldCheck className="h-[clamp(0.95rem,1.8vh,1.15rem)] w-[clamp(0.95rem,1.8vh,1.15rem)]" />
               </button>
@@ -58,7 +58,7 @@ export function LoginPage() {
                 type="button"
                 onClick={handleGoogleLogin}
                 className={authProviderButtonClass}
-                aria-label="Continue with Google"
+                aria-label="Continuer avec Google"
               >
                 <img
                   src={imgGoogleIcon}
@@ -70,7 +70,7 @@ export function LoginPage() {
                 type="button"
                 className={authProviderButtonClass}
                 onClick={() => console.log("GitHub login clicked")}
-                aria-label="Continue with GitHub"
+                aria-label="Continuer avec GitHub"
               >
                 <Github className="h-[clamp(0.95rem,1.8vh,1.15rem)] w-[clamp(0.95rem,1.8vh,1.15rem)]" />
               </button>
@@ -78,7 +78,7 @@ export function LoginPage() {
                 type="button"
                 className={authProviderButtonClass}
                 onClick={() => console.log("Organization login clicked")}
-                aria-label="Continue with organization"
+                aria-label="Continuer avec votre organisation"
               >
                 <Building2 className="h-[clamp(0.95rem,1.8vh,1.15rem)] w-[clamp(0.95rem,1.8vh,1.15rem)]" />
               </button>
@@ -87,7 +87,7 @@ export function LoginPage() {
         <div className="flex items-center gap-[clamp(0.45rem,1vh,0.7rem)]">
               <div className="h-px flex-1 bg-[rgba(117,195,214,0.12)]" />
               <span className="text-[clamp(0.62rem,1.05vh,0.78rem)] font-semibold uppercase tracking-[0.2em] text-[var(--cyber-muted-text)] md:tracking-[0.24em]">
-                Or
+                Ou
               </span>
               <div className="h-px flex-1 bg-[rgba(117,195,214,0.12)]" />
         </div>
@@ -102,7 +102,7 @@ export function LoginPage() {
                     : "text-[var(--cyber-muted-text)] hover:bg-[rgba(123,241,255,0.08)] hover:text-white"
                 }`}
               >
-                Student
+                Étudiant
               </button>
               <button
                 type="button"
@@ -120,14 +120,14 @@ export function LoginPage() {
         <form onSubmit={handleLogin} className="flex flex-col gap-[clamp(0.62rem,1.2vh,0.9rem)]">
               <div>
                 <label className={authLabelClass} htmlFor="login-email">
-                  Email/Username
+                  Email / nom d'utilisateur
                 </label>
                 <input
                   id="login-email"
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Username or email"
+                  placeholder="Nom d'utilisateur ou email"
                   required
                   className={authFieldClass}
                 />
@@ -136,14 +136,14 @@ export function LoginPage() {
               <div>
                 <div className="mb-[clamp(0.32rem,0.7vh,0.45rem)] flex items-center justify-between gap-3">
                   <label className={`${authLabelClass} mb-0`} htmlFor="login-password">
-                    Password
+                    Mot de passe
                   </label>
                   <button
                     type="button"
                     onClick={() => navigate("/forgot-password")}
                     className="text-[clamp(0.64rem,1vh,0.76rem)] font-semibold text-[var(--cyber-accent)] transition hover:text-white"
                   >
-                    Forgot your password?
+                    Mot de passe oublié ?
                   </button>
                 </div>
 
@@ -153,7 +153,7 @@ export function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
+                    placeholder="Mot de passe"
                     required
                     className={`${authFieldClass} pr-11 sm:pr-12`}
                   />
@@ -161,7 +161,7 @@ export function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
                     className="absolute right-[clamp(0.55rem,0.9vw,0.75rem)] top-1/2 -translate-y-1/2 rounded-full p-[clamp(0.3rem,0.7vh,0.45rem)] text-[var(--cyber-muted-text)] transition hover:bg-[rgba(123,241,255,0.08)] hover:text-white"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   >
                     {showPassword ? (
                       <EyeOff className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
@@ -182,10 +182,10 @@ export function LoginPage() {
                     type="checkbox"
                     className="h-[clamp(0.8rem,1.45vh,1rem)] w-[clamp(0.8rem,1.45vh,1rem)] rounded border-[rgba(123,241,255,0.3)] bg-transparent accent-[var(--cyber-accent)]"
                   />
-                  <span>Remember this device</span>
+                  <span>Se souvenir de cet appareil</span>
                 </label>
                 <span className="text-[clamp(0.58rem,0.95vh,0.72rem)] uppercase tracking-[0.16em] text-[var(--cyber-subtle-text)] md:tracking-[0.2em]">
-                  {role === "student" ? "Student Portal" : "Admin Portal"}
+                  {role === "student" ? "Portail étudiant" : "Portail admin"}
                 </span>
               </div>
 
@@ -197,7 +197,7 @@ export function LoginPage() {
                 {isLoading ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgba(4,17,23,0.18)] border-t-[rgba(4,17,23,0.95)]" />
                 ) : (
-                  "Log In"
+                  "Se connecter"
                 )}
               </button>
         </form>
@@ -208,16 +208,16 @@ export function LoginPage() {
                 className={authFooterLinkClass}
                 onClick={() => console.log("Organization SSO clicked")}
               >
-                Log in with your organization SSO
+                Se connecter avec le SSO de votre organisation
               </button>
               <p className="text-[var(--cyber-muted-text)]">
-                Don&apos;t have an account?{" "}
+                Vous n&apos;avez pas de compte ?{" "}
                 <button
                   type="button"
                   className={authTextLinkClass}
                   onClick={() => navigate("/sign-up")}
                 >
-                  Sign up
+                  Créer un compte
                 </button>
               </p>
         </div>
