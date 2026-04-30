@@ -2056,11 +2056,16 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   const liveParticipants = allStudentsData.slice(0, Math.min(exam.students || 5, allStudentsData.length)).map((s, i) => {
     const baseState: "flagged" | "submitted" | "active" = i % 5 === 0 ? "flagged" : i % 4 === 0 ? "submitted" : "active";
     const kicked = kickedIds.includes(s.id);
+    const finalState = (kicked ? "kicked" : baseState) as "flagged" | "submitted" | "active" | "kicked";
+    const progress =
+      finalState === "kicked" ? 0 :
+      finalState === "submitted" ? 100 :
+      Math.min(99, 12 + i * 17 + (elapsed % 11) * 2);
     return {
       id: s.id,
       name: s.name,
-      progress: kicked ? 0 : Math.min(100, 12 + i * 17 + (elapsed % 11) * 2),
-      state: (kicked ? "kicked" : baseState) as "flagged" | "submitted" | "active" | "kicked",
+      progress,
+      state: finalState,
       score: Math.round((10 + (i * 1.7) % 9) * 10) / 10,
     };
   });
@@ -2213,7 +2218,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                       </div>
                     </div>
                     <span className="text-sm font-bold text-[var(--cyber-text)] tabular-nums">{p.score}/20</span>
-                    {p.state !== "kicked" && (
+                    {p.state !== "kicked" && p.state !== "submitted" && (
                       <button
                         onClick={() => setKickTarget({ id: p.id, name: p.name })}
                         className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
