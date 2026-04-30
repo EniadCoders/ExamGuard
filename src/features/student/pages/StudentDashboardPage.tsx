@@ -629,7 +629,7 @@ export function StudentDashboard() {
 
                   {/* Expanded Details section */}
                   {expandedExam === exam.id && exam.status === "upcoming" && (
-                    <div className="mt-6 pt-6 border-t border-[rgba(117,195,214,0.12)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="mt-6 pt-6 border-t border-[rgba(117,195,214,0.12)] grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
                       <div className="flex items-start gap-3">
                         <div className="p-2 rounded-lg bg-[rgba(117,195,214,0.08)] text-[var(--cyber-accent-strong)]">
                           <User className="w-5 h-5" />
@@ -642,21 +642,11 @@ export function StudentDashboard() {
                       
                       <div className="flex items-start gap-3">
                         <div className="p-2 rounded-lg bg-[rgba(117,195,214,0.08)] text-[var(--cyber-accent-strong)]">
-                          <Building className="w-5 h-5" />
+                          <FileText className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-[var(--cyber-subtle-text)] uppercase tracking-wider mb-1">Salle</p>
-                          <p className="text-sm font-medium text-[var(--cyber-text)]">Amphithéâtre B - Bâtiment Sciences</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-lg bg-[rgba(117,195,214,0.08)] text-[var(--cyber-accent-strong)]">
-                          <BookOpen className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-[var(--cyber-subtle-text)] uppercase tracking-wider mb-1">Matériel Requis</p>
-                          <p className="text-sm font-medium text-[var(--cyber-text)]">Calculatrice autorisée, brouillons</p>
+                          <p className="text-xs font-semibold text-[var(--cyber-subtle-text)] uppercase tracking-wider mb-1">Description</p>
+                          <p className="text-sm font-medium text-[var(--cyber-text)]">Cet examen couvrira l'ensemble des chapitres abordés ce semestre. Les documents ne sont pas autorisés.</p>
                         </div>
                       </div>
                     </div>
