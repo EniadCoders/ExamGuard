@@ -2152,22 +2152,54 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
         </div>
 
         {/* End confirm */}
-        {confirmEnd && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md rounded-2xl border border-[rgba(123,241,255,0.25)] bg-[rgba(11,27,38,0.95)] p-6 shadow-2xl">
-              <h3 className="text-lg font-bold text-[var(--cyber-text)] mb-2">Terminer l'examen ?</h3>
-              <p className="text-sm text-[var(--cyber-muted-text)] mb-4">L'examen passera en statut "Terminé". Les soumissions seront verrouillées.</p>
-              <div className="flex justify-end gap-2">
-                <button onClick={() => setConfirmEnd(false)} className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
-                  Annuler
-                </button>
-                <button onClick={() => { setConfirmEnd(false); onEnd(); }} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-sm font-medium text-white transition-colors">
-                  Terminer
-                </button>
+        {confirmEnd && (() => {
+          const notFinished = liveParticipants.filter(p => p.state !== "submitted");
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div className="w-full max-w-md rounded-2xl border border-[rgba(123,241,255,0.25)] bg-[rgba(11,27,38,0.95)] p-6 shadow-2xl">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="w-5 h-5 text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[var(--cyber-text)]">Terminer l'examen ?</h3>
+                    <p className="text-sm text-[var(--cyber-muted-text)] mt-1">
+                      {notFinished.length === 0
+                        ? "Tous les étudiants ont soumis. L'examen passera en statut « Terminé »."
+                        : `${notFinished.length} étudiant${notFinished.length > 1 ? "s n'ont" : " n'a"} pas encore soumis.`}
+                    </p>
+                  </div>
+                </div>
+
+                {notFinished.length > 0 && (
+                  <div className="rounded-xl border border-[rgba(255,80,80,0.25)] bg-[rgba(60,12,12,0.35)] p-3 mb-4 max-h-44 overflow-y-auto">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-red-300 mb-2">Étudiants non soumis</p>
+                    <ul className="space-y-1.5">
+                      {notFinished.map(p => (
+                        <li key={p.id} className="flex items-center justify-between text-sm">
+                          <span className="text-[var(--cyber-text)] truncate">{p.name}</span>
+                          <span className="text-xs text-[var(--cyber-muted-text)] tabular-nums ml-2">{p.progress}%</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-xs text-[var(--cyber-muted-text)] mt-3">
+                      Leurs réponses actuelles seront soumises automatiquement et l'examen sera verrouillé.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setConfirmEnd(false)} className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                    Annuler
+                  </button>
+                  <button onClick={() => { setConfirmEnd(false); onEnd(); }} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-sm font-medium text-white transition-colors">
+                    Confirmer et terminer
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
