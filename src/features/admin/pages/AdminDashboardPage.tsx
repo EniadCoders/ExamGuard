@@ -37,6 +37,11 @@ import {
   AlertCircle,
   User,
   Send,
+  Play,
+  PauseCircle,
+  StopCircle,
+  ArrowLeft,
+  Wifi,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { NotificationPanel } from "@/shared/components/NotificationPanel";
@@ -108,7 +113,7 @@ interface Exam {
   duration: number;
   date: string;
   students: number;
-  status: "scheduled" | "draft" | "completed";
+  status: "scheduled" | "draft" | "completed" | "live";
   questions: number;
   description?: string;
   passingScore?: number;
@@ -306,11 +311,12 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
             <p className="text-sm text-[#666666]">{exam.subject}</p>
           </div>
           <span className={`px-3 py-1.5 rounded-lg text-xs font-medium flex-shrink-0 ${
-            exam.status === "scheduled" ? "bg-black text-white"
+            exam.status === "live" ? "bg-red-600 text-white animate-pulse"
+            : exam.status === "scheduled" ? "bg-black text-white"
             : exam.status === "completed" ? "bg-[#F5F5F5] text-black border border-[#CCCCCC]"
             : "bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]"
           }`}>
-            {exam.status === "scheduled" ? "Planifié" : exam.status === "completed" ? "Terminé" : "Brouillon"}
+            {exam.status === "live" ? "En cours" : exam.status === "scheduled" ? "Planifié" : exam.status === "completed" ? "Terminé" : "Brouillon"}
           </span>
         </div>
 
@@ -1346,7 +1352,7 @@ function OverviewTab({
 }
 
 // ─── Exams Tab ─────────────────────────────────────────────────────────────────
-function ExamsTab({ onCreateExam, exams, setExams }: { onCreateExam: () => void; exams: Exam[]; setExams: React.Dispatch<React.SetStateAction<Exam[]>> }) {
+function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: () => void; exams: Exam[]; setExams: React.Dispatch<React.SetStateAction<Exam[]>>; onMonitor: (exam: Exam) => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
@@ -1398,6 +1404,7 @@ function ExamsTab({ onCreateExam, exams, setExams }: { onCreateExam: () => void;
             className="px-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all"
           >
             <option value="all">Tous les statuts</option>
+            <option value="live">En cours</option>
             <option value="scheduled">Planifiés</option>
             <option value="draft">Brouillons</option>
             <option value="completed">Terminés</option>
@@ -1425,9 +1432,16 @@ function ExamsTab({ onCreateExam, exams, setExams }: { onCreateExam: () => void;
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 min-w-0">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <DashboardStatusBadge
-                      status={exam.status as "scheduled" | "completed" | "draft"}
-                    />
+                    {exam.status === "live" ? (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-red-600 text-white animate-pulse">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                        En cours
+                      </span>
+                    ) : (
+                      <DashboardStatusBadge
+                        status={exam.status as "scheduled" | "completed" | "draft"}
+                      />
+                    )}
                   </div>
                   <h3 className="truncate text-base font-semibold text-[var(--cyber-text)]">{exam.title}</h3>
                   <p className="mt-1 text-xs text-[var(--cyber-muted-text)]">{exam.subject}</p>
@@ -1441,7 +1455,28 @@ function ExamsTab({ onCreateExam, exams, setExams }: { onCreateExam: () => void;
               </div>
               <div className="dashboard-divider mb-4" />
               <div className="flex items-center gap-2">
-                {exam.status !== "completed" && (
+                {exam.status === "scheduled" && (
+                  <button
+                    onClick={() => {
+                      setExams(prev => prev.map(e => e.id === exam.id ? { ...e, status: "live" } : e));
+                      onMonitor({ ...exam, status: "live" });
+                    }}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    Lancer
+                  </button>
+                )}
+                {exam.status === "live" && (
+                  <button
+                    onClick={() => onMonitor(exam)}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+                  >
+                    <Activity className="w-3.5 h-3.5" />
+                    Voir en direct
+                  </button>
+                )}
+                {exam.status !== "completed" && exam.status !== "live" && (
                   <button
                     onClick={() => { setEditingExam(exam); setShowEdit(true); }}
                     className="cyber-button-secondary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
@@ -1922,6 +1957,222 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
   );
 }
 
+// ─── Live Exam Monitor ────────────────────────────────────────────────────────
+function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => void; onEnd: () => void }) {
+  const [paused, setPaused] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [confirmEnd, setConfirmEnd] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const t = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(t);
+  }, [paused]);
+
+  const formatTime = (s: number) => {
+    const h = Math.floor(s / 3600).toString().padStart(2, "0");
+    const m = Math.floor((s % 3600) / 60).toString().padStart(2, "0");
+    const sec = (s % 60).toString().padStart(2, "0");
+    return `${h}:${m}:${sec}`;
+  };
+
+  const liveParticipants = allStudentsData.slice(0, Math.min(exam.students || 5, allStudentsData.length)).map((s, i) => ({
+    id: s.id,
+    name: s.name,
+    progress: Math.min(100, 12 + i * 17 + (elapsed % 11) * 2),
+    state: i % 5 === 0 ? "flagged" : i % 4 === 0 ? "submitted" : "active",
+    score: Math.round((10 + (i * 1.7) % 9) * 10) / 10,
+  }));
+
+  const liveAlerts = [
+    { id: 1, name: liveParticipants[0]?.name ?? "—", type: "Changement d'onglet (3x)", severity: "high",   time: "Il y a 12s" },
+    { id: 2, name: liveParticipants[2]?.name ?? "—", type: "Détection de visage perdue", severity: "medium", time: "Il y a 45s" },
+    { id: 3, name: liveParticipants[1]?.name ?? "—", type: "Tentative copier-coller",     severity: "low",    time: "Il y a 1m 20s" },
+  ];
+
+  const total = liveParticipants.length;
+  const active = liveParticipants.filter(p => p.state === "active").length;
+  const submitted = liveParticipants.filter(p => p.state === "submitted").length;
+  const flagged = liveParticipants.filter(p => p.state === "flagged").length;
+
+  return (
+    <div className="cyber-dashboard-page fixed inset-0 z-40 flex flex-col bg-[#FAFAFA] overflow-y-auto">
+      <GridBackground variant="dashboard" />
+      <div className="relative z-10 flex flex-col min-h-full">
+        {/* Header */}
+        <div className="border-b border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.8)] backdrop-blur-md sticky top-0 z-10">
+          <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            <div className="flex items-center gap-4 min-w-0">
+              <button onClick={onBack} className="p-2 rounded-lg hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                <ArrowLeft className="w-5 h-5 text-[var(--cyber-text)]" />
+              </button>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-red-600 text-white animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                    En direct
+                  </span>
+                  <h1 className="text-base font-bold text-[var(--cyber-text)] truncate">{exam.title}</h1>
+                </div>
+                <p className="text-xs text-[var(--cyber-muted-text)] truncate">{exam.subject} · {exam.duration} min</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-xs text-[var(--cyber-subtle-text)] uppercase tracking-wide">Temps écoulé</span>
+                <span className="text-base font-mono font-bold text-[var(--cyber-text)]">{formatTime(elapsed)}</span>
+              </div>
+              <button
+                onClick={() => setPaused(p => !p)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors"
+              >
+                <PauseCircle className="w-4 h-4" />
+                {paused ? "Reprendre" : "Suspendre"}
+              </button>
+              <button
+                onClick={() => setConfirmEnd(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-sm font-medium text-white transition-colors"
+              >
+                <StopCircle className="w-4 h-4" />
+                Terminer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 py-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            {[
+              { label: "Étudiants connectés", value: `${active + submitted + flagged}/${total}`, icon: Wifi, color: "text-[var(--cyber-accent-strong)]" },
+              { label: "En cours",            value: active,    icon: Activity,        color: "text-[var(--cyber-accent-strong)]" },
+              { label: "Soumis",              value: submitted, icon: CheckCircle2,    color: "text-emerald-400" },
+              { label: "Alertes",             value: flagged,   icon: AlertTriangle,   color: "text-red-400" },
+            ].map(s => (
+              <div key={s.label} className="rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <s.icon className={`w-5 h-5 ${s.color}`} />
+                </div>
+                <p className="text-2xl font-bold text-[var(--cyber-text)]">{s.value}</p>
+                <p className="text-xs text-[var(--cyber-muted-text)] mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Participants */}
+            <div className="lg:col-span-2 rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-base font-bold text-[var(--cyber-text)]">Participants en direct</h2>
+                  <p className="text-xs text-[var(--cyber-muted-text)]">Progression et état des étudiants</p>
+                </div>
+              </div>
+              <div className="space-y-2 max-h-[480px] overflow-y-auto">
+                {liveParticipants.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-[rgba(123,241,255,0.1)] bg-[rgba(7,17,25,0.5)] hover:bg-[rgba(11,27,38,0.7)] transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-bold text-white">{p.name.split(" ").map(n => n[0]).join("")}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-[var(--cyber-text)] truncate">{p.name}</p>
+                        {p.state === "flagged" && <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />}
+                        {p.state === "submitted" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-[rgba(123,241,255,0.08)] rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              p.state === "flagged" ? "bg-red-500" : p.state === "submitted" ? "bg-emerald-500" : "bg-[var(--cyber-accent-strong)]"
+                            }`}
+                            style={{ width: `${p.progress}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-[var(--cyber-muted-text)] tabular-nums">{p.progress}%</span>
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold text-[var(--cyber-text)] tabular-nums">{p.score}/20</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Alerts + Actions */}
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-[rgba(255,80,80,0.25)] bg-[rgba(60,12,12,0.45)] p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-red-400" />
+                    <h2 className="text-base font-bold text-[var(--cyber-text)]">Alertes de fraude</h2>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white">{liveAlerts.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {liveAlerts.map(a => (
+                    <div key={a.id} className="rounded-xl border border-[rgba(255,80,80,0.18)] bg-[rgba(11,27,38,0.5)] p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-[var(--cyber-text)] truncate">{a.name}</p>
+                          <p className="text-xs text-[var(--cyber-muted-text)] mt-0.5">{a.type}</p>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                          a.severity === "high" ? "bg-red-600 text-white" : a.severity === "medium" ? "bg-amber-500 text-black" : "bg-[rgba(123,241,255,0.18)] text-[var(--cyber-text)]"
+                        }`}>{a.severity}</span>
+                      </div>
+                      <p className="text-[10px] text-[var(--cyber-subtle-text)] mt-1">{a.time}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-5">
+                <h2 className="text-base font-bold text-[var(--cyber-text)] mb-4">Actions rapides</h2>
+                <div className="space-y-2">
+                  <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                    <Send className="w-4 h-4" />
+                    Envoyer un message à tous
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                    <Clock className="w-4 h-4" />
+                    Prolonger la durée (+5 min)
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                    <Shield className="w-4 h-4" />
+                    Verrouiller les soumissions
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                    <Download className="w-4 h-4" />
+                    Exporter les soumissions
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* End confirm */}
+        {confirmEnd && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-2xl border border-[rgba(123,241,255,0.25)] bg-[rgba(11,27,38,0.95)] p-6 shadow-2xl">
+              <h3 className="text-lg font-bold text-[var(--cyber-text)] mb-2">Terminer l'examen ?</h3>
+              <p className="text-sm text-[var(--cyber-muted-text)] mb-4">L'examen passera en statut "Terminé". Les soumissions seront verrouillées.</p>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setConfirmEnd(false)} className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  Annuler
+                </button>
+                <button onClick={() => { setConfirmEnd(false); onEnd(); }} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-sm font-medium text-white transition-colors">
+                  Terminer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -1931,6 +2182,8 @@ export function AdminDashboard() {
   const [overviewExamDetails, setOverviewExamDetails] = useState<Exam | null>(null);
   const [reviewAlert, setReviewAlert] = useState<FraudAlert | null>(null);
   const [exams, setExams] = useState<Exam[]>(allExamsData);
+  const [liveExamId, setLiveExamId] = useState<number | null>(null);
+  const liveExam = liveExamId !== null ? exams.find(e => e.id === liveExamId) ?? null : null;
 
   const handleLogoClick = () => {
     setActiveTab("overview");
@@ -1947,6 +2200,19 @@ export function AdminDashboard() {
     { id: "analytics", label: "Analytiques", icon: BarChart3 },
     { id: "settings", label: "Paramètres", icon: Settings },
   ];
+
+  if (liveExam) {
+    return (
+      <LiveExamMonitor
+        exam={liveExam}
+        onBack={() => setLiveExamId(null)}
+        onEnd={() => {
+          setExams(prev => prev.map(e => e.id === liveExam.id ? { ...e, status: "completed" } : e));
+          setLiveExamId(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="cyber-dashboard-page relative min-h-screen overflow-hidden bg-[#FAFAFA]">
@@ -2054,7 +2320,7 @@ export function AdminDashboard() {
             onImportData={() => setShowImport(true)}
           />
         )}
-        {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} exams={exams} setExams={setExams} />}
+        {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} exams={exams} setExams={setExams} onMonitor={(exam) => setLiveExamId(exam.id)} />}
         {activeTab === "students" && <StudentsTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "settings" && <SettingsTab onGoToProfile={() => navigate("/admin/profile")} />}
