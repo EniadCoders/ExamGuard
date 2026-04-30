@@ -2477,8 +2477,11 @@ export function AdminDashboard() {
         exam={liveExam}
         onBack={() => setLiveExamId(null)}
         onEnd={() => {
-          setExams(prev => prev.map(e => e.id === liveExam.id ? { ...e, status: "completed" } : e));
+          const completedExam: Exam = { ...liveExam, status: "completed" };
+          setExams(prev => prev.map(e => e.id === liveExam.id ? completedExam : e));
           setLiveExamId(null);
+          setActiveTab("exams");
+          setOverviewExamDetails(completedExam);
         }}
       />
     );
