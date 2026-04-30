@@ -1962,12 +1962,61 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   const [paused, setPaused] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [extraMinutes, setExtraMinutes] = useState(0);
+  const [locked, setLocked] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [messageDraft, setMessageDraft] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => {
     if (paused) return;
     const t = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(t);
   }, [paused]);
+
+  useEffect(() => {
+    if (!confirmEnd && !messageOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [confirmEnd, messageOpen]);
+
+  const handleExtend = () => {
+    setExtraMinutes(m => m + 5);
+    setToast("Durée prolongée de 5 minutes.");
+  };
+  const handleLock = () => {
+    setLocked(l => !l);
+    setToast(locked ? "Soumissions déverrouillées." : "Soumissions verrouillées.");
+  };
+  const handleSendMessage = () => {
+    if (!messageDraft.trim()) return;
+    setMessageOpen(false);
+    setToast(`Message envoyé à ${liveParticipants.length} étudiant(s).`);
+    setMessageDraft("");
+  };
+  const handleExport = () => {
+    const payload = {
+      exam: { id: exam.id, title: exam.title, subject: exam.subject, exportedAt: new Date().toISOString() },
+      participants: liveParticipants,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `exam-${exam.id}-soumissions.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setToast("Soumissions exportées.");
+  };
 
   const formatTime = (s: number) => {
     const h = Math.floor(s / 3600).toString().padStart(2, "0");
@@ -2014,14 +2063,28 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                   </span>
                   <h1 className="text-base font-bold text-[var(--cyber-text)] truncate">{exam.title}</h1>
                 </div>
-                <p className="text-xs text-[var(--cyber-muted-text)] truncate">{exam.subject} · {exam.duration} min</p>
+                <p className="text-xs text-[var(--cyber-muted-text)] truncate">
+                  {exam.subject} · {exam.duration + extraMinutes} min{extraMinutes > 0 && <span className="text-[var(--cyber-accent-strong)]"> (+{extraMinutes})</span>}
+                  {locked && <span className="ml-2 text-amber-300">· Verrouillé</span>}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex flex-col items-end">
-                <span className="text-xs text-[var(--cyber-subtle-text)] uppercase tracking-wide">Temps écoulé</span>
-                <span className="text-base font-mono font-bold text-[var(--cyber-text)]">{formatTime(elapsed)}</span>
-              </div>
+              {(() => {
+                const totalSeconds = (exam.duration + extraMinutes) * 60;
+                const remaining = Math.max(0, totalSeconds - elapsed);
+                const lowTime = remaining > 0 && remaining <= 300; // < 5 min
+                return (
+                  <div className="hidden sm:flex flex-col items-end">
+                    <span className="text-xs text-[var(--cyber-subtle-text)] uppercase tracking-wide">Temps restant</span>
+                    <span className={`text-base font-mono font-bold tabular-nums ${
+                      remaining === 0 ? "text-red-400" : lowTime ? "text-amber-300" : "text-[var(--cyber-text)]"
+                    }`}>
+                      {formatTime(remaining)}
+                    </span>
+                  </div>
+                );
+              })()}
               <button
                 onClick={() => setPaused(p => !p)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors"
@@ -2129,19 +2192,24 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
               <div className="rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-5">
                 <h2 className="text-base font-bold text-[var(--cyber-text)] mb-4">Actions rapides</h2>
                 <div className="space-y-2">
-                  <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  <button onClick={() => setMessageOpen(true)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
                     <Send className="w-4 h-4" />
                     Envoyer un message à tous
                   </button>
-                  <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  <button onClick={handleExtend} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
                     <Clock className="w-4 h-4" />
                     Prolonger la durée (+5 min)
+                    {extraMinutes > 0 && <span className="ml-auto text-xs text-[var(--cyber-accent-strong)]">+{extraMinutes} min</span>}
                   </button>
-                  <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  <button onClick={handleLock} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                    locked
+                      ? "border-amber-400/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                      : "border-[rgba(123,241,255,0.25)] text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)]"
+                  }`}>
                     <Shield className="w-4 h-4" />
-                    Verrouiller les soumissions
+                    {locked ? "Déverrouiller les soumissions" : "Verrouiller les soumissions"}
                   </button>
-                  <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  <button onClick={handleExport} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
                     <Download className="w-4 h-4" />
                     Exporter les soumissions
                   </button>
@@ -2200,6 +2268,47 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
             </div>
           );
         })()}
+
+        {/* Send-message modal */}
+        {messageOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-2xl border border-[rgba(123,241,255,0.25)] bg-[rgba(11,27,38,0.95)] p-6 shadow-2xl">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[rgba(123,241,255,0.12)] flex items-center justify-center flex-shrink-0">
+                  <Send className="w-5 h-5 text-[var(--cyber-accent-strong)]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-[var(--cyber-text)]">Envoyer un message</h3>
+                  <p className="text-sm text-[var(--cyber-muted-text)] mt-1">Visible immédiatement par les {liveParticipants.length} étudiant(s) en cours.</p>
+                </div>
+              </div>
+              <textarea
+                value={messageDraft}
+                onChange={e => setMessageDraft(e.target.value)}
+                rows={4}
+                placeholder="Votre message..."
+                className="w-full px-3 py-2 bg-[rgba(7,17,25,0.6)] border border-[rgba(123,241,255,0.25)] rounded-xl text-sm text-[var(--cyber-text)] placeholder:text-[var(--cyber-subtle-text)] focus:outline-none focus:ring-2 focus:ring-[var(--cyber-accent-strong)] resize-none"
+              />
+              <div className="flex justify-end gap-2 mt-4">
+                <button onClick={() => { setMessageOpen(false); setMessageDraft(""); }} className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  Annuler
+                </button>
+                <button onClick={handleSendMessage} disabled={!messageDraft.trim()} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--cyber-accent-strong)] hover:opacity-90 text-sm font-medium text-black transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                  <Send className="w-4 h-4" />
+                  Envoyer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast */}
+        {toast && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] px-4 py-3 rounded-xl bg-[rgba(11,27,38,0.95)] border border-[rgba(123,241,255,0.25)] shadow-2xl text-sm text-[var(--cyber-text)] flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[var(--cyber-accent-strong)]" />
+            {toast}
+          </div>
+        )}
       </div>
     </div>
   );
