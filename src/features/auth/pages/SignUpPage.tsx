@@ -15,6 +15,21 @@ import {
 
 type SignUpStep = "form" | "success";
 type AccountType = "student" | "teacher";
+type StudentIdentifierType = "apogee" | "cne";
+
+const umpSchools = [
+  "Ecole Nationale de l'Intelligence Artificielle et du Digital de Berkane (ENIAD)",
+  "Ecole Nationale des Sciences Appliquees d'Oujda (ENSAO)",
+  "Ecole Nationale de Commerce et de Gestion d'Oujda (ENCGO)",
+  "Ecole Superieure de Technologie d'Oujda (ESTO)",
+  "Ecole Superieure de Technologie de Nador (ESTN)",
+  "Ecole Superieure de l'Education et de la Formation d'Oujda (ESEFO)",
+  "Faculte de Medecine et de Pharmacie d'Oujda (FMPO)",
+  "Faculte des Sciences d'Oujda (FSO)",
+  "Faculte des Lettres et Sciences Humaines d'Oujda (FLSHO)",
+  "Faculte des Sciences Juridiques, Economiques et Sociales d'Oujda (FSJESO)",
+  "Faculte Pluridisciplinaire de Nador (FPN)",
+];
 
 export function SignUpPage() {
   const navigate = useNavigate();
@@ -22,6 +37,12 @@ export function SignUpPage() {
   const [accountType, setAccountType] = useState<AccountType>("student");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [school, setSchool] = useState("");
+  const [program, setProgram] = useState("");
+  const [department, setDepartment] = useState("");
+  const [studentIdentifierType, setStudentIdentifierType] =
+    useState<StudentIdentifierType>("apogee");
+  const [studentIdentifier, setStudentIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [institution, setInstitution] = useState("");
@@ -35,7 +56,14 @@ export function SignUpPage() {
     e.preventDefault();
     setError("");
 
-    if (!fullName.trim() || !email.trim()) {
+    if (
+      !fullName.trim() ||
+      !email.trim() ||
+      !school.trim() ||
+      !program.trim() ||
+      !department.trim() ||
+      !studentIdentifier.trim()
+    ) {
       setError("Please complete all required fields.");
       return;
     }
@@ -90,7 +118,10 @@ export function SignUpPage() {
 
   return (
     <AuthPageLayout>
-      <AuthCard>
+      <AuthCard
+        className="md:max-w-[41rem] lg:max-w-[43rem]"
+        bodyClassName="max-w-[38rem] gap-[clamp(0.58rem,1.05vh,0.85rem)]"
+      >
         {step === "form" ? (
           <>
             <AuthHeading
@@ -135,7 +166,8 @@ export function SignUpPage() {
 
             {accountType === "student" ? (
               <form onSubmit={handleSubmit} className="flex flex-col gap-[clamp(0.62rem,1.2vh,0.9rem)]">
-                <div>
+                <div className="grid gap-[clamp(0.62rem,1.2vh,0.9rem)] sm:grid-cols-2">
+                  <div>
                   <label className={authLabelClass} htmlFor="sign-up-name">
                     Full name
                   </label>
@@ -148,78 +180,165 @@ export function SignUpPage() {
                     required
                     className={authFieldClass}
                   />
-                </div>
-
-                <div>
-                  <label className={authLabelClass} htmlFor="sign-up-email">
-                    Email address
-                  </label>
-                  <input
-                    id="sign-up-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@company.com"
-                    required
-                    className={authFieldClass}
-                  />
-                </div>
-
-                <div>
-                  <label className={authLabelClass} htmlFor="sign-up-password">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="sign-up-password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Create a secure password"
-                      required
-                      className={`${authFieldClass} pr-11 sm:pr-12`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((value) => !value)}
-                      className={passwordToggleButtonClass}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
-                      ) : (
-                        <Eye className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
-                      )}
-                    </button>
                   </div>
-                </div>
 
-                <div>
-                  <label className={authLabelClass} htmlFor="sign-up-confirm-password">
-                    Confirm password
-                  </label>
-                  <div className="relative">
+                  <div>
+                    <label className={authLabelClass} htmlFor="sign-up-email">
+                      Email address
+                    </label>
                     <input
-                      id="sign-up-confirm-password"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Repeat your password"
+                      id="sign-up-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@company.com"
                       required
-                      className={`${authFieldClass} pr-11 sm:pr-12`}
+                      className={authFieldClass}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword((value) => !value)}
-                      className={passwordToggleButtonClass}
-                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className={authLabelClass} htmlFor="sign-up-school">
+                      School
+                    </label>
+                    <select
+                      id="sign-up-school"
+                      value={school}
+                      onChange={(e) => setSchool(e.target.value)}
+                      required
+                      className={authFieldClass}
                     >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
-                      ) : (
-                        <Eye className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
-                      )}
-                    </button>
+                      <option value="">Select your UMP school</option>
+                      {umpSchools.map((schoolName) => (
+                        <option key={schoolName} value={schoolName}>
+                          {schoolName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={authLabelClass} htmlFor="sign-up-program">
+                      Program
+                    </label>
+                    <input
+                      id="sign-up-program"
+                      type="text"
+                      value={program}
+                      onChange={(e) => setProgram(e.target.value)}
+                      placeholder="Your program"
+                      required
+                      className={authFieldClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={authLabelClass} htmlFor="sign-up-department">
+                      Department
+                    </label>
+                    <input
+                      id="sign-up-department"
+                      type="text"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      placeholder="Your department"
+                      required
+                      className={authFieldClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={authLabelClass} htmlFor="student-id-type">
+                      Student ID type
+                    </label>
+                    <select
+                      id="student-id-type"
+                      value={studentIdentifierType}
+                      onChange={(e) =>
+                        setStudentIdentifierType(e.target.value as StudentIdentifierType)
+                      }
+                      className={authFieldClass}
+                    >
+                      <option value="apogee">APOGEE</option>
+                      <option value="cne">CNE / Massar</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={authLabelClass} htmlFor="student-id-value">
+                      {studentIdentifierType === "apogee" ? "APOGEE" : "CNE / Massar"}
+                    </label>
+                    <input
+                      id="student-id-value"
+                      type="text"
+                      value={studentIdentifier}
+                      onChange={(e) => setStudentIdentifier(e.target.value)}
+                      placeholder={
+                        studentIdentifierType === "apogee"
+                          ? "Your APOGEE number"
+                          : "Your CNE / Massar code"
+                      }
+                      required
+                      className={authFieldClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={authLabelClass} htmlFor="sign-up-password">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="sign-up-password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Create a secure password"
+                        required
+                        className={`${authFieldClass} pr-11 sm:pr-12`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((value) => !value)}
+                        className={passwordToggleButtonClass}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
+                        ) : (
+                          <Eye className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={authLabelClass} htmlFor="sign-up-confirm-password">
+                      Confirm password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="sign-up-confirm-password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Repeat your password"
+                        required
+                        className={`${authFieldClass} pr-11 sm:pr-12`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((value) => !value)}
+                        className={passwordToggleButtonClass}
+                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
+                        ) : (
+                          <Eye className="h-[clamp(0.85rem,1.5vh,1rem)] w-[clamp(0.85rem,1.5vh,1rem)]" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -358,6 +477,18 @@ export function SignUpPage() {
               <p className="mt-1 text-[clamp(0.74rem,1.18vh,0.88rem)] text-[var(--cyber-muted-text)]">
                 {email}
               </p>
+              {accountType === "student" ? (
+                <div className="mt-3 space-y-1 text-[clamp(0.7rem,1.08vh,0.82rem)] text-[var(--cyber-muted-text)]">
+                  <p>{school}</p>
+                  <p>
+                    {program} - {department}
+                  </p>
+                  <p>
+                    {studentIdentifierType === "apogee" ? "APOGEE" : "CNE"}:{" "}
+                    {studentIdentifier}
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-[clamp(0.5rem,1vh,0.7rem)]">
@@ -377,6 +508,11 @@ export function SignUpPage() {
                   setStep("form");
                   setFullName("");
                   setEmail("");
+                  setSchool("");
+                  setProgram("");
+                  setDepartment("");
+                  setStudentIdentifierType("apogee");
+                  setStudentIdentifier("");
                   setPassword("");
                   setConfirmPassword("");
                   setInstitution("");
