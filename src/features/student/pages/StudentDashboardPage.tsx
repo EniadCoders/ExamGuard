@@ -337,7 +337,7 @@ export function StudentDashboard() {
                       className="cyber-button-primary inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold lg:mt-auto"
                     >
                       <Play className="w-4 h-4" />
-                      <span>Reprendre l&apos;examen</span>
+                      <span>Rejoindre l&apos;examen</span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -613,7 +613,7 @@ export function StudentDashboard() {
                           className="cyber-button-primary flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold"
                         >
                           <Play className="w-4 h-4" />
-                          <span>Reprendre</span>
+                          <span>Rejoindre</span>
                         </button>
                       )}
                       {exam.status === "upcoming" && (
