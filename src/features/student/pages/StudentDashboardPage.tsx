@@ -448,17 +448,6 @@ export function StudentDashboard() {
                   <div className="flex justify-center mb-4">
                     <ScoreRing score={16.8} size="lg" />
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm text-[var(--cyber-muted-text)]">
-                      <span>Moyenne de la classe</span>
-                      <span className="font-semibold text-[var(--cyber-text)]">15.6/20</span>
-                    </div>
-                    <div className="dashboard-divider" />
-                    <div className="flex items-center gap-2 text-sm text-[var(--cyber-muted-text)]">
-                      <ArrowUp className="w-4 h-4 text-[var(--cyber-accent-strong)]" />
-                      <span>+1.2 pts au-dessus de la moyenne</span>
-                    </div>
-                  </div>
                 </DashboardSectionCard>
 
                 {/* Calendar */}
@@ -774,10 +763,6 @@ export function StudentDashboard() {
                           <span>Classement</span>
                           <span className="font-semibold text-[var(--cyber-text)]">#{exam.rank}</span>
                         </div>
-                        <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
-                          <span>Moyenne</span>
-                          <span className="font-semibold text-[var(--cyber-text)]">{exam.classAvg!.toFixed(1)}/20</span>
-                        </div>
                       </div>
                     </button>
                   ))}
@@ -816,11 +801,10 @@ export function StudentDashboard() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                           {[
                             { label: "Note finale", value: `${exam.score!.toFixed(1)}/20` },
                             { label: "Classement", value: `#${exam.rank}` },
-                            { label: "Moyenne classe", value: `${exam.classAvg!.toFixed(1)}/20` },
                           ].map((item) => (
                             <div
                               key={item.label}
