@@ -1054,12 +1054,20 @@ export function StudentDashboard() {
                       </div>
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-black mb-2">Établissement</label>
-                        <input
-                          type="text"
-                          defaultValue="Université Paris-Saclay"
-                          readOnly
-                          className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-[#666666] cursor-not-allowed"
-                        />
+                        <div className="relative">
+                          <select
+                            defaultValue="Université Paris-Saclay"
+                            className="w-full appearance-none bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+                          >
+                            <option value="Université Paris-Saclay">Université Paris-Saclay</option>
+                            <option value="Sorbonne Université">Sorbonne Université</option>
+                            <option value="École Polytechnique">École Polytechnique</option>
+                            <option value="Université PSL">Université PSL</option>
+                            <option value="CentraleSupélec">CentraleSupélec</option>
+                            <option value="Autre">Autre</option>
+                          </select>
+                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666] pointer-events-none" />
+                        </div>
                       </div>
                     </div>
                     <div className="flex justify-stretch pt-4 sm:justify-end">
