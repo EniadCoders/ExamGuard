@@ -573,7 +573,7 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
 
 // ─── Create Exam Modal ─────────────────────────────────────────────────────────
 type DraftQuestion =
-  | { id: number; type: "mcq"; text: string; points: number; options: string[]; correct: number }
+  | { id: number; type: "mcq"; text: string; points: number; options: string[]; multiple: boolean; correct: number[] }
   | { id: number; type: "text"; text: string; points: number }
   | { id: number; type: "code"; text: string; points: number; language: string };
 
@@ -601,7 +601,7 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
 
   const addQuestion = (type: DraftQuestion["type"]) => {
     const id = Date.now();
-    if (type === "mcq") setQuestions(prev => [...prev, { id, type, text: "", points: 1, options: ["", "", "", ""], correct: 0 }]);
+    if (type === "mcq") setQuestions(prev => [...prev, { id, type, text: "", points: 1, options: ["", ""], multiple: false, correct: [] }]);
     else if (type === "text") setQuestions(prev => [...prev, { id, type, text: "", points: 1 }]);
     else setQuestions(prev => [...prev, { id, type, text: "", points: 1, language: "java" }]);
   };
@@ -815,7 +815,7 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
               <div key={q.id} className="border border-[#E5E5E5] rounded-xl p-4 space-y-3 bg-white">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-black text-white uppercase">{q.type}</span>
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-black text-white uppercase">{q.type === "mcq" ? "QCM" : q.type === "text" ? "Texte" : "Code"}</span>
                     <span className="text-sm font-medium text-black">Question {idx + 1}</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -841,29 +841,78 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
                   className="w-full px-3 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black resize-none"
                 />
                 {q.type === "mcq" && (
-                  <div className="space-y-2">
-                    {q.options.map((opt, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          checked={q.correct === i}
-                          onChange={() => updateQuestion(q.id, { correct: i })}
-                          className="w-4 h-4 accent-black"
-                        />
-                        <input
-                          type="text"
-                          value={opt}
-                          onChange={e => {
-                            const next = [...q.options];
-                            next[i] = e.target.value;
-                            updateQuestion(q.id, { options: next });
-                          }}
-                          placeholder={`Option ${i + 1}`}
-                          className="flex-1 px-3 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-                      </div>
-                    ))}
-                    <p className="text-xs text-[#888888]">Cochez la bonne réponse.</p>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { key: false, label: "Choix unique" },
+                        { key: true, label: "Choix multiple" },
+                      ] as const).map(({ key, label }) => (
+                        <button
+                          key={String(key)}
+                          onClick={() => updateQuestion(q.id, { multiple: key, correct: [] })}
+                          className={`px-3 py-2 rounded-lg text-xs font-medium border-2 transition-colors ${
+                            q.multiple === key ? "bg-black border-black text-white" : "bg-white border-[#E5E5E5] text-black hover:border-[#CCCCCC]"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="space-y-2">
+                      {q.options.map((opt, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <input
+                            type={q.multiple ? "checkbox" : "radio"}
+                            checked={q.correct.includes(i)}
+                            onChange={() => {
+                              const next = q.multiple
+                                ? (q.correct.includes(i) ? q.correct.filter(c => c !== i) : [...q.correct, i])
+                                : [i];
+                              updateQuestion(q.id, { correct: next });
+                            }}
+                            className="w-4 h-4 accent-black"
+                          />
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={e => {
+                              const next = [...q.options];
+                              next[i] = e.target.value;
+                              updateQuestion(q.id, { options: next });
+                            }}
+                            placeholder={`Option ${i + 1}`}
+                            className="flex-1 px-3 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black"
+                          />
+                          {q.options.length > 2 && (
+                            <button
+                              onClick={() => {
+                                const nextOptions = q.options.filter((_, idx) => idx !== i);
+                                const nextCorrect = q.correct.filter(c => c !== i).map(c => c > i ? c - 1 : c);
+                                updateQuestion(q.id, { options: nextOptions, correct: nextCorrect });
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors"
+                              title="Supprimer cette option"
+                            >
+                              <X className="w-3.5 h-3.5 text-[#666666]" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {q.options.length < 4 && (
+                      <button
+                        onClick={() => updateQuestion(q.id, { options: [...q.options, ""] })}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-[#CCCCCC] text-xs font-medium text-[#666666] hover:border-black hover:text-black transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Ajouter une option
+                      </button>
+                    )}
+                    <p className="text-xs text-[#888888]">
+                      {q.multiple
+                        ? "Cochez les bonnes réponses (2 à 4 options)."
+                        : "Sélectionnez la bonne réponse (2 à 4 options)."}
+                    </p>
                   </div>
                 )}
                 {q.type === "code" && (
