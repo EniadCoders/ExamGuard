@@ -87,6 +87,15 @@ export function StudentDashboard() {
   const [targetExamId, setTargetExamId] = useState<number | null>(null);
   const [expandedExam, setExpandedExam] = useState<number | null>(null);
 
+  useEffect(() => {
+    const anyModalOpen = selectedResult !== null || showExamLock;
+    if (anyModalOpen) {
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = previous; };
+    }
+  }, [selectedResult, showExamLock]);
+
   const handleLogoClick = () => {
     setActiveTab("dashboard");
     setExamFilter("all");

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import {
   Bell,
@@ -235,8 +235,17 @@ function ModalBase({ children, onClose, title, wide = false }: {
   title: string;
   wide?: boolean;
 }) {
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 backdrop-blur-sm sm:items-center sm:p-4"
+      onWheel={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+    >
       <div className={`relative flex max-h-[92vh] w-full flex-col rounded-2xl border border-[#E5E5E5] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.18)] ${wide ? "max-w-3xl" : "max-w-2xl"}`}>
         <div className="flex items-center justify-between gap-3 rounded-t-2xl border-b border-[#E5E5E5] bg-[#FAFAFA] px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="text-base font-bold text-black">{title}</h2>
