@@ -205,11 +205,11 @@ const activityFeed = [
 ];
 
 const analyticsData = [
-  { subject: "Java EE", avg: 16.4, passing: 15.6, students: 45 },
-  { subject: "BDD", avg: 15.2, passing: 13.6, students: 38 },
-  { subject: "Sécurité", avg: 17.6, passing: 17.0, students: 52 },
-  { subject: "Web", avg: 18.2, passing: 17.8, students: 31 },
-  { subject: "IA", avg: 15.8, passing: 14.2, students: 28 },
+  { subject: "Java EE", avg: 16.4, passing: 15.6, best: 19.4, worst: 9.8,  students: 45 },
+  { subject: "BDD",     avg: 15.2, passing: 13.6, best: 18.6, worst: 7.2,  students: 38 },
+  { subject: "Sécurité",avg: 17.6, passing: 17.0, best: 19.8, worst: 11.4, students: 52 },
+  { subject: "Web",     avg: 18.2, passing: 17.8, best: 20.0, worst: 12.6, students: 31 },
+  { subject: "IA",      avg: 15.8, passing: 14.2, best: 18.4, worst: 8.4,  students: 28 },
 ];
 
 const trendData = [
@@ -1671,7 +1671,7 @@ function AnalyticsTab() {
           <BarChart data={analyticsData} barGap={4}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(117, 195, 214, 0.12)" vertical={false} />
             <XAxis dataKey="subject" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[10, 20]} />
+            <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[0, 20]} />
             <Tooltip
               contentStyle={{ background: "rgba(11, 27, 38, 0.95)", border: "1px solid rgba(123, 241, 255, 0.25)", borderRadius: "12px", fontSize: 12, color: "#E5F4FF", boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)" }}
                 labelStyle={{ color: "#E5F4FF" }}
@@ -1679,8 +1679,10 @@ function AnalyticsTab() {
               cursor={{ fill: "rgba(123, 241, 255, 0.08)" }}
             />
             <Legend wrapperStyle={{ fontSize: 12, paddingTop: 16 }} />
-            <Bar dataKey="avg" name="Moyenne" fill="#3DD8E9" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="passing" name="Note de passage" fill="#F4A261" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="best" name="Meilleure note" fill="#6ef2bd" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="avg" name="Moyenne" fill="#3dd8e9" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="passing" name="Note de passage" fill="#ffd36b" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="worst" name="Note la plus basse" fill="#ff7b82" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </DashboardSectionCard>
