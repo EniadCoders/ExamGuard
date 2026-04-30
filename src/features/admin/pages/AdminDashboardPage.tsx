@@ -64,6 +64,11 @@ import {
 } from "recharts";
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
+type DraftQuestion =
+  | { id: number; type: "mcq"; text: string; points: number; options: string[]; multiple: boolean; correct: number[] }
+  | { id: number; type: "text"; text: string; points: number }
+  | { id: number; type: "code"; text: string; points: number; language: string };
+
 interface Exam {
   id: number;
   title: string;
@@ -75,6 +80,10 @@ interface Exam {
   questions: number;
   description?: string;
   passingScore?: number;
+  selectedStudentIds?: number[];
+  importedFileName?: string;
+  draftQuestions?: DraftQuestion[];
+  launchMode?: "auto" | "manual";
 }
 
 interface Student {
@@ -572,11 +581,6 @@ function EditExamModal({ exam, onClose, onSave }: { exam: Exam; onClose: () => v
 }
 
 // ─── Create Exam Modal ─────────────────────────────────────────────────────────
-type DraftQuestion =
-  | { id: number; type: "mcq"; text: string; points: number; options: string[]; multiple: boolean; correct: number[] }
-  | { id: number; type: "text"; text: string; points: number }
-  | { id: number; type: "code"; text: string; points: number; language: string };
-
 function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => void; onCreated?: (exam: Exam) => void; initialExam?: Exam }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [examTitle, setExamTitle] = useState(initialExam?.title ?? "");
@@ -585,11 +589,11 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
   const [examDate, setExamDate] = useState(initialExam ? frDateToIso(initialExam.date) : "");
   const [examDesc, setExamDesc] = useState(initialExam?.description ?? "");
   const [passingScore, setPassingScore] = useState(initialExam?.passingScore ?? 12);
-  const [selectedStudents, setSelectedStudents] = useState<number[]>([]);
-  const [launchMode, setLaunchMode] = useState<"auto" | "manual">("auto");
+  const [selectedStudents, setSelectedStudents] = useState<number[]>(initialExam?.selectedStudentIds ?? []);
+  const [launchMode, setLaunchMode] = useState<"auto" | "manual">(initialExam?.launchMode ?? "auto");
   const [studentSearch, setStudentSearch] = useState("");
-  const [importedFileName, setImportedFileName] = useState("");
-  const [questions, setQuestions] = useState<DraftQuestion[]>([]);
+  const [importedFileName, setImportedFileName] = useState(initialExam?.importedFileName ?? "");
+  const [questions, setQuestions] = useState<DraftQuestion[]>(initialExam?.draftQuestions ?? []);
 
   const step1Complete = examTitle.trim() !== "" && examSubject.trim() !== "" && examDuration > 0 && examDate !== "";
   const filteredStudents = allStudentsData.filter(s =>
@@ -620,6 +624,10 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
     questions: questions.length,
     description: examDesc,
     passingScore,
+    selectedStudentIds: selectedStudents,
+    importedFileName,
+    draftQuestions: questions,
+    launchMode,
   });
   const saveAsDraft = () => { onCreated?.(buildExam("draft")); onClose(); };
   const schedule = () => { onCreated?.(buildExam("scheduled")); onClose(); };
