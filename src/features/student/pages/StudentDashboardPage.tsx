@@ -1179,7 +1179,6 @@ export function StudentDashboard() {
                     <div className="space-y-5">
                       {[
                         { key: "examReminders", label: "Rappels d'examen", desc: "Recevoir des notifications avant chaque examen", default: true },
-                        { key: "resultNotifications", label: "Notifications de résultats", desc: "Être averti lorsque les résultats sont publiés", default: true },
                         { key: "systemUpdates", label: "Mises à jour système", desc: "Recevoir les annonces et mises à jour de la plateforme", default: false },
                       ].map((setting) => (
                         <div key={setting.key} className="flex flex-col gap-4 rounded-xl bg-[#F5F7FB] p-5 sm:flex-row sm:items-center sm:justify-between">
