@@ -169,6 +169,24 @@ const allStudentsData: Student[] = [
   { id: 4, name: "Lucas Petit", email: "lucas.petit@univ.fr", exams: 8, avg: 17.0, status: "active", lastActive: "Il y a 1 heure", department: "IA & Data", year: "L3", studentId: "ETU-2024-004" },
   { id: 5, name: "Emma Rousseau", email: "emma.rousseau@univ.fr", exams: 11, avg: 18.2, status: "active", lastActive: "Il y a 30 min", department: "Réseaux", year: "M1", studentId: "ETU-2024-005" },
   { id: 6, name: "Hugo Lefebvre", email: "hugo.lefebvre@univ.fr", exams: 7, avg: 14.6, status: "inactive", lastActive: "Il y a 5 jours", department: "Informatique", year: "L3", studentId: "ETU-2024-006" },
+  { id: 7, name: "Léa Moreau", email: "lea.moreau@univ.fr", exams: 9, avg: 16.2, status: "active", lastActive: "Actif maintenant", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-007" },
+  { id: 8, name: "Adam Garcia", email: "adam.garcia@univ.fr", exams: 13, avg: 15.0, status: "active", lastActive: "Il y a 2 min", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-008" },
+  { id: 9, name: "Chloé Roux", email: "chloe.roux@univ.fr", exams: 8, avg: 18.8, status: "active", lastActive: "Il y a 10 min", department: "IA & Data", year: "M1", studentId: "ETU-2024-009" },
+  { id: 10, name: "Nathan Fournier", email: "nathan.fournier@univ.fr", exams: 11, avg: 13.4, status: "active", lastActive: "Il y a 25 min", department: "Réseaux", year: "L3", studentId: "ETU-2024-010" },
+  { id: 11, name: "Inès Vincent", email: "ines.vincent@univ.fr", exams: 14, avg: 17.9, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-011" },
+  { id: 12, name: "Maxime Girard", email: "maxime.girard@univ.fr", exams: 10, avg: 14.8, status: "inactive", lastActive: "Il y a 3 jours", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-012" },
+  { id: 13, name: "Camille Bonnet", email: "camille.bonnet@univ.fr", exams: 12, avg: 16.6, status: "active", lastActive: "Il y a 1 heure", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-013" },
+  { id: 14, name: "Yanis Lambert", email: "yanis.lambert@univ.fr", exams: 6, avg: 12.8, status: "active", lastActive: "Il y a 15 min", department: "IA & Data", year: "L2", studentId: "ETU-2024-014" },
+  { id: 15, name: "Mila Henry", email: "mila.henry@univ.fr", exams: 9, avg: 19.2, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M1", studentId: "ETU-2024-015" },
+  { id: 16, name: "Raphaël Mercier", email: "raphael.mercier@univ.fr", exams: 13, avg: 15.4, status: "active", lastActive: "Il y a 4 min", department: "Réseaux", year: "M2", studentId: "ETU-2024-016" },
+  { id: 17, name: "Sara Lopez", email: "sara.lopez@univ.fr", exams: 11, avg: 17.0, status: "active", lastActive: "Il y a 50 min", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-017" },
+  { id: 18, name: "Ilyas Robert", email: "ilyas.robert@univ.fr", exams: 7, avg: 13.6, status: "inactive", lastActive: "Il y a 1 semaine", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-018" },
+  { id: 19, name: "Lina Faure", email: "lina.faure@univ.fr", exams: 12, avg: 18.0, status: "active", lastActive: "Il y a 8 min", department: "IA & Data", year: "M1", studentId: "ETU-2024-019" },
+  { id: 20, name: "Tom Leroy", email: "tom.leroy@univ.fr", exams: 10, avg: 16.2, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "L3", studentId: "ETU-2024-020" },
+  { id: 21, name: "Anaïs Perrin", email: "anais.perrin@univ.fr", exams: 14, avg: 18.4, status: "active", lastActive: "Il y a 12 min", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-021" },
+  { id: 22, name: "Mehdi Blanc", email: "mehdi.blanc@univ.fr", exams: 8, avg: 14.2, status: "active", lastActive: "Il y a 35 min", department: "Réseaux", year: "L2", studentId: "ETU-2024-022" },
+  { id: 23, name: "Zoé Aubert", email: "zoe.aubert@univ.fr", exams: 11, avg: 17.6, status: "active", lastActive: "Actif maintenant", department: "Cybersécurité", year: "M1", studentId: "ETU-2024-023" },
+  { id: 24, name: "Noah Carpentier", email: "noah.carpentier@univ.fr", exams: 9, avg: 15.8, status: "active", lastActive: "Il y a 6 min", department: "IA & Data", year: "M2", studentId: "ETU-2024-024" },
 ];
 
 const fraudAlerts = [
@@ -2047,11 +2065,30 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     };
   });
 
-  const liveAlerts = [
-    { id: 1, studentId: liveParticipants[0]?.id ?? 0, name: liveParticipants[0]?.name ?? "—", type: "Changement d'onglet (3x)", severity: "high",   time: "Il y a 12s" },
-    { id: 2, studentId: liveParticipants[2]?.id ?? 0, name: liveParticipants[2]?.name ?? "—", type: "Détection de visage perdue", severity: "medium", time: "Il y a 45s" },
-    { id: 3, studentId: liveParticipants[1]?.id ?? 0, name: liveParticipants[1]?.name ?? "—", type: "Tentative copier-coller",     severity: "low",    time: "Il y a 1m 20s" },
+  const ALERT_TYPES = [
+    { type: "Changement d'onglet (3x)",        severity: "high"   as const },
+    { type: "Détection de visage perdue",      severity: "medium" as const },
+    { type: "Tentative copier-coller",         severity: "low"    as const },
+    { type: "Plusieurs visages détectés",      severity: "high"   as const },
+    { type: "Sortie du mode plein écran",      severity: "medium" as const },
+    { type: "Capture d'écran détectée",        severity: "high"   as const },
+    { type: "Bruit ambiant suspect",           severity: "low"    as const },
+    { type: "Connexion réseau instable",       severity: "low"    as const },
+    { type: "Raccourci clavier interdit",      severity: "medium" as const },
+    { type: "Téléphone détecté à proximité",   severity: "high"   as const },
   ];
+  const ALERT_TIMES = ["Il y a 12s", "Il y a 45s", "Il y a 1m 20s", "Il y a 2m", "Il y a 3m 10s", "Il y a 4m", "Il y a 5m 35s", "Il y a 7m", "Il y a 9m 12s", "Il y a 11m"];
+  const liveAlerts = liveParticipants.slice(0, Math.min(12, liveParticipants.length)).map((p, i) => {
+    const a = ALERT_TYPES[i % ALERT_TYPES.length];
+    return {
+      id: i + 1,
+      studentId: p.id,
+      name: p.name,
+      type: a.type,
+      severity: a.severity,
+      time: ALERT_TIMES[i % ALERT_TIMES.length],
+    };
+  });
 
   const total = liveParticipants.length;
   const active = liveParticipants.filter(p => p.state === "active").length;
@@ -2136,16 +2173,16 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             {/* Participants */}
-            <div className="lg:col-span-2 rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-5">
-              <div className="flex items-center justify-between mb-4">
+            <div className="lg:col-span-2 rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-5 flex flex-col h-[680px]">
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <div>
                   <h2 className="text-base font-bold text-[var(--cyber-text)]">Participants en direct</h2>
                   <p className="text-xs text-[var(--cyber-muted-text)]">Progression et état des étudiants</p>
                 </div>
               </div>
-              <div className="space-y-2 max-h-[480px] overflow-y-auto">
+              <div className="scrollbar-vision space-y-2 flex-1 min-h-0 overflow-y-auto overscroll-contain pr-2">
                 {liveParticipants.map(p => (
                   <div key={p.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors ${
                     p.state === "kicked"
@@ -2202,7 +2239,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                   </div>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white">{liveAlerts.length}</span>
                 </div>
-                <div className="space-y-2">
+                <div className="scrollbar-vision space-y-2 max-h-[360px] overflow-y-auto overscroll-contain pr-2">
                   {liveAlerts.map(a => {
                     const isKicked = kickedIds.includes(a.studentId);
                     return (
