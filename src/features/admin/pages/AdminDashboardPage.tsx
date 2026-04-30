@@ -1967,6 +1967,9 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageDraft, setMessageDraft] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [kickTarget, setKickTarget] = useState<{ id: number; name: string } | null>(null);
+  const [kickReason, setKickReason] = useState("");
+  const [kickedIds, setKickedIds] = useState<number[]>([]);
 
   useEffect(() => {
     if (!toast) return;
@@ -1981,11 +1984,11 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   }, [paused]);
 
   useEffect(() => {
-    if (!confirmEnd && !messageOpen) return;
+    if (!confirmEnd && !messageOpen && !kickTarget) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = previous; };
-  }, [confirmEnd, messageOpen]);
+  }, [confirmEnd, messageOpen, kickTarget]);
 
   const handleExtend = () => {
     setExtraMinutes(m => m + 5);
@@ -2000,6 +2003,13 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     setMessageOpen(false);
     setToast(`Message envoyé à ${liveParticipants.length} étudiant(s).`);
     setMessageDraft("");
+  };
+  const handleKick = () => {
+    if (!kickTarget) return;
+    setKickedIds(prev => prev.includes(kickTarget.id) ? prev : [...prev, kickTarget.id]);
+    setToast(`${kickTarget.name} exclu de l'examen.`);
+    setKickTarget(null);
+    setKickReason("");
   };
   const handleExport = () => {
     const payload = {
@@ -2025,18 +2035,22 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     return `${h}:${m}:${sec}`;
   };
 
-  const liveParticipants = allStudentsData.slice(0, Math.min(exam.students || 5, allStudentsData.length)).map((s, i) => ({
-    id: s.id,
-    name: s.name,
-    progress: Math.min(100, 12 + i * 17 + (elapsed % 11) * 2),
-    state: i % 5 === 0 ? "flagged" : i % 4 === 0 ? "submitted" : "active",
-    score: Math.round((10 + (i * 1.7) % 9) * 10) / 10,
-  }));
+  const liveParticipants = allStudentsData.slice(0, Math.min(exam.students || 5, allStudentsData.length)).map((s, i) => {
+    const baseState: "flagged" | "submitted" | "active" = i % 5 === 0 ? "flagged" : i % 4 === 0 ? "submitted" : "active";
+    const kicked = kickedIds.includes(s.id);
+    return {
+      id: s.id,
+      name: s.name,
+      progress: kicked ? 0 : Math.min(100, 12 + i * 17 + (elapsed % 11) * 2),
+      state: (kicked ? "kicked" : baseState) as "flagged" | "submitted" | "active" | "kicked",
+      score: Math.round((10 + (i * 1.7) % 9) * 10) / 10,
+    };
+  });
 
   const liveAlerts = [
-    { id: 1, name: liveParticipants[0]?.name ?? "—", type: "Changement d'onglet (3x)", severity: "high",   time: "Il y a 12s" },
-    { id: 2, name: liveParticipants[2]?.name ?? "—", type: "Détection de visage perdue", severity: "medium", time: "Il y a 45s" },
-    { id: 3, name: liveParticipants[1]?.name ?? "—", type: "Tentative copier-coller",     severity: "low",    time: "Il y a 1m 20s" },
+    { id: 1, studentId: liveParticipants[0]?.id ?? 0, name: liveParticipants[0]?.name ?? "—", type: "Changement d'onglet (3x)", severity: "high",   time: "Il y a 12s" },
+    { id: 2, studentId: liveParticipants[2]?.id ?? 0, name: liveParticipants[2]?.name ?? "—", type: "Détection de visage perdue", severity: "medium", time: "Il y a 45s" },
+    { id: 3, studentId: liveParticipants[1]?.id ?? 0, name: liveParticipants[1]?.name ?? "—", type: "Tentative copier-coller",     severity: "low",    time: "Il y a 1m 20s" },
   ];
 
   const total = liveParticipants.length;
@@ -2133,21 +2147,29 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
               </div>
               <div className="space-y-2 max-h-[480px] overflow-y-auto">
                 {liveParticipants.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-[rgba(123,241,255,0.1)] bg-[rgba(7,17,25,0.5)] hover:bg-[rgba(11,27,38,0.7)] transition-colors">
+                  <div key={p.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors ${
+                    p.state === "kicked"
+                      ? "border-red-500/30 bg-red-950/30 opacity-60"
+                      : "border-[rgba(123,241,255,0.1)] bg-[rgba(7,17,25,0.5)] hover:bg-[rgba(11,27,38,0.7)]"
+                  }`}>
                     <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
                       <span className="text-[10px] font-bold text-white">{p.name.split(" ").map(n => n[0]).join("")}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-[var(--cyber-text)] truncate">{p.name}</p>
+                        <p className={`text-sm font-medium truncate ${p.state === "kicked" ? "text-red-300 line-through" : "text-[var(--cyber-text)]"}`}>{p.name}</p>
                         {p.state === "flagged" && <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />}
                         {p.state === "submitted" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
+                        {p.state === "kicked" && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-red-600 text-white">Exclu</span>}
                       </div>
                       <div className="mt-1 flex items-center gap-2">
                         <div className="flex-1 h-1.5 bg-[rgba(123,241,255,0.08)] rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
-                              p.state === "flagged" ? "bg-red-500" : p.state === "submitted" ? "bg-emerald-500" : "bg-[var(--cyber-accent-strong)]"
+                              p.state === "kicked" ? "bg-red-700" :
+                              p.state === "flagged" ? "bg-red-500" :
+                              p.state === "submitted" ? "bg-emerald-500" :
+                              "bg-[var(--cyber-accent-strong)]"
                             }`}
                             style={{ width: `${p.progress}%` }}
                           />
@@ -2156,6 +2178,15 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                       </div>
                     </div>
                     <span className="text-sm font-bold text-[var(--cyber-text)] tabular-nums">{p.score}/20</span>
+                    {p.state !== "kicked" && (
+                      <button
+                        onClick={() => setKickTarget({ id: p.id, name: p.name })}
+                        className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                        title="Exclure de l'examen"
+                      >
+                        <LogOut className="w-4 h-4 text-red-400" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -2172,20 +2203,36 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white">{liveAlerts.length}</span>
                 </div>
                 <div className="space-y-2">
-                  {liveAlerts.map(a => (
-                    <div key={a.id} className="rounded-xl border border-[rgba(255,80,80,0.18)] bg-[rgba(11,27,38,0.5)] p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-[var(--cyber-text)] truncate">{a.name}</p>
-                          <p className="text-xs text-[var(--cyber-muted-text)] mt-0.5">{a.type}</p>
+                  {liveAlerts.map(a => {
+                    const isKicked = kickedIds.includes(a.studentId);
+                    return (
+                      <div key={a.id} className="rounded-xl border border-[rgba(255,80,80,0.18)] bg-[rgba(11,27,38,0.5)] p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-[var(--cyber-text)] truncate">{a.name}</p>
+                            <p className="text-xs text-[var(--cyber-muted-text)] mt-0.5">{a.type}</p>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase flex-shrink-0 ${
+                            a.severity === "high" ? "bg-red-600 text-white" : a.severity === "medium" ? "bg-amber-500 text-black" : "bg-[rgba(123,241,255,0.18)] text-[var(--cyber-text)]"
+                          }`}>{a.severity}</span>
                         </div>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          a.severity === "high" ? "bg-red-600 text-white" : a.severity === "medium" ? "bg-amber-500 text-black" : "bg-[rgba(123,241,255,0.18)] text-[var(--cyber-text)]"
-                        }`}>{a.severity}</span>
+                        <div className="flex items-center justify-between gap-2 mt-2">
+                          <p className="text-[10px] text-[var(--cyber-subtle-text)]">{a.time}</p>
+                          {!isKicked ? (
+                            <button
+                              onClick={() => setKickTarget({ id: a.studentId, name: a.name })}
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-[10px] font-medium text-red-200 transition-colors"
+                            >
+                              <LogOut className="w-3 h-3" />
+                              Exclure
+                            </button>
+                          ) : (
+                            <span className="text-[10px] font-medium text-red-300">Étudiant exclu</span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-[10px] text-[var(--cyber-subtle-text)] mt-1">{a.time}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -2296,6 +2343,44 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                 <button onClick={handleSendMessage} disabled={!messageDraft.trim()} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--cyber-accent-strong)] hover:opacity-90 text-sm font-medium text-black transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
                   <Send className="w-4 h-4" />
                   Envoyer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Kick modal */}
+        {kickTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-2xl border border-[rgba(255,80,80,0.35)] bg-[rgba(11,27,38,0.95)] p-6 shadow-2xl">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center flex-shrink-0">
+                  <LogOut className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-[var(--cyber-text)]">Exclure {kickTarget.name} ?</h3>
+                  <p className="text-sm text-[var(--cyber-muted-text)] mt-1">L'étudiant sera déconnecté et verra le message ci-dessous.</p>
+                </div>
+              </div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--cyber-subtle-text)] mb-1.5">Motif d'exclusion</label>
+              <textarea
+                value={kickReason}
+                onChange={e => setKickReason(e.target.value)}
+                rows={3}
+                placeholder="Ex : Tentative de fraude détectée — changement d'onglet répété."
+                className="w-full px-3 py-2 bg-[rgba(7,17,25,0.6)] border border-[rgba(255,80,80,0.25)] rounded-xl text-sm text-[var(--cyber-text)] placeholder:text-[var(--cyber-subtle-text)] focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+              />
+              <div className="flex justify-end gap-2 mt-4">
+                <button onClick={() => { setKickTarget(null); setKickReason(""); }} className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  Annuler
+                </button>
+                <button
+                  onClick={handleKick}
+                  disabled={!kickReason.trim()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Confirmer l'exclusion
                 </button>
               </div>
             </div>
