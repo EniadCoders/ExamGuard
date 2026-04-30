@@ -2031,22 +2031,6 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     setKickTarget(null);
     setKickReason("");
   };
-  const handleExport = () => {
-    const payload = {
-      exam: { id: exam.id, title: exam.title, subject: exam.subject, exportedAt: new Date().toISOString() },
-      participants: liveParticipants,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `exam-${exam.id}-soumissions.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    setToast("Soumissions exportées.");
-  };
 
   const formatTime = (s: number) => {
     const h = Math.floor(s / 3600).toString().padStart(2, "0");
@@ -2262,10 +2246,6 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                   }`}>
                     <Shield className="w-4 h-4" />
                     {locked ? "Déverrouiller les soumissions" : "Verrouiller les soumissions"}
-                  </button>
-                  <button onClick={handleExport} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
-                    <Download className="w-4 h-4" />
-                    Exporter les soumissions
                   </button>
                 </div>
               </div>
