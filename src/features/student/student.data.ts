@@ -9,7 +9,7 @@ export const studentDashboardStats = [
   { label: "Examens a venir", value: "3", icon: CalendarDays, change: "+1 cette semaine" },
   { label: "Examens completes", value: "12", icon: CheckCircle2, change: "+2 ce mois" },
   { label: "Note moyenne", value: "16.8/20", icon: TrendingUp, change: "+0.6 pts vs mois dernier" },
-  { label: "Certifications", value: "4", icon: Award, change: "1 en cours" },
+  { label: "Validations", value: "4", icon: Award, change: "" },
 ];
 
 export const studentExams = [
