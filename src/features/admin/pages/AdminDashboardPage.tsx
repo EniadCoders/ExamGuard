@@ -2229,8 +2229,35 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
               </div>
             </div>
 
-            {/* Alerts + Actions */}
+            {/* Actions + Alerts */}
             <div className="space-y-6">
+              <div className="rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-5">
+                <h2 className="text-base font-bold text-[var(--cyber-text)] mb-4">Actions rapides</h2>
+                <div className="space-y-2">
+                  <button onClick={() => setMessageOpen(true)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                    <Send className="w-4 h-4" />
+                    Envoyer un message à tous
+                  </button>
+                  <button onClick={handleExtend} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                    <Clock className="w-4 h-4" />
+                    Prolonger la durée (+5 min)
+                    {extraMinutes > 0 && <span className="ml-auto text-xs text-[var(--cyber-accent-strong)]">+{extraMinutes} min</span>}
+                  </button>
+                  <button onClick={handleLock} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                    locked
+                      ? "border-amber-400/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                      : "border-[rgba(123,241,255,0.25)] text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)]"
+                  }`}>
+                    <Shield className="w-4 h-4" />
+                    {locked ? "Déverrouiller les soumissions" : "Verrouiller les soumissions"}
+                  </button>
+                  <button onClick={handleExport} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                    <Download className="w-4 h-4" />
+                    Exporter les soumissions
+                  </button>
+                </div>
+              </div>
+
               <div className="rounded-2xl border border-[rgba(255,80,80,0.25)] bg-[rgba(60,12,12,0.45)] p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -2270,33 +2297,6 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                       </div>
                     );
                   })}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-5">
-                <h2 className="text-base font-bold text-[var(--cyber-text)] mb-4">Actions rapides</h2>
-                <div className="space-y-2">
-                  <button onClick={() => setMessageOpen(true)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
-                    <Send className="w-4 h-4" />
-                    Envoyer un message à tous
-                  </button>
-                  <button onClick={handleExtend} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
-                    <Clock className="w-4 h-4" />
-                    Prolonger la durée (+5 min)
-                    {extraMinutes > 0 && <span className="ml-auto text-xs text-[var(--cyber-accent-strong)]">+{extraMinutes} min</span>}
-                  </button>
-                  <button onClick={handleLock} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                    locked
-                      ? "border-amber-400/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
-                      : "border-[rgba(123,241,255,0.25)] text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)]"
-                  }`}>
-                    <Shield className="w-4 h-4" />
-                    {locked ? "Déverrouiller les soumissions" : "Verrouiller les soumissions"}
-                  </button>
-                  <button onClick={handleExport} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
-                    <Download className="w-4 h-4" />
-                    Exporter les soumissions
-                  </button>
                 </div>
               </div>
             </div>
