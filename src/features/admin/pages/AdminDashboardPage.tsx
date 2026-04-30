@@ -1986,6 +1986,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   const [locked, setLocked] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageDraft, setMessageDraft] = useState("");
+  const [messageTarget, setMessageTarget] = useState<{ id: number; name: string } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [kickTarget, setKickTarget] = useState<{ id: number; name: string } | null>(null);
   const [kickReason, setKickReason] = useState("");
@@ -2020,8 +2021,13 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   };
   const handleSendMessage = () => {
     if (!messageDraft.trim()) return;
+    if (messageTarget) {
+      setToast(`Message envoyé à ${messageTarget.name}.`);
+    } else {
+      setToast(`Message envoyé à ${liveParticipants.length} étudiant(s).`);
+    }
     setMessageOpen(false);
-    setToast(`Message envoyé à ${liveParticipants.length} étudiant(s).`);
+    setMessageTarget(null);
     setMessageDraft("");
   };
   const handleKick = () => {
@@ -2212,13 +2218,22 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                     </div>
                     <span className="text-sm font-bold text-[var(--cyber-text)] tabular-nums">{p.score}/20</span>
                     {p.state !== "kicked" && p.state !== "submitted" && (
-                      <button
-                        onClick={() => setKickTarget({ id: p.id, name: p.name })}
-                        className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
-                        title="Exclure de l'examen"
-                      >
-                        <LogOut className="w-4 h-4 text-red-400" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => { setMessageTarget({ id: p.id, name: p.name }); setMessageOpen(true); }}
+                          className="p-1.5 rounded-lg hover:bg-[rgba(123,241,255,0.12)] transition-colors"
+                          title="Envoyer un message / avertissement"
+                        >
+                          <Send className="w-4 h-4 text-[var(--cyber-accent-strong)]" />
+                        </button>
+                        <button
+                          onClick={() => setKickTarget({ id: p.id, name: p.name })}
+                          className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                          title="Exclure de l'examen"
+                        >
+                          <LogOut className="w-4 h-4 text-red-400" />
+                        </button>
+                      </>
                     )}
                   </div>
                 ))}
@@ -2351,19 +2366,25 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                   <Send className="w-5 h-5 text-[var(--cyber-accent-strong)]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[var(--cyber-text)]">Envoyer un message</h3>
-                  <p className="text-sm text-[var(--cyber-muted-text)] mt-1">Visible immédiatement par les {liveParticipants.length} étudiant(s) en cours.</p>
+                  <h3 className="text-lg font-bold text-[var(--cyber-text)]">
+                    {messageTarget ? `Message à ${messageTarget.name}` : "Envoyer un message"}
+                  </h3>
+                  <p className="text-sm text-[var(--cyber-muted-text)] mt-1">
+                    {messageTarget
+                      ? "Visible immédiatement par cet étudiant uniquement."
+                      : `Visible immédiatement par les ${liveParticipants.length} étudiant(s) en cours.`}
+                  </p>
                 </div>
               </div>
               <textarea
                 value={messageDraft}
                 onChange={e => setMessageDraft(e.target.value)}
                 rows={4}
-                placeholder="Votre message..."
+                placeholder={messageTarget ? "Ex : Veuillez recentrer votre regard sur l'écran." : "Votre message..."}
                 className="w-full px-3 py-2 bg-[rgba(7,17,25,0.6)] border border-[rgba(123,241,255,0.25)] rounded-xl text-sm text-[var(--cyber-text)] placeholder:text-[var(--cyber-subtle-text)] focus:outline-none focus:ring-2 focus:ring-[var(--cyber-accent-strong)] resize-none"
               />
               <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => { setMessageOpen(false); setMessageDraft(""); }} className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                <button onClick={() => { setMessageOpen(false); setMessageDraft(""); setMessageTarget(null); }} className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
                   Annuler
                 </button>
                 <button onClick={handleSendMessage} disabled={!messageDraft.trim()} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--cyber-accent-strong)] hover:opacity-90 text-sm font-medium text-black transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
