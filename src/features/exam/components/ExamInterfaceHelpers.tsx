@@ -210,16 +210,11 @@ export function ExamResultsView({
               </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="mb-6 grid grid-cols-1 gap-3">
               <div className="rounded-xl border-2 border-[#E5E5E5] p-4 text-center bg-[#F5F5F5]">
                 {isPassed ? <Check className="w-5 h-5 mx-auto mb-1 text-black" /> : <X className="w-5 h-5 mx-auto mb-1 text-black" />}
                 <p className="text-xs text-[#888888]">Statut</p>
                 <p className="text-sm font-bold text-black mt-0.5">{isPassed ? "Valide" : "A revoir"}</p>
-              </div>
-              <div className="rounded-xl border-2 border-[#E5E5E5] p-4 text-center bg-[#F5F5F5]">
-                <AlertTriangle className="w-5 h-5 mx-auto mb-1 text-black" />
-                <p className="text-xs text-[#888888]">Questions signalees</p>
-                <p className="text-sm font-bold text-black mt-0.5">{flaggedCount}</p>
               </div>
             </div>
 
