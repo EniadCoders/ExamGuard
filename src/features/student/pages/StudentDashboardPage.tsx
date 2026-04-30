@@ -83,7 +83,22 @@ export function StudentDashboard() {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
   const [showExamLock, setShowExamLock] = useState(false);
+
+  const getPasswordStrength = (pwd: string) => {
+    if (!pwd) return { score: 0, label: "", color: "bg-[#E5E5E5]", textColor: "text-transparent" };
+    let score = 0;
+    if (pwd.length >= 8) score += 1;
+    if (/[A-Z]/.test(pwd)) score += 1;
+    if (/[0-9]/.test(pwd)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+
+    if (score <= 1) return { score: 1, label: "Faible", color: "bg-red-500", textColor: "text-red-500" };
+    if (score === 2 || score === 3) return { score: 2, label: "Moyenne", color: "bg-yellow-500", textColor: "text-yellow-500" };
+    return { score: 3, label: "Forte", color: "bg-green-500", textColor: "text-green-500" };
+  };
+  const pwdStrength = getPasswordStrength(newPassword);
   const [targetExamId, setTargetExamId] = useState<number | null>(null);
   const [expandedExam, setExpandedExam] = useState<number | null>(null);
 
@@ -1106,6 +1121,8 @@ export function StudentDashboard() {
                         <div className="relative">
                           <input
                             type={showNewPassword ? "text" : "password"}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
                             className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 pr-12 text-black focus:outline-none focus:ring-2 focus:ring-black"
                           />
                           <button
@@ -1116,6 +1133,18 @@ export function StudentDashboard() {
                             {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                           </button>
                         </div>
+                        {newPassword && (
+                          <div className="mt-3">
+                            <div className="flex gap-2 mb-1.5 h-1.5 w-full rounded-full overflow-hidden">
+                              <div className={`h-full flex-1 rounded-full transition-colors ${pwdStrength.score >= 1 ? pwdStrength.color : "bg-[#E5E5E5]"}`}></div>
+                              <div className={`h-full flex-1 rounded-full transition-colors ${pwdStrength.score >= 2 ? pwdStrength.color : "bg-[#E5E5E5]"}`}></div>
+                              <div className={`h-full flex-1 rounded-full transition-colors ${pwdStrength.score >= 3 ? pwdStrength.color : "bg-[#E5E5E5]"}`}></div>
+                            </div>
+                            <p className={`text-xs font-medium text-right ${pwdStrength.textColor}`}>
+                              Force : {pwdStrength.label}
+                            </p>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-black mb-2">Confirmer le mot de passe</label>
