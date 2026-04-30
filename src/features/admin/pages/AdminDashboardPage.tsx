@@ -2158,16 +2158,14 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
         <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 py-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             {[
-              { label: "Étudiants connectés", value: `${active + submitted + flagged}/${total}`, icon: Wifi, color: "text-[var(--cyber-accent-strong)]" },
-              { label: "En cours",            value: active,    icon: Activity,        color: "text-[var(--cyber-accent-strong)]" },
-              { label: "Soumis",              value: submitted, icon: CheckCircle2,    color: "text-emerald-400" },
-              { label: "Alertes",             value: flagged,   icon: AlertTriangle,   color: "text-red-400" },
+              { label: "Étudiants connectés", value: `${active + submitted + flagged}/${total}`, icon: Wifi },
+              { label: "En cours",            value: active,    icon: Activity },
+              { label: "Soumis",              value: submitted, icon: CheckCircle2 },
+              { label: "Alertes",             value: flagged,   icon: AlertTriangle },
             ].map(s => (
-              <div key={s.label} className="rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <s.icon className={`w-5 h-5 ${s.color}`} />
-                </div>
-                <p className="text-2xl font-bold text-[var(--cyber-text)]">{s.value}</p>
+              <div key={s.label} className="rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-4 relative">
+                <s.icon className="absolute top-4 right-4 w-4 h-4 text-[var(--cyber-subtle-text)]" />
+                <p className="text-2xl font-bold text-[var(--cyber-text)] pr-8">{s.value}</p>
                 <p className="text-xs text-[var(--cyber-muted-text)] mt-1">{s.label}</p>
               </div>
             ))}
@@ -2260,10 +2258,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
 
               <div className="rounded-2xl border border-[rgba(255,80,80,0.25)] bg-[rgba(60,12,12,0.45)] p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-red-400" />
-                    <h2 className="text-base font-bold text-[var(--cyber-text)]">Alertes de fraude</h2>
-                  </div>
+                  <h2 className="text-base font-bold text-[var(--cyber-text)]">Alertes de fraude</h2>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white">{liveAlerts.length}</span>
                 </div>
                 <div className="scrollbar-vision space-y-2 max-h-[360px] overflow-y-auto overscroll-contain pr-2">
