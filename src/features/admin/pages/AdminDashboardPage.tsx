@@ -2053,18 +2053,25 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     return `${h}:${m}:${sec}`;
   };
 
+  const totalQuestions = exam.questions || 10;
   const liveParticipants = allStudentsData.slice(0, Math.min(exam.students || 5, allStudentsData.length)).map((s, i) => {
     const baseState: "flagged" | "submitted" | "active" = i % 5 === 0 ? "flagged" : i % 4 === 0 ? "submitted" : "active";
     const kicked = kickedIds.includes(s.id);
     const finalState = (kicked ? "kicked" : baseState) as "flagged" | "submitted" | "active" | "kicked";
-    const progress =
+    const progressPct =
       finalState === "kicked" ? 0 :
       finalState === "submitted" ? 100 :
       Math.min(99, 12 + i * 17 + (elapsed % 11) * 2);
+    const answered =
+      finalState === "submitted" ? totalQuestions :
+      finalState === "kicked" ? 0 :
+      Math.min(totalQuestions - 1, Math.floor((progressPct / 100) * totalQuestions));
     return {
       id: s.id,
       name: s.name,
-      progress,
+      progress: progressPct,
+      answered,
+      totalQuestions,
       state: finalState,
       score: Math.round((10 + (i * 1.7) % 9) * 10) / 10,
     };
@@ -2214,7 +2221,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                             style={{ width: `${p.progress}%` }}
                           />
                         </div>
-                        <span className="text-[10px] text-[var(--cyber-muted-text)] tabular-nums">{p.progress}%</span>
+                        <span className="text-[10px] text-[var(--cyber-muted-text)] tabular-nums">{p.answered}/{p.totalQuestions} q.</span>
                       </div>
                     </div>
                     <span className="text-sm font-bold text-[var(--cyber-text)] tabular-nums">{p.score}/20</span>
@@ -2330,7 +2337,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                       {notFinished.map(p => (
                         <li key={p.id} className="flex items-center justify-between text-sm">
                           <span className="text-[var(--cyber-text)] truncate">{p.name}</span>
-                          <span className="text-xs text-[var(--cyber-muted-text)] tabular-nums ml-2">{p.progress}%</span>
+                          <span className="text-xs text-[var(--cyber-muted-text)] tabular-nums ml-2">{p.answered}/{p.totalQuestions} q.</span>
                         </li>
                       ))}
                     </ul>
