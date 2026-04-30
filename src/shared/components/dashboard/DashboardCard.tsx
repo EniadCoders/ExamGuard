@@ -53,7 +53,7 @@ const statusMap: Record<StatusKind, { label: string; tone: BadgeTone }> = {
   alert: { label: "Alerte", tone: "danger" },
 };
 
-interface DashboardCardProps {
+interface DashboardCardProps extends React.HTMLAttributes<HTMLElement> {
   children: ReactNode;
   className?: string;
   tone?: CardTone;
@@ -65,6 +65,7 @@ export function DashboardCard({
   className,
   tone = "default",
   interactive = false,
+  ...props
 }: DashboardCardProps) {
   return (
     <section
@@ -74,6 +75,7 @@ export function DashboardCard({
         interactive && "dashboard-card-interactive",
         className,
       )}
+      {...props}
     >
       {children}
     </section>
@@ -100,6 +102,7 @@ export function DashboardSectionCard({
   tone = "default",
   interactive = false,
   bodyClassName,
+  ...props
 }: DashboardSectionCardProps) {
   const Icon = icon;
   return (
@@ -107,6 +110,7 @@ export function DashboardSectionCard({
       className={cn("relative overflow-hidden", className)}
       tone={tone}
       interactive={interactive}
+      {...props}
     >
       {Icon && (
         <div className="dashboard-section-card-icon-background">

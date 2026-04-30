@@ -393,6 +393,7 @@ export function StudentDashboard() {
                   <DashboardCard
                     key={exam.id}
                     interactive
+                    onClick={() => setActiveTab("exams")}
                     className="p-6"
                   >
                     <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -465,6 +466,9 @@ export function StudentDashboard() {
                   title="Calendrier"
                   subtitle="Vos prochains rendez-vous"
                   icon={Calendar}
+                  interactive
+                  onClick={() => setActiveTab("calendar")}
+                  className="cursor-pointer"
                 >
                   <div className="space-y-3">
                     {calendarEvents.slice(0, 3).map((event) => (
