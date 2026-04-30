@@ -374,9 +374,9 @@ export function StudentDashboard() {
                     value={stat.value}
                     change={stat.change}
                     iconTone={
-                      idx === 1 || idx === 2 ? "positive" : idx === 3 ? "warning" : "default"
+                      idx === 1 || idx === 2 || idx === 3 ? "positive" : "default"
                     }
-                    changeTone={idx === 3 ? "warning" : "info"}
+                    changeTone="info"
                   />
                 );
               })}
