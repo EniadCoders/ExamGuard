@@ -596,13 +596,8 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
     s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
     s.email.toLowerCase().includes(studentSearch.toLowerCase())
   );
-  const allSelected = filteredStudents.length > 0 && filteredStudents.every(s => selectedStudents.includes(s.id));
-
   const toggleStudent = (id: number) =>
     setSelectedStudents(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const toggleAll = () =>
-    setSelectedStudents(allSelected ? selectedStudents.filter(id => !filteredStudents.some(s => s.id === id))
-                                    : Array.from(new Set([...selectedStudents, ...filteredStudents.map(s => s.id)])));
 
   const addQuestion = (type: DraftQuestion["type"]) => {
     const id = Date.now();
@@ -727,12 +722,7 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-black">Étudiants à inviter ({selectedStudents.length})</label>
-              <button onClick={toggleAll} className="text-xs font-medium text-black hover:underline">
-                {allSelected ? "Tout désélectionner" : "Tout sélectionner"}
-              </button>
-            </div>
+            <label className="block text-sm font-medium text-black mb-2">Étudiants à inviter ({selectedStudents.length})</label>
             <div className="relative mb-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
               <input
