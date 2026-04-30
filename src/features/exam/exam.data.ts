@@ -31,7 +31,6 @@ export const mockExamQuestions: Question[] = [
     text: "Expliquez le concept de polymorphisme en programmation orientee objet. Donnez un exemple concret en Java et decrivez comment il ameliore la maintenabilite du code.",
     points: 5,
     placeholder: "Redigez votre reponse ici. Soyez precis et illustrez avec des exemples...",
-    minWords: 80,
   },
   {
     id: 4,
