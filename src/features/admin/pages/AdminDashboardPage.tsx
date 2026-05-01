@@ -603,12 +603,25 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
 
   const MIN_QUESTIONS = 5;
   const MAX_QUESTIONS = 40;
+  const TOTAL_POINTS = 20;
+  const POINTS_MIN = 0;
+  const POINTS_MAX = 20;
   const questionsCount = questions.length;
   const atMaxQuestions = questionsCount >= MAX_QUESTIONS;
   const questionsValid = questionsCount >= MIN_QUESTIONS && questionsCount <= MAX_QUESTIONS;
   const mcqCount = questions.filter(q => q.type === "mcq").length;
   const textCount = questions.filter(q => q.type === "text").length;
   const codeCount = questions.filter(q => q.type === "code").length;
+  const totalPoints = questions.reduce((s, q) => s + (Number(q.points) || 0), 0);
+  const totalPointsRounded = Math.round(totalPoints * 100) / 100;
+  const pointsValid = questionsCount > 0 && totalPointsRounded === TOTAL_POINTS;
+  const pointsDelta = Math.round((TOTAL_POINTS - totalPoints) * 100) / 100;
+  const allPointsInRange = questions.every(q => q.points >= POINTS_MIN && q.points <= POINTS_MAX);
+
+  const clampPoints = (value: number) => {
+    if (Number.isNaN(value)) return 0;
+    return Math.min(POINTS_MAX, Math.max(POINTS_MIN, value));
+  };
 
   const addQuestion = (type: DraftQuestion["type"]) => {
     if (atMaxQuestions) return;
@@ -868,12 +881,18 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
                     <input
                       type="number"
                       value={q.points}
-                      onChange={e => updateQuestion(q.id, { points: Number(e.target.value) })}
-                      min={0}
+                      onChange={e => updateQuestion(q.id, { points: clampPoints(Number(e.target.value)) })}
+                      min={POINTS_MIN}
+                      max={POINTS_MAX}
                       step={0.5}
-                      className="w-20 px-2 py-1 text-sm bg-white border border-[#E5E5E5] rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black"
+                      aria-invalid={q.points < POINTS_MIN || q.points > POINTS_MAX}
+                      className={`w-20 px-2 py-1 text-sm bg-white border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black ${
+                        q.points < POINTS_MIN || q.points > POINTS_MAX
+                          ? "border-red-300 focus:ring-red-500"
+                          : "border-[#E5E5E5]"
+                      }`}
                     />
-                    <span className="text-xs text-[#666666]">pts</span>
+                    <span className="text-xs text-[#666666]">/ {POINTS_MAX} pts</span>
                     <button onClick={() => removeQuestion(q.id)} className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors" title="Supprimer">
                       <X className="w-4 h-4 text-[#666666]" />
                     </button>
@@ -1019,12 +1038,14 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
             <div
               role="status"
               aria-live="polite"
-              className="flex items-center gap-2.5 rounded-lg border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5"
+              className="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3"
             >
-              <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" aria-hidden="true" />
-              <p className="text-xs leading-relaxed text-amber-800">
-                <span className="font-medium text-amber-900">
-                  {MIN_QUESTIONS - questionsCount} question{MIN_QUESTIONS - questionsCount > 1 ? "s" : ""} restante{MIN_QUESTIONS - questionsCount > 1 ? "s" : ""}
+              <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0" aria-hidden="true" />
+              <p className="text-sm font-medium leading-relaxed text-amber-900">
+                Il reste
+                {" "}
+                <span className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 font-semibold text-amber-900">
+                  {MIN_QUESTIONS - questionsCount} question{MIN_QUESTIONS - questionsCount > 1 ? "s" : ""}
                 </span>
                 {" "}pour atteindre le minimum de {MIN_QUESTIONS}.
               </p>
@@ -1037,11 +1058,38 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
                 <span className="ml-auto text-amber-900 font-medium">Total : {questions.reduce((s, q) => s + q.points, 0)} pts</span>
               </p>
             </div>
+          ) : pointsValid ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 px-4 py-3"
+            >
+              <CheckCircle2 className="w-5 h-5 text-green-700 flex-shrink-0" aria-hidden="true" />
+              <p className="text-sm font-medium leading-relaxed text-green-900">
+                Barème complet — {questionsCount} question{questionsCount > 1 ? "s" : ""} pour un total de
+                {" "}
+                <span className="inline-flex items-center rounded-md bg-green-100 px-2 py-0.5 font-semibold text-green-900">
+                  {totalPointsRounded}/{TOTAL_POINTS} pts
+                </span>
+                .
+              </p>
+            </div>
           ) : (
-            <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
-              <p className="text-xs text-[#666666] flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
-                {questionsCount} question{questionsCount > 1 ? "s" : ""} — total : {questions.reduce((s, q) => s + q.points, 0)} pts.
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="flex items-center gap-3 rounded-lg border border-red-300 bg-red-50 px-4 py-3"
+            >
+              <AlertCircle className="w-5 h-5 text-red-700 flex-shrink-0" aria-hidden="true" />
+              <p className="text-sm font-medium leading-relaxed text-red-900">
+                Total actuel :
+                {" "}
+                <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-0.5 font-semibold text-red-900">
+                  {totalPointsRounded}/{TOTAL_POINTS} pts
+                </span>
+                {" "}— {pointsDelta > 0
+                  ? `ajoutez ${pointsDelta} pt${pointsDelta > 1 ? "s" : ""} pour atteindre ${TOTAL_POINTS}.`
+                  : `retirez ${Math.abs(pointsDelta)} pt${Math.abs(pointsDelta) > 1 ? "s" : ""} pour atteindre ${TOTAL_POINTS}.`}
               </p>
             </div>
           )}
@@ -1085,8 +1133,16 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
           {step === 3 && (
             <button
               onClick={schedule}
-              disabled={(selectedStudents.length === 0 && !importedFileName) || !questionsValid}
-              title={!questionsValid ? `Le nombre de questions doit être compris entre ${MIN_QUESTIONS} et ${MAX_QUESTIONS}.` : undefined}
+              disabled={(selectedStudents.length === 0 && !importedFileName) || !questionsValid || !pointsValid || !allPointsInRange}
+              title={
+                !questionsValid
+                  ? `Le nombre de questions doit être compris entre ${MIN_QUESTIONS} et ${MAX_QUESTIONS}.`
+                  : !allPointsInRange
+                    ? `Chaque question doit valoir entre ${POINTS_MIN} et ${POINTS_MAX} points.`
+                    : !pointsValid
+                      ? `Le total des points doit être exactement ${TOTAL_POINTS} (actuel : ${totalPointsRounded}).`
+                      : undefined
+              }
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
             >
               {initialExam?.status === "scheduled" ? (
