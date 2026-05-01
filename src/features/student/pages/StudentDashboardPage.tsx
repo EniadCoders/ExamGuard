@@ -103,6 +103,8 @@ export function StudentDashboard() {
   const [expandedExam, setExpandedExam] = useState<number | null>(null);
   const [sessionToRevoke, setSessionToRevoke] = useState<string | null>(null);
   const [activeSessionsList, setActiveSessionsList] = useState(["MacBook Pro", "iPhone 14"]);
+  const [show2FAPopup, setShow2FAPopup] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
   useEffect(() => {
     const anyModalOpen = selectedResult !== null || showExamLock;
@@ -1200,8 +1202,15 @@ export function StudentDashboard() {
                               <p className="text-sm text-[#666666]">Ajouter une couche de sécurité supplémentaire</p>
                             </div>
                           </div>
-                          <button className="px-4 py-2 bg-[#00809D] text-white text-sm font-bold rounded-lg hover:bg-[#1C1C1C] transition-all">
-                            Activer
+                          <button 
+                            onClick={() => !is2FAEnabled && setShow2FAPopup(true)}
+                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${
+                              is2FAEnabled 
+                                ? "bg-[#2ECC71]/10 text-[#2ECC71] border border-[#2ECC71]/20 cursor-default" 
+                                : "bg-[#00809D] text-white hover:bg-[#1C1C1C]"
+                            }`}
+                          >
+                            {is2FAEnabled ? "Activé" : "Activer"}
                           </button>
                         </div>
                       </div>
@@ -1263,6 +1272,42 @@ export function StudentDashboard() {
           </div>
         )}
       </main>
+
+      {/* 2FA Confirmation Modal */}
+      {show2FAPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-2xl border border-[#E5E5E5] bg-white p-5 shadow-2xl sm:p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 bg-[rgba(0,128,157,0.1)] rounded-full flex items-center justify-center mb-4">
+                <Shield className="w-7 h-7 text-[#00809D]" />
+              </div>
+              <h2 className="text-xl font-serif text-black mb-2">
+                Activer l'A2F ?
+              </h2>
+              <p className="text-sm text-[#666666] mb-6">
+                L'authentification à deux facteurs renforcera la sécurité de votre compte. Souhaitez-vous vraiment l'activer ?
+              </p>
+              <div className="flex w-full gap-3">
+                <button
+                  onClick={() => setShow2FAPopup(false)}
+                  className="flex-1 px-4 py-2.5 bg-white border border-[#E5E5E5] text-black font-medium text-sm rounded-xl hover:border-black transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => {
+                    setIs2FAEnabled(true);
+                    setShow2FAPopup(false);
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-[#00809D] text-white font-bold text-sm rounded-xl hover:bg-[#1C1C1C] transition-all"
+                >
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Revoke Session Modal */}
       {sessionToRevoke && (
