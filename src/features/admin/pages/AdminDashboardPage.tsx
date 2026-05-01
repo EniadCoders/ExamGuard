@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import {
   Bell,
@@ -2117,6 +2117,8 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   const [kickTarget, setKickTarget] = useState<{ id: number; name: string } | null>(null);
   const [kickReason, setKickReason] = useState("");
   const [kickedIds, setKickedIds] = useState<number[]>([]);
+  const [quickConfirm, setQuickConfirm] = useState<"extend" | "lock-on" | "lock-off" | "message" | null>(null);
+  const quickConfirmCancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!toast) return;
@@ -2131,11 +2133,24 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   }, [paused]);
 
   useEffect(() => {
-    if (!confirmEnd && !messageOpen && !kickTarget) return;
+    if (!confirmEnd && !messageOpen && !kickTarget && !quickConfirm) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = previous; };
-  }, [confirmEnd, messageOpen, kickTarget]);
+  }, [confirmEnd, messageOpen, kickTarget, quickConfirm]);
+
+  useEffect(() => {
+    if (!quickConfirm) return;
+    quickConfirmCancelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setQuickConfirm(null);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [quickConfirm]);
 
   const handleExtend = () => {
     setExtraMinutes(m => m + 5);
@@ -2371,16 +2386,16 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
               <div className="rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-5">
                 <h2 className="text-base font-bold text-[var(--cyber-text)] mb-4">Actions rapides</h2>
                 <div className="space-y-2">
-                  <button onClick={() => setMessageOpen(true)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  <button onClick={() => setQuickConfirm("message")} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
                     <Send className="w-4 h-4" />
                     Envoyer un message à tous
                   </button>
-                  <button onClick={handleExtend} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  <button onClick={() => setQuickConfirm("extend")} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
                     <Clock className="w-4 h-4" />
                     Prolonger la durée (+5 min)
                     {extraMinutes > 0 && <span className="ml-auto text-xs text-[var(--cyber-accent-strong)]">+{extraMinutes} min</span>}
                   </button>
-                  <button onClick={handleLock} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                  <button onClick={() => setQuickConfirm(locked ? "lock-off" : "lock-on")} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
                     locked
                       ? "border-amber-400/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
                       : "border-[rgba(123,241,255,0.25)] text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)]"
@@ -2559,6 +2574,96 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
             </div>
           </div>
         )}
+
+        {/* Quick action confirm */}
+        {quickConfirm && (() => {
+          const config = quickConfirm === "extend"
+            ? {
+                title: "Prolonger la durée ?",
+                description: `5 minutes supplémentaires seront ajoutées au temps imparti${extraMinutes > 0 ? ` (rallonge actuelle : +${extraMinutes} min)` : ""}. Tous les étudiants encore en cours en bénéficieront immédiatement.`,
+                confirmLabel: "Confirmer la prolongation",
+                icon: Clock,
+                tone: "accent" as const,
+                onConfirm: () => { handleExtend(); setQuickConfirm(null); },
+              }
+            : quickConfirm === "lock-on"
+              ? {
+                  title: "Verrouiller les soumissions ?",
+                  description: "Les étudiants ne pourront plus envoyer leurs réponses. Cette action peut être annulée à tout moment.",
+                  confirmLabel: "Verrouiller",
+                  icon: Shield,
+                  tone: "warn" as const,
+                  onConfirm: () => { handleLock(); setQuickConfirm(null); },
+                }
+              : quickConfirm === "lock-off"
+                ? {
+                    title: "Déverrouiller les soumissions ?",
+                    description: "Les étudiants pourront à nouveau envoyer leurs réponses.",
+                    confirmLabel: "Déverrouiller",
+                    icon: Shield,
+                    tone: "accent" as const,
+                    onConfirm: () => { handleLock(); setQuickConfirm(null); },
+                  }
+                : {
+                    title: "Envoyer un message à tous ?",
+                    description: `Un message sera diffusé aux ${liveParticipants.length} étudiant(s) en cours. Vous pourrez en rédiger le contenu à l'étape suivante.`,
+                    confirmLabel: "Continuer",
+                    icon: Send,
+                    tone: "accent" as const,
+                    onConfirm: () => { setQuickConfirm(null); setMessageOpen(true); },
+                  };
+          const Icon = config.icon;
+          const isWarn = config.tone === "warn";
+          return (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+              onClick={() => setQuickConfirm(null)}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="quick-confirm-title"
+                aria-describedby="quick-confirm-desc"
+                onClick={(e) => e.stopPropagation()}
+                className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl bg-[rgba(11,27,38,0.95)] ${
+                  isWarn ? "border-amber-400/40" : "border-[rgba(123,241,255,0.25)]"
+                }`}
+              >
+                <div className="flex items-start gap-3 mb-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    isWarn ? "bg-amber-500/15" : "bg-[rgba(123,241,255,0.12)]"
+                  }`}>
+                    <Icon className={`w-5 h-5 ${isWarn ? "text-amber-300" : "text-[var(--cyber-accent-strong)]"}`} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 id="quick-confirm-title" className="text-lg font-bold text-[var(--cyber-text)]">{config.title}</h3>
+                    <p id="quick-confirm-desc" className="text-sm text-[var(--cyber-muted-text)] mt-1 leading-relaxed">{config.description}</p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    ref={quickConfirmCancelRef}
+                    onClick={() => setQuickConfirm(null)}
+                    className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] focus:outline-none focus:ring-2 focus:ring-[var(--cyber-accent-strong)] transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={config.onConfirm}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[rgba(11,27,38,0.95)] ${
+                      isWarn
+                        ? "bg-amber-500 hover:bg-amber-400 text-black focus:ring-amber-300"
+                        : "bg-[var(--cyber-accent-strong)] hover:opacity-90 text-black focus:ring-[var(--cyber-accent-strong)]"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" aria-hidden="true" />
+                    {config.confirmLabel}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Toast */}
         {toast && (
