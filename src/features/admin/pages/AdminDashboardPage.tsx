@@ -1202,10 +1202,9 @@ function StudentDetailsModal({ student, onClose }: { student: Student; onClose: 
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {[
             { label: "Examens passés", value: student.exams.toString(), icon: FileText },
-            { label: "Moyenne générale", value: `${student.avg}/20`, icon: TrendingUp },
             { label: "Dernière activité", value: student.lastActive, icon: Clock },
           ].map((item) => (
             <div key={item.label} className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
