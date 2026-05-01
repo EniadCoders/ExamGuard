@@ -1812,7 +1812,7 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="teacher-students-table w-full">
                 <thead>
                   <tr className="border-b border-[#E5E5E5] bg-[#FAFAFA]">
                     <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Étudiant</th>
@@ -1842,7 +1842,7 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
                         }
                       }}
                       aria-label={`Voir les détails de ${student.name}`}
-                      className="cursor-pointer hover:bg-[#FAFAFA] focus:bg-[#FAFAFA] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black transition-colors"
+                      className="cursor-pointer text-black transition-colors hover:!bg-[rgba(12,31,43,0.92)] active:!bg-[rgba(16,42,58,0.98)] focus:!bg-[rgba(12,31,43,0.92)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black hover:[&>td]:!bg-[rgba(12,31,43,0.92)] active:[&>td]:!bg-[rgba(16,42,58,0.98)] focus:[&>td]:!bg-[rgba(12,31,43,0.92)]"
                     >
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap items-center gap-3">

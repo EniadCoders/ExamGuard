@@ -1359,6 +1359,29 @@ button[data-ui="notification-trigger"] [data-ui="notification-badge"] {
   background: rgba(12, 31, 43, 0.72) !important;
 }
 
+.teacher-students-table tbody tr[role="button"],
+.teacher-students-table tbody tr[role="button"] > td {
+  cursor: pointer !important;
+}
+
+.teacher-students-table tbody tr[role="button"]:hover,
+.teacher-students-table tbody tr[role="button"]:hover > td {
+  background: rgba(12, 31, 43, 0.92) !important;
+  color: var(--cyber-text) !important;
+}
+
+.teacher-students-table tbody tr[role="button"]:active,
+.teacher-students-table tbody tr[role="button"]:active > td {
+  background: rgba(16, 42, 58, 0.98) !important;
+  color: var(--cyber-text) !important;
+}
+
+.teacher-students-table tbody tr[role="button"]:focus,
+.teacher-students-table tbody tr[role="button"]:focus > td {
+  background: rgba(12, 31, 43, 0.92) !important;
+  color: var(--cyber-text) !important;
+}
+
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="hover:bg-[#222222]"]:hover,
 :is(.cyber-dashboard-page, .cyber-profile-page, .cyber-exam-page) [class~="hover:bg-black"]:hover {
   background:
