@@ -767,18 +767,28 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
               {([
                 { key: "auto", label: "Lancement automatique", desc: "L'examen démarre à la date prévue." },
                 { key: "manual", label: "Lancement manuel", desc: "Vous démarrez l'examen via un clic le jour J." },
-              ] as const).map(({ key, label, desc }) => (
-                <button
-                  key={key}
-                  onClick={() => setLaunchMode(key)}
-                  className={`text-left p-4 rounded-xl border-2 transition-all ${
-                    launchMode === key ? "bg-black border-black text-white" : "bg-white border-[#E5E5E5] hover:border-[#CCCCCC]"
-                  }`}
-                >
-                  <p className={`text-sm font-medium ${launchMode === key ? "text-white" : "text-black"}`}>{label}</p>
-                  <p className={`text-xs mt-1 ${launchMode === key ? "text-white/80" : "text-[#666666]"}`}>{desc}</p>
-                </button>
-              ))}
+              ] as const).map(({ key, label, desc }) => {
+                const selected = launchMode === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setLaunchMode(key)}
+                    aria-pressed={selected}
+                    className={`relative text-left p-4 rounded-xl border-2 transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 ${
+                      selected
+                        ? "bg-black border-black text-white shadow-[0_4px_14px_rgba(0,0,0,0.25)]"
+                        : "bg-white border-[#E5E5E5] hover:border-black hover:bg-[#FAFAFA] active:bg-[#F0F0F0]"
+                    }`}
+                  >
+                    {selected && (
+                      <CheckCircle2 className="absolute top-3 right-3 w-4 h-4 text-white" />
+                    )}
+                    <p className={`text-sm font-medium pr-6 ${selected ? "text-white" : "text-black"}`}>{label}</p>
+                    <p className={`text-xs mt-1 ${selected ? "text-white/80" : "text-[#666666]"}`}>{desc}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
