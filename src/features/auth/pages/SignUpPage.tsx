@@ -403,15 +403,20 @@ export function SignUpPage() {
                   <label className={authLabelClass} htmlFor="teacher-institution">
                     Établissement
                   </label>
-                  <input
+                  <select
                     id="teacher-institution"
-                    type="text"
                     value={institution}
                     onChange={(e) => setInstitution(e.target.value)}
-                    placeholder="École ou organisation"
                     required
                     className={authFieldClass}
-                  />
+                  >
+                    <option value="">Sélectionnez votre école UMP</option>
+                    {umpSchools.map((schoolName) => (
+                      <option key={schoolName} value={schoolName}>
+                        {schoolName}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
