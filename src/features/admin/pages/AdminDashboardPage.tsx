@@ -2117,8 +2117,10 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   const [kickTarget, setKickTarget] = useState<{ id: number; name: string } | null>(null);
   const [kickReason, setKickReason] = useState("");
   const [kickedIds, setKickedIds] = useState<number[]>([]);
-  const [quickConfirm, setQuickConfirm] = useState<"extend" | "lock-on" | "lock-off" | "message" | null>(null);
+  const [quickConfirm, setQuickConfirm] = useState<"extend" | "lock-on" | "lock-off" | null>(null);
   const quickConfirmCancelRef = useRef<HTMLButtonElement>(null);
+  const [messageConfirmOpen, setMessageConfirmOpen] = useState(false);
+  const messageConfirmCancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!toast) return;
@@ -2133,11 +2135,24 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   }, [paused]);
 
   useEffect(() => {
-    if (!confirmEnd && !messageOpen && !kickTarget && !quickConfirm) return;
+    if (!confirmEnd && !messageOpen && !kickTarget && !quickConfirm && !messageConfirmOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = previous; };
-  }, [confirmEnd, messageOpen, kickTarget, quickConfirm]);
+  }, [confirmEnd, messageOpen, kickTarget, quickConfirm, messageConfirmOpen]);
+
+  useEffect(() => {
+    if (!messageConfirmOpen) return;
+    messageConfirmCancelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setMessageConfirmOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [messageConfirmOpen]);
 
   useEffect(() => {
     if (!quickConfirm) return;
@@ -2170,6 +2185,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     setMessageOpen(false);
     setMessageTarget(null);
     setMessageDraft("");
+    setMessageConfirmOpen(false);
   };
   const handleKick = () => {
     if (!kickTarget) return;
@@ -2386,7 +2402,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
               <div className="rounded-2xl border border-[rgba(123,241,255,0.18)] bg-[rgba(11,27,38,0.5)] p-5">
                 <h2 className="text-base font-bold text-[var(--cyber-text)] mb-4">Actions rapides</h2>
                 <div className="space-y-2">
-                  <button onClick={() => setQuickConfirm("message")} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
+                  <button onClick={() => setMessageOpen(true)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
                     <Send className="w-4 h-4" />
                     Envoyer un message à tous
                   </button>
@@ -2528,9 +2544,73 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                 <button onClick={() => { setMessageOpen(false); setMessageDraft(""); setMessageTarget(null); }} className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors">
                   Annuler
                 </button>
-                <button onClick={handleSendMessage} disabled={!messageDraft.trim()} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--cyber-accent-strong)] hover:opacity-90 text-sm font-medium text-black transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                <button
+                  onClick={() => { if (messageDraft.trim()) setMessageConfirmOpen(true); }}
+                  disabled={!messageDraft.trim()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--cyber-accent-strong)] hover:opacity-90 text-sm font-medium text-black transition-opacity disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--cyber-accent-strong)] focus:ring-offset-2 focus:ring-offset-[rgba(11,27,38,0.95)]"
+                >
                   <Send className="w-4 h-4" />
                   Envoyer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Send-message confirmation */}
+        {messageConfirmOpen && (
+          <div
+            className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setMessageConfirmOpen(false)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="message-confirm-title"
+              aria-describedby="message-confirm-desc"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl border border-[rgba(123,241,255,0.25)] bg-[rgba(11,27,38,0.95)] p-6 shadow-2xl"
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-[rgba(123,241,255,0.12)] flex items-center justify-center flex-shrink-0">
+                  <Send className="w-5 h-5 text-[var(--cyber-accent-strong)]" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 id="message-confirm-title" className="text-lg font-bold text-[var(--cyber-text)]">
+                    {messageTarget
+                      ? `Confirmer l'envoi à ${messageTarget.name} ?`
+                      : "Confirmer l'envoi à tous les étudiants ?"}
+                  </h3>
+                  <p id="message-confirm-desc" className="text-sm text-[var(--cyber-muted-text)] mt-1 leading-relaxed">
+                    {messageTarget
+                      ? "Le message sera visible immédiatement par cet étudiant."
+                      : `Le message sera visible immédiatement par les ${liveParticipants.length} étudiant(s) en cours.`}
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cyber-subtle-text)] mb-1.5">Aperçu du message</p>
+              <div className="rounded-xl border border-[rgba(123,241,255,0.18)] bg-[rgba(7,17,25,0.6)] px-3 py-2.5 mb-4 max-h-40 overflow-y-auto">
+                <p className="text-sm text-[var(--cyber-text)] whitespace-pre-wrap break-words leading-relaxed">
+                  {messageDraft.trim()}
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  ref={messageConfirmCancelRef}
+                  onClick={() => setMessageConfirmOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] focus:outline-none focus:ring-2 focus:ring-[var(--cyber-accent-strong)] transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!messageDraft.trim()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--cyber-accent-strong)] hover:opacity-90 text-sm font-medium text-black transition-opacity disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[rgba(11,27,38,0.95)] focus:ring-[var(--cyber-accent-strong)]"
+                >
+                  <Send className="w-4 h-4" aria-hidden="true" />
+                  Confirmer l'envoi
                 </button>
               </div>
             </div>
@@ -2595,23 +2675,14 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                   tone: "warn" as const,
                   onConfirm: () => { handleLock(); setQuickConfirm(null); },
                 }
-              : quickConfirm === "lock-off"
-                ? {
-                    title: "Déverrouiller les soumissions ?",
-                    description: "Les étudiants pourront à nouveau envoyer leurs réponses.",
-                    confirmLabel: "Déverrouiller",
-                    icon: Shield,
-                    tone: "accent" as const,
-                    onConfirm: () => { handleLock(); setQuickConfirm(null); },
-                  }
-                : {
-                    title: "Envoyer un message à tous ?",
-                    description: `Un message sera diffusé aux ${liveParticipants.length} étudiant(s) en cours. Vous pourrez en rédiger le contenu à l'étape suivante.`,
-                    confirmLabel: "Continuer",
-                    icon: Send,
-                    tone: "accent" as const,
-                    onConfirm: () => { setQuickConfirm(null); setMessageOpen(true); },
-                  };
+              : {
+                  title: "Déverrouiller les soumissions ?",
+                  description: "Les étudiants pourront à nouveau envoyer leurs réponses.",
+                  confirmLabel: "Déverrouiller",
+                  icon: Shield,
+                  tone: "accent" as const,
+                  onConfirm: () => { handleLock(); setQuickConfirm(null); },
+                };
           const Icon = config.icon;
           const isWarn = config.tone === "warn";
           return (
