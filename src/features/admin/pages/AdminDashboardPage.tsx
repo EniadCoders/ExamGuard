@@ -1654,6 +1654,7 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filiereFilter, setFiliereFilter] = useState<string>("all");
   const [examFilter, setExamFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"name" | "status">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -1686,6 +1687,12 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
   const examFilterStudentIds = examFilter === "all"
     ? null
     : new Set(takenExams.find(e => e.id.toString() === examFilter)?.selectedStudentIds ?? []);
+  const liveExamStudentIds = new Set<number>(
+    exams.filter(e => e.status === "live").flatMap(e => e.selectedStudentIds ?? [])
+  );
+  // Actif = étudiant dans un examen en cours ou marqué actif par une activité récente.
+  const isStudentActive = (student: Student) =>
+    student.status === "active" || liveExamStudentIds.has(student.id);
 
   const query = searchQuery.toLowerCase().trim();
   const filtered = teacherStudents
@@ -1701,6 +1708,10 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
     .slice()
     .sort((a, b) => {
       const dir = sortDir === "asc" ? 1 : -1;
+      if (sortBy === "status") {
+        const statusOrder = Number(isStudentActive(a)) - Number(isStudentActive(b));
+        if (statusOrder !== 0) return statusOrder * dir;
+      }
       return a.name.localeCompare(b.name) * dir;
     });
 
@@ -1763,9 +1774,16 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
         )}
 
         <div className="flex items-center gap-2 lg:ml-auto">
-          <span className="px-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black">
-            Trier : Nom
-          </span>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as "name" | "status")}
+            aria-label="Trier par"
+            title="Actif : étudiant dans un examen en cours ou récemment actif"
+            className="px-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all"
+          >
+            <option value="name">Trier : Nom</option>
+            <option value="status">Trier : Statut</option>
+          </select>
           <button
             type="button"
             onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
@@ -1805,7 +1823,10 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E5E5E5]">
-                  {filtered.map((student) => (
+                  {filtered.map((student) => {
+                    const active = isStudentActive(student);
+
+                    return (
                     <tr key={student.id} className="hover:bg-[#FAFAFA] transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap items-center gap-3">
@@ -1830,9 +1851,11 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
                           <DashboardStatusBadge
-                            status={student.status as "active" | "inactive"}
+                            status={active ? "active" : "inactive"}
                           />
-                          <span className="text-xs text-[#888888]">{student.lastActive}</span>
+                          <span className="text-xs text-[#888888]">
+                            {liveExamStudentIds.has(student.id) ? "Examen en cours" : student.lastActive}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -1848,7 +1871,8 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
