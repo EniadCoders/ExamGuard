@@ -39,6 +39,7 @@ import {
   Send,
   Play,
   PauseCircle,
+  PlayCircle,
   StopCircle,
   ArrowLeft,
   Wifi,
@@ -2298,10 +2299,21 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                 );
               })()}
               <button
+                type="button"
                 onClick={() => setPaused(p => !p)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(123,241,255,0.25)] text-sm font-medium text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)] transition-colors"
+                aria-pressed={paused}
+                aria-label={paused ? "Reprendre l'examen" : "Suspendre l'examen"}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  paused
+                    ? "border-amber-400/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                    : "border-[rgba(123,241,255,0.25)] text-[var(--cyber-text)] hover:bg-[rgba(123,241,255,0.08)]"
+                }`}
               >
-                <PauseCircle className="w-4 h-4" />
+                {paused ? (
+                  <PlayCircle className="w-4 h-4" aria-hidden="true" />
+                ) : (
+                  <PauseCircle className="w-4 h-4" aria-hidden="true" />
+                )}
                 {paused ? "Reprendre" : "Suspendre"}
               </button>
               <button
