@@ -157,7 +157,7 @@ const allExamsData: Exam[] = [
   { id: 3, title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril 2026", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité informatique.", passingScore: 12 },
   { id: 4, title: "Programmation Web", subject: "Développement", duration: 60, date: "15 Avril 2026", students: 31, status: "draft", questions: 10, description: "HTML, CSS, JavaScript et frameworks modernes.", passingScore: 10 },
   { id: 5, title: "Intelligence Artificielle", subject: "IA & ML", duration: 150, date: "18 Avril 2026", students: 28, status: "scheduled", questions: 20, description: "Machine learning, réseaux de neurones et IA appliquée.", passingScore: 13 },
-  { id: 6, title: "Algorithmique Avancée", subject: "Informatique", duration: 120, date: "02 Avril 2026 à 09:00", students: 42, status: "completed", questions: 18, description: "Structures de données, complexité et algorithmes de graphes.", passingScore: 12 },
+  { id: 6, title: "Algorithmique Avancée", subject: "Informatique", duration: 120, date: "02 Avril 2026 à 09:00", students: 42, status: "completed", questions: 18, description: "Structures de données, complexité et algorithmes de graphes.", passingScore: 12, selectedStudentIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
 ];
 
 const defaultModules = ["Génie logiciel", "Systèmes d'information", "Cybersécurité", "Développement", "IA & ML", "Réseaux"];
@@ -1647,16 +1647,71 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
 }
 
 // ─── Students Tab ─────────────────────────────────────────────────────────────
-function StudentsTab() {
-  const students = allStudentsData;
+// NOTE: `exams` is the current teacher's exam list. It MUST be scoped server-side
+// by the authenticated teacher id (e.g. WHERE exams.teacher_id = :currentTeacherId)
+// before reaching this component. Never trust the client to filter by ownership.
+function StudentsTab({ exams }: { exams: Exam[] }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [filiereFilter, setFiliereFilter] = useState<string>("all");
+  const [examFilter, setExamFilter] = useState<string>("all");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  const filtered = students.filter(s =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.email.toLowerCase().includes(searchQuery.toLowerCase())
+  // Roster = students who took (live or completed) at least one of this teacher's exams.
+  // In the API equivalent: SELECT students.* FROM students
+  //   JOIN submissions ON submissions.student_id = students.id
+  //   JOIN exams ON exams.id = submissions.exam_id
+  //  WHERE exams.teacher_id = :currentTeacherId AND exams.status IN ('completed', 'live')
+  const takenExams = exams.filter(e => e.status === "completed" || e.status === "live");
+  const rosterStudentIds = new Set<number>(
+    takenExams.flatMap(e => e.selectedStudentIds ?? [])
   );
+  const teacherStudents = allStudentsData.filter(s => rosterStudentIds.has(s.id));
+
+  // TODO: remove these debug logs once the linkage is verified end-to-end.
+  if (typeof window !== "undefined") {
+    // eslint-disable-next-line no-console
+    console.debug("[StudentsTab] teacher exams →", exams.map(e => ({ id: e.id, title: e.title, status: e.status, selectedStudentIds: e.selectedStudentIds })));
+    // eslint-disable-next-line no-console
+    console.debug("[StudentsTab] taken exams (completed | live) →", takenExams.map(e => e.id));
+    // eslint-disable-next-line no-console
+    console.debug("[StudentsTab] roster student ids →", Array.from(rosterStudentIds));
+    // eslint-disable-next-line no-console
+    console.debug("[StudentsTab] resolved students →", teacherStudents.map(s => ({ id: s.id, name: s.name })));
+  }
+
+  const filieres = Array.from(new Set(teacherStudents.map(s => s.department).filter(Boolean))) as string[];
+
+  const examFilterStudentIds = examFilter === "all"
+    ? null
+    : new Set(takenExams.find(e => e.id.toString() === examFilter)?.selectedStudentIds ?? []);
+
+  const query = searchQuery.toLowerCase().trim();
+  const filtered = teacherStudents
+    .filter(s => {
+      if (filiereFilter !== "all" && s.department !== filiereFilter) return false;
+      if (examFilterStudentIds && !examFilterStudentIds.has(s.id)) return false;
+      if (!query) return true;
+      return (
+        s.name.toLowerCase().includes(query) ||
+        s.email.toLowerCase().includes(query)
+      );
+    })
+    .slice()
+    .sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      return a.name.localeCompare(b.name) * dir;
+    });
+
+  const filtersActive =
+    filiereFilter !== "all" || examFilter !== "all" || query.length > 0;
+
+  const resetFilters = () => {
+    setFiliereFilter("all");
+    setExamFilter("all");
+    setSearchQuery("");
+  };
 
   return (
     <div className="space-y-6">
@@ -1666,100 +1721,154 @@ function StudentsTab() {
           onClose={() => setShowDetails(false)}
         />
       )}
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex-1 w-full sm:max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
-            <input
-              type="text"
-              placeholder="Rechercher un étudiant..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
+
+      {/* Filter bar */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-3">
+        <div className="relative flex-1 lg:max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" aria-hidden="true" />
+          <input
+            type="text"
+            placeholder="Rechercher par nom ou email..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            aria-label="Rechercher un étudiant"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
+          />
+        </div>
+
+        <select
+          value={filiereFilter}
+          onChange={e => setFiliereFilter(e.target.value)}
+          aria-label="Filtrer par filière"
+          className="px-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all"
+        >
+          <option value="all">Toutes les filières</option>
+          {filieres.map(f => (
+            <option key={f} value={f}>{f}</option>
+          ))}
+        </select>
+
+        {takenExams.length > 0 && (
+          <select
+            value={examFilter}
+            onChange={e => setExamFilter(e.target.value)}
+            aria-label="Filtrer par examen"
+            className="px-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all"
+          >
+            <option value="all">Tous les examens</option>
+            {takenExams.map(e => (
+              <option key={e.id} value={e.id.toString()}>{e.title}</option>
+            ))}
+          </select>
+        )}
+
+        <div className="flex items-center gap-2 lg:ml-auto">
+          <span className="px-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black">
+            Trier : Nom
+          </span>
+          <button
+            type="button"
+            onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
+            aria-label={sortDir === "asc" ? "Tri croissant — basculer en décroissant" : "Tri décroissant — basculer en croissant"}
+            title={sortDir === "asc" ? "Croissant" : "Décroissant"}
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-[#E5E5E5] text-black hover:border-black focus:outline-none focus:ring-2 focus:ring-black transition-colors"
+          >
+            <ChevronRight
+              className={`w-4 h-4 transition-transform ${sortDir === "asc" ? "-rotate-90" : "rotate-90"}`}
+              aria-hidden="true"
             />
-          </div>
+          </button>
         </div>
       </div>
 
       {/* Students Table */}
       <div className="dashboard-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#E5E5E5] bg-[#FAFAFA]">
-                <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Étudiant</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider hidden md:table-cell">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider hidden lg:table-cell">Département</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Examens</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Moyenne</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Statut</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E5E5E5]">
-              {filtered.map((student) => (
-                <tr key={student.id} className="hover:bg-[#FAFAFA] transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-bold text-white">{student.name.split(" ").map(n => n[0]).join("")}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-black block">{student.name}</span>
-                        {student.studentId && <span className="text-xs text-[#888888]">{student.studentId}</span>}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 hidden md:table-cell">
-                    <span className="text-sm text-[#666666]">{student.email}</span>
-                  </td>
-                  <td className="px-6 py-4 hidden lg:table-cell">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm text-black">{student.department}</span>
-                      <span className="text-xs text-[#888888]">{student.year}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-black font-medium">{student.exams}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-black">{student.avg}/20</span>
-                      <div className="w-16 h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden">
-                        <div className="h-full bg-black rounded-full" style={{ width: `${(student.avg / 20) * 100}%` }} />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <DashboardStatusBadge
-                        status={student.status as "active" | "inactive"}
-                      />
-                      <span className="text-xs text-[#888888]">{student.lastActive}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => { setSelectedStudent(student); setShowDetails(true); }}
-                        className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors"
-                        title="Voir les détails"
-                      >
-                        <Eye className="w-4 h-4 text-[#666666]" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filtered.length === 0 && (
-          <div className="px-6 py-10 text-center">
-            <Users className="w-8 h-8 text-[#CCCCCC] mx-auto mb-2" />
-            <p className="text-sm text-[#666666]">Aucun étudiant trouvé</p>
+        {teacherStudents.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <FileText className="w-10 h-10 text-[#CCCCCC] mx-auto mb-3" aria-hidden="true" />
+            <p className="text-sm font-medium text-black mb-1">Aucun étudiant n'a encore passé l'un de vos examens</p>
+            <p className="text-xs text-[#666666]">
+              La liste apparaîtra dès qu'un étudiant aura participé à un examen en cours ou terminé.
+            </p>
           </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#E5E5E5] bg-[#FAFAFA]">
+                    <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Étudiant</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider hidden md:table-cell">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider hidden lg:table-cell">Filière</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Statut</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E5E5E5]">
+                  {filtered.map((student) => (
+                    <tr key={student.id} className="hover:bg-[#FAFAFA] transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-white">{student.name.split(" ").map(n => n[0]).join("")}</span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-black block">{student.name}</span>
+                            {student.studentId && <span className="text-xs text-[#888888]">{student.studentId}</span>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 hidden md:table-cell">
+                        <span className="text-sm text-[#666666]">{student.email}</span>
+                      </td>
+                      <td className="px-6 py-4 hidden lg:table-cell">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm text-black">{student.department}</span>
+                          <span className="text-xs text-[#888888]">{student.year}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <DashboardStatusBadge
+                            status={student.status as "active" | "inactive"}
+                          />
+                          <span className="text-xs text-[#888888]">{student.lastActive}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => { setSelectedStudent(student); setShowDetails(true); }}
+                            className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors"
+                            title="Voir les détails"
+                            aria-label={`Voir les détails de ${student.name}`}
+                          >
+                            <Eye className="w-4 h-4 text-[#666666]" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {filtered.length === 0 && (
+              <div className="px-6 py-10 text-center">
+                <Users className="w-8 h-8 text-[#CCCCCC] mx-auto mb-2" aria-hidden="true" />
+                <p className="text-sm font-medium text-black mb-1">Aucun étudiant ne correspond aux filtres</p>
+                <p className="text-xs text-[#666666] mb-3">Essayez d'élargir votre recherche.</p>
+                {filtersActive && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="text-xs font-medium text-black underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-black rounded"
+                  >
+                    Réinitialiser les filtres
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -2911,7 +3020,7 @@ export function AdminDashboard() {
           />
         )}
         {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} exams={exams} setExams={setExams} onMonitor={(exam) => setLiveExamId(exam.id)} />}
-        {activeTab === "students" && <StudentsTab />}
+        {activeTab === "students" && <StudentsTab exams={exams} />}
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "settings" && <SettingsTab onGoToProfile={() => navigate("/admin/profile")} />}
       </main>
