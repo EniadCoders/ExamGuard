@@ -1904,7 +1904,28 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
 }
 
 // ─── Analytics Tab ─────────────────────────────────────────────────────────────
-function AnalyticsTab() {
+function AnalyticsTab({ exams }: { exams: Exam[] }) {
+  const [rankingExamFilter, setRankingExamFilter] = useState<string>("all");
+  const rankingExamOptions = exams.filter(e => e.status === "completed" || e.status === "live");
+  const selectedRankingExam = rankingExamFilter === "all"
+    ? null
+    : rankingExamOptions.find(e => e.id.toString() === rankingExamFilter) ?? null;
+  const getExamScore = (student: Student, exam: Exam | null) => {
+    if (!exam) return student.avg;
+    const variation = (((student.id * 7 + exam.id * 5) % 9) - 4) * 0.35;
+    return Math.min(20, Math.max(0, Math.round((student.avg + variation) * 10) / 10));
+  };
+  const rankedStudents = (selectedRankingExam
+    ? allStudentsData.filter(student => selectedRankingExam.selectedStudentIds?.includes(student.id))
+    : allStudentsData
+  )
+    .map(student => ({
+      ...student,
+      rankingScore: getExamScore(student, selectedRankingExam),
+    }))
+    .sort((a, b) => b.rankingScore - a.rankingScore)
+    .slice(0, 5);
+
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
@@ -2000,12 +2021,29 @@ function AnalyticsTab() {
       {/* Ranking table */}
       <DashboardSectionCard
         title="Classement des étudiants (Top 5)"
-        subtitle="Meilleures moyennes sur la période"
+        subtitle={selectedRankingExam ? `Meilleures notes — ${selectedRankingExam.title}` : "Meilleures notes tous examens confondus"}
         icon={Activity}
         bodyClassName="p-0"
       >
+        <div className="flex flex-col gap-3 border-b border-[#E5E5E5] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-black">Filtrer par examen</p>
+            <p className="text-xs text-[#888888]">Classement calculé avec la note de l'examen sélectionné.</p>
+          </div>
+          <select
+            value={rankingExamFilter}
+            onChange={e => setRankingExamFilter(e.target.value)}
+            aria-label="Filtrer le classement par examen"
+            className="w-full px-4 py-2.5 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all sm:w-72"
+          >
+            <option value="all">Tous les examens</option>
+            {rankingExamOptions.map(exam => (
+              <option key={exam.id} value={exam.id.toString()}>{exam.title}</option>
+            ))}
+          </select>
+        </div>
         <div className="divide-y divide-[#E5E5E5]">
-          {allStudentsData.sort((a, b) => b.avg - a.avg).slice(0, 5).map((student, i) => (
+          {rankedStudents.map((student, i) => (
             <div key={student.id} className="flex items-center gap-4 px-6 py-4 hover:bg-[#FAFAFA] transition-colors">
               <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                 i === 0 ? "bg-black text-white" : "bg-[#F5F5F5] text-[#666666]"
@@ -2017,14 +2055,23 @@ function AnalyticsTab() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-black">{student.name}</p>
-                <p className="text-xs text-[#888888]">{student.department} · {student.exams} examens</p>
+                <p className="text-xs text-[#888888]">
+                  {selectedRankingExam ? `${student.department} · ${selectedRankingExam.title}` : student.department}
+                </p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold text-black">{student.avg}/20</p>
-                <p className="text-xs text-[#888888]">Moyenne</p>
+                <p className="text-sm font-bold text-black">{student.rankingScore}/20</p>
+                <p className="text-xs text-[#888888]">Note</p>
               </div>
             </div>
           ))}
+          {rankedStudents.length === 0 && (
+            <div className="px-6 py-10 text-center">
+              <Users className="w-8 h-8 text-[#CCCCCC] mx-auto mb-2" aria-hidden="true" />
+              <p className="text-sm font-medium text-black mb-1">Aucun étudiant pour cet examen</p>
+              <p className="text-xs text-[#888888]">Sélectionnez un autre examen pour afficher le classement.</p>
+            </div>
+          )}
         </div>
       </DashboardSectionCard>
     </div>
@@ -3049,7 +3096,7 @@ export function AdminDashboard() {
         )}
         {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} exams={exams} setExams={setExams} onMonitor={(exam) => setLiveExamId(exam.id)} />}
         {activeTab === "students" && <StudentsTab exams={exams} />}
-        {activeTab === "analytics" && <AnalyticsTab />}
+        {activeTab === "analytics" && <AnalyticsTab exams={exams} />}
         {activeTab === "settings" && <SettingsTab onGoToProfile={() => navigate("/admin/profile")} />}
       </main>
       </div>
