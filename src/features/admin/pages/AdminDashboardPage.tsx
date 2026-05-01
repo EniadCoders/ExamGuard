@@ -601,7 +601,17 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
   const toggleStudent = (id: number) =>
     setSelectedStudents(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
+  const MIN_QUESTIONS = 5;
+  const MAX_QUESTIONS = 40;
+  const questionsCount = questions.length;
+  const atMaxQuestions = questionsCount >= MAX_QUESTIONS;
+  const questionsValid = questionsCount >= MIN_QUESTIONS && questionsCount <= MAX_QUESTIONS;
+  const mcqCount = questions.filter(q => q.type === "mcq").length;
+  const textCount = questions.filter(q => q.type === "text").length;
+  const codeCount = questions.filter(q => q.type === "code").length;
+
   const addQuestion = (type: DraftQuestion["type"]) => {
+    if (atMaxQuestions) return;
     const id = Date.now();
     if (type === "mcq") setQuestions(prev => [...prev, { id, type, text: "", points: 1, options: ["", ""], multiple: false, correct: [] }]);
     else if (type === "text") setQuestions(prev => [...prev, { id, type, text: "", points: 1 }]);
@@ -806,16 +816,36 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
       {step === 3 && (
         <div className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Ajouter une question</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-black">Ajouter une question</label>
+              <span className={`text-xs font-medium ${atMaxQuestions ? "text-red-600" : "text-[#666666]"}`}>
+                {questionsCount} / {MAX_QUESTIONS}
+              </span>
+            </div>
             <div className="grid grid-cols-3 gap-2">
-              <button onClick={() => addQuestion("mcq")} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#E5E5E5] hover:border-black text-sm font-medium text-black transition-colors">
+              <button
+                onClick={() => addQuestion("mcq")}
+                disabled={atMaxQuestions}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#E5E5E5] hover:border-black text-sm font-medium text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-[#E5E5E5]"
+              >
                 <Plus className="w-4 h-4" /> QCM
+                {mcqCount > 0 && <span className="text-xs text-[#666666]">({mcqCount})</span>}
               </button>
-              <button onClick={() => addQuestion("text")} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#E5E5E5] hover:border-black text-sm font-medium text-black transition-colors">
+              <button
+                onClick={() => addQuestion("text")}
+                disabled={atMaxQuestions}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#E5E5E5] hover:border-black text-sm font-medium text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-[#E5E5E5]"
+              >
                 <Plus className="w-4 h-4" /> Texte
+                {textCount > 0 && <span className="text-xs text-[#666666]">({textCount})</span>}
               </button>
-              <button onClick={() => addQuestion("code")} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#E5E5E5] hover:border-black text-sm font-medium text-black transition-colors">
+              <button
+                onClick={() => addQuestion("code")}
+                disabled={atMaxQuestions}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-[#E5E5E5] hover:border-black text-sm font-medium text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-[#E5E5E5]"
+              >
                 <Plus className="w-4 h-4" /> Code
+                {codeCount > 0 && <span className="text-xs text-[#666666]">({codeCount})</span>}
               </button>
             </div>
           </div>
@@ -978,14 +1008,43 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
             ))}
           </div>
 
-          <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
-            <p className="text-xs text-[#666666] flex items-center gap-2">
-              <Info className="w-3.5 h-3.5 text-[#888888] flex-shrink-0" />
-              {questions.length === 0
-                ? "Vous pouvez enregistrer comme brouillon et créer les questions plus tard."
-                : `${questions.length} question(s) — total : ${questions.reduce((s, q) => s + q.points, 0)} pts.`}
-            </p>
-          </div>
+          {questionsCount === 0 ? (
+            <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
+              <p className="text-xs text-[#666666] flex items-center gap-2">
+                <Info className="w-3.5 h-3.5 text-[#888888] flex-shrink-0" />
+                Ajoutez entre {MIN_QUESTIONS} et {MAX_QUESTIONS} questions, ou enregistrez comme brouillon pour les créer plus tard.
+              </p>
+            </div>
+          ) : questionsCount < MIN_QUESTIONS ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-center gap-2.5 rounded-lg border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5"
+            >
+              <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" aria-hidden="true" />
+              <p className="text-xs leading-relaxed text-amber-800">
+                <span className="font-medium text-amber-900">
+                  {MIN_QUESTIONS - questionsCount} question{MIN_QUESTIONS - questionsCount > 1 ? "s" : ""} restante{MIN_QUESTIONS - questionsCount > 1 ? "s" : ""}
+                </span>
+                {" "}pour atteindre le minimum de {MIN_QUESTIONS}.
+              </p>
+            </div>
+          ) : atMaxQuestions ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p className="text-xs text-amber-800 flex items-center gap-2">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                Limite maximale atteinte ({MAX_QUESTIONS} questions). Supprimez-en pour en ajouter d'autres.
+                <span className="ml-auto text-amber-900 font-medium">Total : {questions.reduce((s, q) => s + q.points, 0)} pts</span>
+              </p>
+            </div>
+          ) : (
+            <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4">
+              <p className="text-xs text-[#666666] flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                {questionsCount} question{questionsCount > 1 ? "s" : ""} — total : {questions.reduce((s, q) => s + q.points, 0)} pts.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -1026,7 +1085,8 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
           {step === 3 && (
             <button
               onClick={schedule}
-              disabled={selectedStudents.length === 0 && !importedFileName}
+              disabled={(selectedStudents.length === 0 && !importedFileName) || !questionsValid}
+              title={!questionsValid ? `Le nombre de questions doit être compris entre ${MIN_QUESTIONS} et ${MAX_QUESTIONS}.` : undefined}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
             >
               {initialExam?.status === "scheduled" ? (
