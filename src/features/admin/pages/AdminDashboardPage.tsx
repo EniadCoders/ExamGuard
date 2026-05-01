@@ -1819,15 +1819,31 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
                     <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider hidden md:table-cell">Email</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider hidden lg:table-cell">Filière</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Statut</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-[#666666] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E5E5E5]">
                   {filtered.map((student) => {
                     const active = isStudentActive(student);
+                    const openStudentDetails = () => {
+                      setSelectedStudent(student);
+                      setShowDetails(true);
+                    };
 
                     return (
-                    <tr key={student.id} className="hover:bg-[#FAFAFA] transition-colors">
+                    <tr
+                      key={student.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={openStudentDetails}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openStudentDetails();
+                        }
+                      }}
+                      aria-label={`Voir les détails de ${student.name}`}
+                      className="cursor-pointer hover:bg-[#FAFAFA] focus:bg-[#FAFAFA] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black transition-colors"
+                    >
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
@@ -1856,18 +1872,6 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
                           <span className="text-xs text-[#888888]">
                             {liveExamStudentIds.has(student.id) ? "Examen en cours" : student.lastActive}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => { setSelectedStudent(student); setShowDetails(true); }}
-                            className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors"
-                            title="Voir les détails"
-                            aria-label={`Voir les détails de ${student.name}`}
-                          >
-                            <Eye className="w-4 h-4 text-[#666666]" />
-                          </button>
                         </div>
                       </td>
                     </tr>
