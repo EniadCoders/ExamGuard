@@ -1198,24 +1198,26 @@ export function StudentDashboard() {
                               <Shield className="w-5 h-5 text-black" />
                             </div>
                             <div>
-                              <p className="font-semibold text-black">Authentification à deux facteurs</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-black">Authentification à deux facteurs</p>
+                                {is2FAEnabled && (
+                                  <span className="px-2 py-0.5 bg-[#2ECC71]/10 text-[#2ECC71] text-[10px] uppercase tracking-wider font-bold rounded-full">
+                                    Activé
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-sm text-[#666666]">Ajouter une couche de sécurité supplémentaire</p>
                             </div>
                           </div>
                           <button 
                             onClick={() => setShow2FAPopup(true)}
-                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all group ${
+                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${
                               is2FAEnabled 
-                                ? "bg-[#2ECC71]/10 text-[#2ECC71] border border-[#2ECC71]/20 hover:bg-[#FF5555] hover:text-white hover:border-[#FF5555]" 
+                                ? "bg-white border border-[#E5E5E5] text-black hover:bg-[#FF5555] hover:text-white hover:border-[#FF5555]" 
                                 : "bg-[#00809D] text-white hover:bg-[#1C1C1C]"
                             }`}
                           >
-                            {is2FAEnabled ? (
-                              <>
-                                <span className="group-hover:hidden">Activé</span>
-                                <span className="hidden group-hover:inline">Désactiver</span>
-                              </>
-                            ) : "Activer"}
+                            {is2FAEnabled ? "Désactiver" : "Activer"}
                           </button>
                         </div>
                       </div>
