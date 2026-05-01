@@ -1203,14 +1203,19 @@ export function StudentDashboard() {
                             </div>
                           </div>
                           <button 
-                            onClick={() => !is2FAEnabled && setShow2FAPopup(true)}
-                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${
+                            onClick={() => setShow2FAPopup(true)}
+                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all group ${
                               is2FAEnabled 
-                                ? "bg-[#2ECC71]/10 text-[#2ECC71] border border-[#2ECC71]/20 cursor-default" 
+                                ? "bg-[#2ECC71]/10 text-[#2ECC71] border border-[#2ECC71]/20 hover:bg-[#FF5555] hover:text-white hover:border-[#FF5555]" 
                                 : "bg-[#00809D] text-white hover:bg-[#1C1C1C]"
                             }`}
                           >
-                            {is2FAEnabled ? "Activé" : "Activer"}
+                            {is2FAEnabled ? (
+                              <>
+                                <span className="group-hover:hidden">Activé</span>
+                                <span className="hidden group-hover:inline">Désactiver</span>
+                              </>
+                            ) : "Activer"}
                           </button>
                         </div>
                       </div>
@@ -1282,10 +1287,12 @@ export function StudentDashboard() {
                 <Shield className="w-7 h-7 text-[#00809D]" />
               </div>
               <h2 className="text-xl font-serif text-black mb-2">
-                Activer l'A2F ?
+                {is2FAEnabled ? "Désactiver l'A2F ?" : "Activer l'A2F ?"}
               </h2>
               <p className="text-sm text-[#666666] mb-6">
-                L'authentification à deux facteurs renforcera la sécurité de votre compte. Souhaitez-vous vraiment l'activer ?
+                {is2FAEnabled 
+                  ? "Êtes-vous sûr de vouloir désactiver l'authentification à deux facteurs ? La sécurité de votre compte sera réduite." 
+                  : "L'authentification à deux facteurs renforcera la sécurité de votre compte. Souhaitez-vous vraiment l'activer ?"}
               </p>
               <div className="flex w-full gap-3">
                 <button
@@ -1296,10 +1303,12 @@ export function StudentDashboard() {
                 </button>
                 <button
                   onClick={() => {
-                    setIs2FAEnabled(true);
+                    setIs2FAEnabled(!is2FAEnabled);
                     setShow2FAPopup(false);
                   }}
-                  className="flex-1 px-4 py-2.5 bg-[#00809D] text-white font-bold text-sm rounded-xl hover:bg-[#1C1C1C] transition-all"
+                  className={`flex-1 px-4 py-2.5 text-white font-bold text-sm rounded-xl transition-all ${
+                    is2FAEnabled ? "bg-[#FF5555] hover:bg-[#CC4444]" : "bg-[#00809D] hover:bg-[#1C1C1C]"
+                  }`}
                 >
                   Confirmer
                 </button>
