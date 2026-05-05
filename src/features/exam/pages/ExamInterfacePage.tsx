@@ -52,6 +52,7 @@ export function ExamInterface() {
   const [showSaved, setShowSaved] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showReclamation, setShowReclamation] = useState(false);
+  const [codeExpanded, setCodeExpanded] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isFullscreen, setIsFullscreen] = useState(true);
@@ -323,7 +324,7 @@ export function ExamInterface() {
         {/* Main layout */}
         <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center justify-center gap-5 px-4 py-5 sm:px-6 sm:py-8 sm:gap-6">
           {/* Left navigation rail */}
-          <aside className="hidden xl:flex flex-col gap-3 w-64 flex-shrink-0">
+          <aside className={`xl:flex flex-col gap-3 w-64 flex-shrink-0 transition-all duration-300 ${codeExpanded ? "hidden" : "hidden xl:flex"}`}>
             <div className="bg-white border border-[#E5E5E5] rounded-2xl p-5 sticky top-[80px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm text-[#666666] font-semibold">Questions</span>
@@ -560,6 +561,7 @@ export function ExamInterface() {
                       starterCode={question.starterCode}
                       value={codeAns}
                       onChange={setAnswer}
+                      onExpandChange={setCodeExpanded}
                     />
                   </div>
                 );
@@ -615,7 +617,7 @@ export function ExamInterface() {
           </div>
 
           {/* Right panel: proctoring */}
-          <aside className="hidden lg:flex flex-col gap-3 w-60 flex-shrink-0">
+          <aside className={`lg:flex flex-col gap-3 w-60 flex-shrink-0 transition-all duration-300 ${codeExpanded ? "hidden" : "hidden lg:flex"}`}>
             <div className="bg-white border border-[#E5E5E5] rounded-2xl p-5 sticky top-[80px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               <h3 className="text-sm text-[#666666] font-semibold mb-4 flex items-center gap-2">
                 <Shield className="w-3.5 h-3.5 text-black" />
