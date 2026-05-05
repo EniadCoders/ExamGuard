@@ -7,6 +7,7 @@ import { StudentDashboard } from "@/features/student/pages/StudentDashboardPage"
 import { ExamInterface } from "@/features/exam/pages/ExamInterfacePage";
 import { TeacherDashboard } from "@/features/teacher/pages/TeacherDashboardPage";
 import { TeacherProfilePage } from "@/features/teacher/pages/TeacherProfilePage";
+import { SuperAdminPage } from "@/features/superadmin/pages/SuperAdminPage";
 
 export const router = createBrowserRouter([
   {
@@ -40,5 +41,9 @@ export const router = createBrowserRouter([
   {
     path: "/teacher/profile",
     Component: TeacherProfilePage,
+  },
+  {
+    path: "/superadmin",
+    Component: SuperAdminPage,
   },
 ]);
