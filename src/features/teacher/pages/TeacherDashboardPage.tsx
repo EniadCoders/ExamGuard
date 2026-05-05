@@ -2944,7 +2944,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export function AdminDashboard() {
+export function TeacherDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [showCreateExam, setShowCreateExam] = useState(false);
@@ -3018,10 +3018,10 @@ export function AdminDashboard() {
       <header className="cyber-topbar sticky top-0 z-40 border-b border-[#E5E5E5] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-6 sm:py-0">
           <div className="flex items-center gap-6">
-            <Logo size="md" to="/admin" onClick={handleLogoClick} />
+            <Logo size="md" to="/teacher" onClick={handleLogoClick} />
             <div className="hidden sm:block w-px h-6 bg-[#E5E5E5]" />
             <div className="hidden sm:block">
-              <h1 className="text-base font-bold text-black">Dashboard Administrateur</h1>
+              <h1 className="text-base font-bold text-black">Dashboard Professeur</h1>
               <p className="text-xs text-[#666666]">ExamGuard Platform</p>
             </div>
           </div>
@@ -3032,12 +3032,12 @@ export function AdminDashboard() {
 
             {/* Profile — clickable → Teacher Profile Page */}
             <button
-              onClick={() => navigate("/admin/profile")}
+              onClick={() => navigate("/teacher/profile")}
               className="hidden sm:flex items-center gap-3 pl-3 border-l border-[#E5E5E5] hover:bg-[#F5F5F5] rounded-xl px-3 py-2 transition-colors group"
             >
               <div className="text-right">
                 <p className="text-sm font-medium text-black group-hover:underline">Prof. Dupont</p>
-                <p className="text-xs text-[#666666]">Administrateur</p>
+                <p className="text-xs text-[#666666]">Professeur</p>
               </div>
               <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-bold text-white">PD</span>
@@ -3096,7 +3096,7 @@ export function AdminDashboard() {
         {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} exams={exams} setExams={setExams} onMonitor={(exam) => setLiveExamId(exam.id)} />}
         {activeTab === "students" && <StudentsTab exams={exams} />}
         {activeTab === "analytics" && <AnalyticsTab exams={exams} />}
-        {activeTab === "settings" && <SettingsTab onGoToProfile={() => navigate("/admin/profile")} />}
+        {activeTab === "settings" && <SettingsTab onGoToProfile={() => navigate("/teacher/profile")} />}
       </main>
       </div>
     </div>

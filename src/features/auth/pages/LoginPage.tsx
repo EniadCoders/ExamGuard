@@ -17,7 +17,7 @@ import {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<"student" | "admin">("student");
+  const [role, setRole] = useState<"student" | "teacher">("student");
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +28,7 @@ export function LoginPage() {
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 800));
     setIsLoading(false);
-    navigate(role === "student" ? "/student" : "/admin");
+    navigate(role === "student" ? "/student" : "/teacher");
   };
 
   const handleGoogleLogin = () => {
@@ -106,14 +106,14 @@ export function LoginPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setRole("admin")}
+                onClick={() => setRole("teacher")}
                 className={`${roleButtonBaseClass} ${
-                  role === "admin"
+                  role === "teacher"
                     ? "cyber-button-primary"
                     : "text-[var(--cyber-muted-text)] hover:bg-[rgba(123,241,255,0.08)] hover:text-white"
                 }`}
               >
-                Admin
+                Professeur
               </button>
         </div>
 
@@ -185,7 +185,7 @@ export function LoginPage() {
                   <span>Se souvenir de cet appareil</span>
                 </label>
                 <span className="text-[clamp(0.58rem,0.95vh,0.72rem)] uppercase tracking-[0.16em] text-[var(--cyber-subtle-text)] md:tracking-[0.2em]">
-                  {role === "student" ? "Portail étudiant" : "Portail admin"}
+                  {role === "student" ? "Portail étudiant" : "Portail professeur"}
                 </span>
               </div>
 

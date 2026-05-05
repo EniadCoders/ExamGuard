@@ -5,7 +5,7 @@ import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
 import { StudentDashboard } from "@/features/student/pages/StudentDashboardPage";
 import { ExamInterface } from "@/features/exam/pages/ExamInterfacePage";
-import { AdminDashboard } from "@/features/admin/pages/AdminDashboardPage";
+import { TeacherDashboard } from "@/features/teacher/pages/TeacherDashboardPage";
 import { TeacherProfilePage } from "@/features/teacher/pages/TeacherProfilePage";
 
 export const router = createBrowserRouter([
@@ -34,11 +34,11 @@ export const router = createBrowserRouter([
     Component: ExamInterface,
   },
   {
-    path: "/admin",
-    Component: AdminDashboard,
+    path: "/teacher",
+    Component: TeacherDashboard,
   },
   {
-    path: "/admin/profile",
+    path: "/teacher/profile",
     Component: TeacherProfilePage,
   },
 ]);
