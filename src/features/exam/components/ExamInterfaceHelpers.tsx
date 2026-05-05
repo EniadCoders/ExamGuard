@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
   AlertTriangle,
@@ -5,6 +6,8 @@ import {
   Check,
   CheckCircle2,
   Code2,
+  MessageSquareWarning,
+  Send,
   Shield,
   X,
   XCircle,
@@ -244,6 +247,197 @@ export function ExamResultsView({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─────────────── Reclamation Modal ─────────────── */
+
+interface ReclamationModalProps {
+  onClose: () => void;
+  questionNumber?: number;
+}
+
+export function ReclamationModal({ onClose, questionNumber }: ReclamationModalProps) {
+  const [category, setCategory] = useState("question");
+  const [subject, setSubject] = useState(
+    questionNumber ? `Réclamation - Question ${questionNumber}` : ""
+  );
+  const [message, setMessage] = useState("");
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const categories = [
+    { value: "question", label: "Contenu de la question" },
+    { value: "technique", label: "Problème technique" },
+    { value: "temps", label: "Temps insuffisant" },
+    { value: "autre", label: "Autre" },
+  ];
+
+  const canSend = subject.trim().length > 0 && message.trim().length > 0;
+
+  const handleSend = () => {
+    if (!canSend) return;
+    setSending(true);
+    // Simulate sending
+    setTimeout(() => {
+      setSending(false);
+      setSent(true);
+    }, 1200);
+  };
+
+  if (sent) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div
+          className="relative w-full max-w-sm rounded-2xl border-2 border-[#E5E5E5] bg-white p-6 shadow-[0_8px_32px_rgba(0,0,0,0.16)] text-center"
+          style={{ animation: "reclamation-pop 0.35s cubic-bezier(0.34,1.56,0.64,1)" }}
+        >
+          <div className="w-14 h-14 rounded-full bg-black flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-7 h-7 text-white" />
+          </div>
+          <h3 className="text-lg font-bold text-black mb-2">Réclamation envoyée</h3>
+          <p className="text-sm text-[#666666] mb-6">
+            Votre réclamation a été transmise au professeur. Vous recevrez une réponse après l'examen.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-3 rounded-xl bg-black hover:bg-[#222222] text-white transition-all text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.16)]"
+          >
+            Fermer
+          </button>
+        </div>
+        <style>{`
+          @keyframes reclamation-pop {
+            0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div
+        className="relative w-full max-w-md rounded-2xl border-2 border-[#E5E5E5] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.16)] overflow-hidden"
+        style={{ animation: "reclamation-pop 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[#E5E5E5] bg-[#FAFAFA] px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-black flex items-center justify-center">
+              <MessageSquareWarning className="w-4.5 h-4.5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-black">Réclamation</h3>
+              <p className="text-xs text-[#888888]">Envoyer au professeur</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-[#EAEAEA] transition-colors"
+          >
+            <X className="w-4 h-4 text-[#666666]" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 space-y-4">
+          {/* Category */}
+          <div>
+            <label className="block text-xs font-semibold text-[#666666] mb-2">Catégorie</label>
+            <div className="grid grid-cols-2 gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() => setCategory(cat.value)}
+                  className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${
+                    category === cat.value
+                      ? "border-black bg-black text-white"
+                      : "border-[#E5E5E5] bg-white text-[#666666] hover:border-[#CCCCCC] hover:text-black"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Subject */}
+          <div>
+            <label className="block text-xs font-semibold text-[#666666] mb-2">Sujet</label>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Ex: Erreur dans l'énoncé de la question 3"
+              className="w-full px-4 py-2.5 bg-white border-2 border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#AAAAAA] focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all"
+            />
+          </div>
+
+          {/* Message */}
+          <div>
+            <label className="block text-xs font-semibold text-[#666666] mb-2">Message</label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Décrivez votre réclamation en détail..."
+              rows={4}
+              className="w-full px-4 py-3 bg-white border-2 border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#AAAAAA] focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all resize-none leading-relaxed"
+            />
+            <p className="text-xs text-[#AAAAAA] mt-1.5">
+              {message.length}/500 caractères
+            </p>
+          </div>
+
+          {/* Info */}
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-[#F5F5F5] border border-[#E5E5E5]">
+            <AlertTriangle className="w-3.5 h-3.5 text-[#888888] mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-[#666666] leading-relaxed">
+              La réclamation sera envoyée au professeur responsable de cet examen.
+              Vous recevrez une réponse après la fin de l'épreuve.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 border-t border-[#E5E5E5] bg-[#FAFAFA] px-5 py-4">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl border-2 border-[#E5E5E5] text-[#666666] hover:border-black hover:text-black transition-all text-sm font-medium"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={!canSend || sending}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] ${
+              canSend && !sending
+                ? "bg-black hover:bg-[#222222] text-white"
+                : "bg-[#CCCCCC] text-white cursor-not-allowed"
+            }`}
+          >
+            {sending ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Envoi...
+              </>
+            ) : (
+              <>
+                <Send className="w-3.5 h-3.5" />
+                Envoyer
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+      <style>{`
+        @keyframes reclamation-pop {
+          0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   Monitor,
   CheckCircle2,
   Info,
+  MessageSquareWarning,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
@@ -35,6 +36,7 @@ import {
   FraudWarningBanner as WarningBanner,
   QuestionTypeIcon as QTypeIcon,
   SubmitExamModal as SubmitModal,
+  ReclamationModal,
 } from "@/features/exam/components/ExamInterfaceHelpers";
 
 export function ExamInterface() {
@@ -49,6 +51,7 @@ export function ExamInterface() {
   const [wordCounts, setWordCounts] = useState<Record<number, number>>({});
   const [showSaved, setShowSaved] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showReclamation, setShowReclamation] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isFullscreen, setIsFullscreen] = useState(true);
@@ -230,6 +233,13 @@ export function ExamInterface() {
         />
       )}
 
+      {showReclamation && (
+        <ReclamationModal
+          onClose={() => setShowReclamation(false)}
+          questionNumber={current + 1}
+        />
+      )}
+
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Warning banner */}
         {showWarning && (
@@ -298,6 +308,14 @@ export function ExamInterface() {
                 <Lock className="w-3.5 h-3.5 text-black" />
                 Mode sécurisé
               </div>
+              <button
+                onClick={() => setShowReclamation(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E5E5] bg-white text-xs text-[#666666] font-medium transition-all hover:border-black hover:text-black hover:bg-[#F5F5F5]"
+                title="Envoyer une réclamation"
+              >
+                <MessageSquareWarning className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Réclamation</span>
+              </button>
             </div>
           </div>
         </header>
