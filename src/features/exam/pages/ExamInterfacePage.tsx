@@ -321,7 +321,7 @@ export function ExamInterface() {
         </header>
 
         {/* Main layout */}
-        <div className="mx-auto flex w-full max-w-[1400px] flex-1 gap-4 px-3 py-4 sm:px-4 sm:py-6 sm:gap-5">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-1 items-center justify-center gap-4 px-3 py-4 sm:px-4 sm:py-6 sm:gap-5">
           {/* Left navigation rail */}
           <aside className="hidden xl:flex flex-col gap-3 w-56 flex-shrink-0">
             <div className="bg-white border border-[#E5E5E5] rounded-2xl p-4 sticky top-[80px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
