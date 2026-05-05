@@ -321,18 +321,18 @@ export function ExamInterface() {
         </header>
 
         {/* Main layout */}
-        <div className="mx-auto flex w-full max-w-[1400px] flex-1 items-center justify-center gap-4 px-3 py-4 sm:px-4 sm:py-6 sm:gap-5">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-1 items-center justify-center gap-5 px-4 py-5 sm:px-6 sm:py-8 sm:gap-6">
           {/* Left navigation rail */}
-          <aside className="hidden xl:flex flex-col gap-3 w-56 flex-shrink-0">
-            <div className="bg-white border border-[#E5E5E5] rounded-2xl p-4 sticky top-[80px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-[#666666] font-semibold">Questions</span>
-                <span className="text-xs text-[#888888]">
+          <aside className="hidden xl:flex flex-col gap-3 w-64 flex-shrink-0">
+            <div className="bg-white border border-[#E5E5E5] rounded-2xl p-5 sticky top-[80px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm text-[#666666] font-semibold">Questions</span>
+                <span className="text-sm text-[#888888]">
                   {answeredCount}/{TOTAL}
                 </span>
               </div>
 
-              <div className="grid grid-cols-4 gap-2.5 mb-4 p-1 -m-1 overflow-visible">
+              <div className="grid grid-cols-4 gap-3 mb-5 p-1 -m-1 overflow-visible">
                 {examQuestions.map((q, idx) => {
                   const active = idx === current;
                   const answered = isAnswered(idx);
@@ -342,7 +342,7 @@ export function ExamInterface() {
                       <button
                         onClick={() => setCurrent(idx)}
                         title={`Q${idx + 1} - ${TYPE_LABELS[q.type]}`}
-                        className={`w-full h-full aspect-square rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
+                        className={`w-full h-full aspect-square rounded-lg text-sm font-bold transition-all flex items-center justify-center ${
                           active
                             ? "ring-2 ring-[#00BCD4] ring-offset-1 bg-black text-white shadow-md"
                             : answered
@@ -364,7 +364,7 @@ export function ExamInterface() {
               </div>
 
               {/* Legend */}
-              <div className="space-y-1.5 text-xs font-medium text-[#666666] pb-4 border-b border-[#E5E5E5]">
+              <div className="space-y-2 text-sm font-medium text-[#666666] pb-4 border-b border-[#E5E5E5]">
                 {[
                   { color: "bg-[rgba(255,255,255,0.08)] border border-white", label: "Répondue", count: answeredCount },
                   { color: "bg-[#F5F5F5] border border-[#E5E5E5]", label: "Non répondue", count: TOTAL - answeredCount },
@@ -378,7 +378,7 @@ export function ExamInterface() {
               </div>
 
               {/* Type legend */}
-              <div className="mt-3 space-y-1.5 text-xs text-[#666666]">
+              <div className="mt-4 space-y-2 text-sm text-[#666666]">
                 {(["mcq", "text", "code"] as const).map((type) => (
                   <div key={type} className="flex items-center gap-2">
                     <QTypeIcon type={type} className="w-3 h-3 text-black" />
@@ -397,11 +397,11 @@ export function ExamInterface() {
           </aside>
 
           {/* Center: Question */}
-          <div className="flex-1 flex flex-col gap-4 min-w-0">
+          <div className="flex-1 flex flex-col gap-5 min-w-0">
             {/* Question card */}
             <div className="bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               {/* Card header */}
-              <div className="flex flex-col gap-3 border-b border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-3 border-b border-[#E5E5E5] bg-[#FAFAFA] px-5 py-5 sm:px-7 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#E5E5E5] bg-white text-xs font-medium text-black">
                     <QTypeIcon type={question.type} className="w-3 h-3" />
@@ -435,13 +435,13 @@ export function ExamInterface() {
               </div>
 
               {/* Question text */}
-              <div className="px-4 py-5 sm:px-6">
-                <p className="text-sm font-medium leading-relaxed text-black sm:text-base">{question.text}</p>
+              <div className="px-5 py-6 sm:px-7">
+                <p className="text-base font-medium leading-relaxed text-black sm:text-lg">{question.text}</p>
               </div>
 
               {/* MCQ Answer */}
               {question.type === "mcq" && (
-                <div className="space-y-2.5 px-4 pb-5 sm:px-6 sm:pb-6">
+                <div className="space-y-3 px-5 pb-6 sm:px-7 sm:pb-7">
                   {question.options.map((opt) => {
                     const sel = Array.isArray(answers[current]) ? answers[current].includes(opt.id) : answers[current] === opt.id;
                     return (
@@ -615,13 +615,13 @@ export function ExamInterface() {
           </div>
 
           {/* Right panel: proctoring */}
-          <aside className="hidden lg:flex flex-col gap-3 w-52 flex-shrink-0">
-            <div className="bg-white border border-[#E5E5E5] rounded-2xl p-4 sticky top-[80px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-              <h3 className="text-xs text-[#666666] font-semibold mb-3 flex items-center gap-2">
+          <aside className="hidden lg:flex flex-col gap-3 w-60 flex-shrink-0">
+            <div className="bg-white border border-[#E5E5E5] rounded-2xl p-5 sticky top-[80px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+              <h3 className="text-sm text-[#666666] font-semibold mb-4 flex items-center gap-2">
                 <Shield className="w-3.5 h-3.5 text-black" />
                 Surveillance
               </h3>
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {[
                   { icon: Monitor, label: "Plein écran", ok: true },
                   { icon: Eye, label: "Focus fenêtre", ok: false },
@@ -648,9 +648,9 @@ export function ExamInterface() {
                 ))}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-[#E5E5E5]">
-                <p className="text-xs text-[#666666] mb-2 font-semibold">Progression</p>
-                <div className="w-full h-2 bg-[#E5E5E5] rounded-full overflow-hidden mb-1">
+              <div className="mt-5 pt-5 border-t border-[#E5E5E5]">
+                <p className="text-sm text-[#666666] mb-2 font-semibold">Progression</p>
+                <div className="w-full h-2.5 bg-[#E5E5E5] rounded-full overflow-hidden mb-1.5">
                   <div
                     className="h-full bg-black rounded-full transition-all"
                     style={{ width: `${(answeredCount / TOTAL) * 100}%` }}
@@ -661,8 +661,8 @@ export function ExamInterface() {
                 </p>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-[#E5E5E5]">
-                <p className="text-xs text-[#666666] mb-2 font-semibold">Répartition</p>
+              <div className="mt-5 pt-5 border-t border-[#E5E5E5]">
+                <p className="text-sm text-[#666666] mb-2 font-semibold">Répartition</p>
                 <div className="space-y-1">
                   {(["mcq", "text", "code"] as const).map((type) => {
                     const typeQs = examQuestions.filter((q) => q.type === type);
@@ -686,7 +686,7 @@ export function ExamInterface() {
 
               <button
                 onClick={() => setShowSubmit(true)}
-                className="w-full mt-5 py-2.5 bg-black hover:bg-[#222222] rounded-xl text-xs font-semibold text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                className="w-full mt-6 py-3 bg-black hover:bg-[#222222] rounded-xl text-sm font-semibold text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
               >
                 Soumettre
               </button>
