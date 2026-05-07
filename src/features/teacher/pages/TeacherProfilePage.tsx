@@ -17,6 +17,7 @@ import {
   Trash2,
   Lock,
   X as XIcon,
+  Check,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
@@ -323,8 +324,8 @@ export function TeacherProfilePage() {
                       </div>
                     )}
 
-                    <div className="bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl p-4 space-y-2">
-                      <p className="text-xs font-medium text-black">Le mot de passe doit contenir :</p>
+                    <div className="bg-[rgba(11,27,38,0.55)] border border-[rgba(117,195,214,0.18)] rounded-xl p-4 space-y-2">
+                      <p className="text-xs font-medium text-[var(--cyber-text)]">Le mot de passe doit contenir :</p>
                       {[
                         { check: newPwd.length >= 8, text: "Au moins 8 caractères" },
                         { check: /[A-Z]/.test(newPwd), text: "Au moins une majuscule" },
@@ -332,12 +333,14 @@ export function TeacherProfilePage() {
                         { check: /[^a-zA-Z0-9]/.test(newPwd), text: "Au moins un caractère spécial" },
                       ].map(({ check, text }) => (
                         <div key={text} className="flex items-center gap-2">
-                          <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            check ? "bg-black" : "bg-[#E5E5E5]"
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                            check
+                              ? "bg-[#22C55E] border border-[#22C55E] shadow-[0_0_8px_rgba(34,197,94,0.45)]"
+                              : "bg-transparent border border-[rgba(123,241,255,0.4)]"
                           }`}>
-                            {check && <span className="w-1.5 h-1.5 bg-white rounded-full block" />}
+                            {check && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
                           </div>
-                          <p className={`text-xs ${check ? "text-black" : "text-[#888888]"}`}>{text}</p>
+                          <p className={`text-xs transition-colors ${check ? "text-[#22C55E] font-medium" : "text-[var(--cyber-muted-text)]"}`}>{text}</p>
                         </div>
                       ))}
                     </div>

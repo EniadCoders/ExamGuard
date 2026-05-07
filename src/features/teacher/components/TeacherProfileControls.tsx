@@ -145,8 +145,8 @@ export function PasswordStrengthMeter({
     : /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^a-zA-Z0-9]/.test(password) ? 4
     : 3;
 
-  const labels = ["", "Faible", "Moyen", "Fort", "Tres fort"];
-  const colors = ["", "#CCCCCC", "#888888", "#444444", "#000000"];
+  const labels = ["", "Faible", "Moyen", "Fort", "Très fort"];
+  const colors = ["", "#EF4444", "#F59E0B", "#3DD8E9", "#22C55E"];
 
   if (password.length === 0) return null;
 
@@ -157,12 +157,12 @@ export function PasswordStrengthMeter({
           <div
             key={index}
             className="h-1.5 flex-1 rounded-full transition-all duration-300"
-            style={{ background: index <= strength ? colors[strength] : "#E5E5E5" }}
+            style={{ background: index <= strength ? colors[strength] : "rgba(229,229,229,0.4)" }}
           />
         ))}
       </div>
-      <p className="text-xs" style={{ color: colors[strength] }}>
-        Securite : {labels[strength]}
+      <p className="text-xs font-medium" style={{ color: colors[strength] }}>
+        Sécurité : {labels[strength]}
       </p>
     </div>
   );

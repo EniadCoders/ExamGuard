@@ -12,6 +12,7 @@ import {
   authSecondaryButtonClass,
   authTextLinkClass,
 } from "@/features/auth/components/AuthPageLayout";
+import { PasswordStrengthMeter } from "@/features/teacher/components/TeacherProfileControls";
 
 type SignUpStep = "form" | "success";
 type AccountType = "student" | "teacher";
@@ -310,6 +311,7 @@ export function SignUpPage() {
                         )}
                       </button>
                     </div>
+                    <PasswordStrengthMeter password={password} />
                   </div>
 
                   <div>
