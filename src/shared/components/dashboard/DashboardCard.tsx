@@ -13,6 +13,7 @@ type StatusKind =
   | "upcoming"
   | "scheduled"
   | "draft"
+  | "archived"
   | "medium"
   | "high"
   | "alert";
@@ -48,6 +49,7 @@ const statusMap: Record<StatusKind, { label: string; tone: BadgeTone }> = {
   upcoming: { label: "À venir", tone: "neutral" },
   scheduled: { label: "Planifié", tone: "info" },
   draft: { label: "Brouillon", tone: "neutral" },
+  archived: { label: "Archivé", tone: "neutral" },
   medium: { label: "Moyenne", tone: "warning" },
   high: { label: "Élevée", tone: "danger" },
   alert: { label: "Alerte", tone: "danger" },

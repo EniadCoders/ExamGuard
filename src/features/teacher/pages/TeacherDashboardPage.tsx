@@ -42,6 +42,9 @@ import {
   StopCircle,
   ArrowLeft,
   Wifi,
+  Archive,
+  ArchiveRestore,
+  Copy,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { NotificationPanel } from "@/shared/components/NotificationPanel";
@@ -113,7 +116,7 @@ interface Exam {
   duration: number;
   date: string;
   students: number;
-  status: "scheduled" | "draft" | "completed" | "live";
+  status: "scheduled" | "draft" | "completed" | "live" | "archived";
   questions: number;
   description?: string;
   passingScore?: number;
@@ -121,6 +124,7 @@ interface Exam {
   importedFileName?: string;
   draftQuestions?: DraftQuestion[];
   launchMode?: "auto" | "manual";
+  previousStatus?: "scheduled" | "draft" | "completed";
 }
 
 interface Student {
@@ -334,7 +338,11 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
             : exam.status === "completed" ? "bg-[#F5F5F5] text-black border border-[#CCCCCC]"
             : "bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]"
           }`}>
-            {exam.status === "live" ? "En cours" : exam.status === "scheduled" ? "Planifié" : exam.status === "completed" ? "Terminé" : "Brouillon"}
+            {exam.status === "live" ? "En cours"
+              : exam.status === "scheduled" ? "Planifié"
+              : exam.status === "completed" ? "Terminé"
+              : exam.status === "archived" ? "Archivé"
+              : "Brouillon"}
           </span>
         </div>
 
@@ -579,19 +587,30 @@ function isoToFrDate(iso: string): string {
 }
 
 // ─── Create Exam Modal ─────────────────────────────────────────────────────────
-function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => void; onCreated?: (exam: Exam) => void; initialExam?: Exam }) {
+function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { onClose: () => void; onCreated?: (exam: Exam) => void; initialExam?: Exam; mode?: "edit" | "duplicate" }) {
+  const isDuplicate = mode === "duplicate" && !!initialExam;
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [examTitle, setExamTitle] = useState(initialExam?.title ?? "");
+  const [examTitle, setExamTitle] = useState(
+    isDuplicate ? `Copie de ${initialExam!.title}` : (initialExam?.title ?? "")
+  );
   const [examSubject, setExamSubject] = useState(initialExam?.subject ?? "");
   const [examDuration, setExamDuration] = useState(initialExam?.duration ?? 90);
-  const [examDate, setExamDate] = useState(initialExam ? frDateToIso(initialExam.date) : "");
+  const [examDate, setExamDate] = useState(
+    isDuplicate ? "" : (initialExam ? frDateToIso(initialExam.date) : "")
+  );
   const [examDesc, setExamDesc] = useState(initialExam?.description ?? "");
   const [passingScore, setPassingScore] = useState(initialExam?.passingScore ?? 12);
-  const [selectedStudents, setSelectedStudents] = useState<number[]>(initialExam?.selectedStudentIds ?? []);
+  const [selectedStudents, setSelectedStudents] = useState<number[]>(
+    isDuplicate ? [] : (initialExam?.selectedStudentIds ?? [])
+  );
   const [launchMode, setLaunchMode] = useState<"auto" | "manual">(initialExam?.launchMode ?? "auto");
   const [studentSearch, setStudentSearch] = useState("");
-  const [importedFileName, setImportedFileName] = useState(initialExam?.importedFileName ?? "");
-  const [questions, setQuestions] = useState<DraftQuestion[]>(initialExam?.draftQuestions ?? []);
+  const [importedFileName, setImportedFileName] = useState(isDuplicate ? "" : (initialExam?.importedFileName ?? ""));
+  const [questions, setQuestions] = useState<DraftQuestion[]>(
+    isDuplicate
+      ? (initialExam!.draftQuestions ?? []).map(q => ({ ...q, id: Date.now() + Math.random() }))
+      : (initialExam?.draftQuestions ?? [])
+  );
 
   const step1Complete = examTitle.trim() !== "" && examSubject.trim() !== "" && examDuration > 0 && examDate !== "";
   const filteredStudents = allStudentsData.filter(s =>
@@ -635,7 +654,7 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
   const removeQuestion = (id: number) => setQuestions(prev => prev.filter(q => q.id !== id));
 
   const buildExam = (status: "draft" | "scheduled"): Exam => ({
-    id: initialExam?.id ?? Date.now(),
+    id: isDuplicate || !initialExam ? Date.now() : initialExam.id,
     title: examTitle.trim() || "Examen sans titre",
     subject: examSubject.trim() || "Non spécifié",
     duration: examDuration,
@@ -655,9 +674,11 @@ function CreateExamModal({ onClose, onCreated, initialExam }: { onClose: () => v
 
   return (
     <ModalBase title={
-      step === 1 ? `${initialExam ? "Éditer" : "Créer"} un examen — 1/3 Détails`
-      : step === 2 ? `${initialExam ? "Éditer" : "Créer"} un examen — 2/3 Étudiants`
-      : `${initialExam ? "Éditer" : "Créer"} un examen — 3/3 Questions`
+      (() => {
+        const verb = isDuplicate ? "Dupliquer" : initialExam ? "Éditer" : "Créer";
+        const part = step === 1 ? "1/3 Détails" : step === 2 ? "2/3 Étudiants" : "3/3 Questions";
+        return `${verb} un examen — ${part}`;
+      })()
     } onClose={onClose} wide>
       {step === 1 && (
         <div className="p-6 space-y-5">
@@ -1500,14 +1521,26 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
+  const [duplicatingExam, setDuplicatingExam] = useState<Exam | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
 
   const filtered = exams.filter(e => {
     const matchSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) || e.subject.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStatus = filterStatus === "all" || e.status === filterStatus;
+    const matchStatus = filterStatus === "all"
+      ? e.status !== "archived"
+      : e.status === filterStatus;
     return matchSearch && matchStatus;
   });
+
+  const archiveExam = (id: number) => setExams(prev => prev.map(e => {
+    if (e.id !== id || e.status === "archived" || e.status === "live") return e;
+    return { ...e, status: "archived", previousStatus: e.status as "scheduled" | "draft" | "completed" };
+  }));
+  const unarchiveExam = (id: number) => setExams(prev => prev.map(e => {
+    if (e.id !== id || e.status !== "archived") return e;
+    return { ...e, status: e.previousStatus ?? "completed", previousStatus: undefined };
+  }));
 
   return (
     <div className="space-y-6">
@@ -1523,6 +1556,14 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
           initialExam={editingExam}
           onClose={() => setShowEdit(false)}
           onCreated={(updated) => setExams(prev => prev.map(e => e.id === updated.id ? updated : e))}
+        />
+      )}
+      {duplicatingExam && (
+        <CreateExamModal
+          initialExam={duplicatingExam}
+          mode="duplicate"
+          onClose={() => setDuplicatingExam(null)}
+          onCreated={(created) => setExams(prev => [created, ...prev])}
         />
       )}
 
@@ -1551,6 +1592,7 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
             <option value="scheduled">Planifiés</option>
             <option value="draft">Brouillons</option>
             <option value="completed">Terminés</option>
+            <option value="archived">Archivés</option>
           </select>
           <button
             onClick={onCreateExam}
@@ -1582,7 +1624,7 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                       </span>
                     ) : (
                       <DashboardStatusBadge
-                        status={exam.status as "scheduled" | "completed" | "draft"}
+                        status={exam.status as "scheduled" | "completed" | "draft" | "archived"}
                       />
                     )}
                   </div>
@@ -1597,7 +1639,7 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                 <DashboardMetaItem icon={Hash}>{exam.questions} questions</DashboardMetaItem>
               </div>
               <div className="dashboard-divider mb-4" />
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {exam.status === "scheduled" && (
                   <button
                     onClick={() => {
@@ -1619,13 +1661,23 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                     Voir en direct
                   </button>
                 )}
-                {exam.status !== "completed" && exam.status !== "live" && (
+                {exam.status !== "completed" && exam.status !== "live" && exam.status !== "archived" && (
                   <button
                     onClick={() => { setEditingExam(exam); setShowEdit(true); }}
                     className="cyber-button-secondary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     Éditer
+                  </button>
+                )}
+                {exam.status !== "live" && (
+                  <button
+                    onClick={() => setDuplicatingExam(exam)}
+                    className="cyber-button-secondary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
+                    title="Créer un nouvel examen à partir de celui-ci"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    Dupliquer
                   </button>
                 )}
                 <button
@@ -1635,6 +1687,24 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                   <Eye className="w-3.5 h-3.5" />
                   Voir détails
                 </button>
+                {exam.status !== "live" && exam.status !== "archived" && (
+                  <button
+                    onClick={() => archiveExam(exam.id)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium border border-[rgba(117,195,214,0.22)] text-[var(--cyber-muted-text)] hover:text-[var(--cyber-text)] hover:border-[rgba(123,241,255,0.4)] transition-colors"
+                    title="Archiver l'examen"
+                  >
+                    <Archive className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {exam.status === "archived" && (
+                  <button
+                    onClick={() => unarchiveExam(exam.id)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium border border-[rgba(117,195,214,0.22)] text-[var(--cyber-muted-text)] hover:text-[var(--cyber-text)] hover:border-[rgba(123,241,255,0.4)] transition-colors"
+                    title="Désarchiver l'examen"
+                  >
+                    <ArchiveRestore className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </DashboardCard>
           ))}
