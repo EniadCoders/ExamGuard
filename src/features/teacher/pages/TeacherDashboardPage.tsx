@@ -9,7 +9,6 @@ import {
   Users,
   Plus,
   Calendar,
-  Eye,
   TrendingUp,
   Shield,
   Clock,
@@ -1612,8 +1611,26 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
         </DashboardCard>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filtered.map((exam) => (
-            <DashboardCard key={exam.id} interactive className="p-5 group">
+          {filtered.map((exam) => {
+            const handleCardOpen = () => {
+              if (exam.status === "live") onMonitor(exam);
+              else { setSelectedExam(exam); setShowDetails(true); }
+            };
+            return (
+            <DashboardCard
+              key={exam.id}
+              interactive
+              role="button"
+              tabIndex={0}
+              onClick={handleCardOpen}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleCardOpen();
+                }
+              }}
+              className="p-5 group cursor-pointer"
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 min-w-0">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -1642,8 +1659,9 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
               <div className="flex flex-wrap items-center gap-2">
                 {exam.status === "scheduled" && (
                   <button
-                    onClick={() => {
-                      setExams(prev => prev.map(e => e.id === exam.id ? { ...e, status: "live" } : e));
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExams(prev => prev.map(x => x.id === exam.id ? { ...x, status: "live" } : x));
                       onMonitor({ ...exam, status: "live" });
                     }}
                     className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
@@ -1654,7 +1672,7 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                 )}
                 {exam.status === "live" && (
                   <button
-                    onClick={() => onMonitor(exam)}
+                    onClick={(e) => { e.stopPropagation(); onMonitor(exam); }}
                     className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
                   >
                     <Activity className="w-3.5 h-3.5" />
@@ -1663,7 +1681,7 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                 )}
                 {exam.status !== "completed" && exam.status !== "live" && exam.status !== "archived" && (
                   <button
-                    onClick={() => { setEditingExam(exam); setShowEdit(true); }}
+                    onClick={(e) => { e.stopPropagation(); setEditingExam(exam); setShowEdit(true); }}
                     className="cyber-button-secondary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
@@ -1672,7 +1690,7 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                 )}
                 {exam.status !== "live" && (
                   <button
-                    onClick={() => setDuplicatingExam(exam)}
+                    onClick={(e) => { e.stopPropagation(); setDuplicatingExam(exam); }}
                     className="cyber-button-secondary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
                     title="Créer un nouvel examen à partir de celui-ci"
                   >
@@ -1680,16 +1698,9 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                     Dupliquer
                   </button>
                 )}
-                <button
-                  onClick={() => { setSelectedExam(exam); setShowDetails(true); }}
-                  className="cyber-button-primary inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  Voir détails
-                </button>
                 {exam.status !== "live" && exam.status !== "archived" && (
                   <button
-                    onClick={() => archiveExam(exam.id)}
+                    onClick={(e) => { e.stopPropagation(); archiveExam(exam.id); }}
                     className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium border border-[rgba(117,195,214,0.22)] text-[var(--cyber-muted-text)] hover:text-[var(--cyber-text)] hover:border-[rgba(123,241,255,0.4)] transition-colors"
                     title="Archiver l'examen"
                   >
@@ -1698,7 +1709,7 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                 )}
                 {exam.status === "archived" && (
                   <button
-                    onClick={() => unarchiveExam(exam.id)}
+                    onClick={(e) => { e.stopPropagation(); unarchiveExam(exam.id); }}
                     className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium border border-[rgba(117,195,214,0.22)] text-[var(--cyber-muted-text)] hover:text-[var(--cyber-text)] hover:border-[rgba(123,241,255,0.4)] transition-colors"
                     title="Désarchiver l'examen"
                   >
@@ -1707,7 +1718,8 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                 )}
               </div>
             </DashboardCard>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
