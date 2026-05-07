@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import {
-  Bell,
   LogOut,
   LayoutDashboard,
   FileText,
@@ -2119,26 +2118,6 @@ function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
             { key: "facial", title: "Détection faciale", desc: "Vérifie l'identité via webcam pendant l'examen", default: false },
             { key: "screen", title: "Surveillance d'écran", desc: "Enregistre les activités écran suspectes", default: true },
             { key: "ip", title: "Restriction IP", desc: "Limite l'accès aux réseaux institutionnels uniquement", default: false },
-          ].map(item => (
-            <div key={item.key} className="flex items-center justify-between py-4">
-              <div>
-                <h3 className="text-sm font-medium text-black mb-0.5">{item.title}</h3>
-                <p className="text-xs text-[#666666]">{item.desc}</p>
-              </div>
-              <ToggleSwitch defaultChecked={item.default} />
-            </div>
-          ))}
-        </div>
-      </DashboardSectionCard>
-
-      {/* Notification settings */}
-      <DashboardSectionCard title="Notifications" icon={Bell}>
-        <div className="space-y-0 divide-y divide-[#E5E5E5]">
-          {[
-            { key: "email", title: "Notifications par email", desc: "Recevoir des alertes pour les événements importants", default: true },
-            { key: "fraud_alert", title: "Alertes fraude en temps réel", desc: "Notifications instantanées lors de détection d'anomalies", default: true },
-            { key: "exam_start", title: "Démarrage d'examen", desc: "Notification quand un examen commence", default: false },
-            { key: "autosave", title: "Auto-sauvegarde", desc: "Sauvegarde automatique toutes les 30 secondes", default: true },
           ].map(item => (
             <div key={item.key} className="flex items-center justify-between py-4">
               <div>

@@ -127,14 +127,14 @@ export function TeacherProfilePage() {
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-6 sm:py-0">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/admin")}
+              onClick={() => navigate("/teacher")}
               className="flex items-center gap-2 p-2 hover:bg-[#F5F5F5] rounded-lg transition-colors text-[#666666] hover:text-black"
             >
               <ArrowLeft className="w-5 h-5" />
               <span className="text-sm font-medium hidden sm:block">Retour au dashboard</span>
             </button>
             <div className="w-px h-6 bg-[#E5E5E5]" />
-            <Logo size="md" to="/admin" />
+            <Logo size="md" to="/teacher" />
           </div>
           <div className="flex items-center gap-2">
             <NotificationPanel role="admin" />
@@ -416,9 +416,7 @@ export function TeacherProfilePage() {
                     {[
                       { title: "Alertes fraude critique", desc: "Recevoir immédiatement un email pour les alertes de niveau élevé", default: true },
                       { title: "Résumé quotidien", desc: "Un rapport quotidien des activités et statistiques de la plateforme", default: true },
-                      { title: "Démarrage d'examens", desc: "Notification à chaque démarrage d'un examen planifié", default: false },
                       { title: "Soumissions d'examens", desc: "Notifié quand tous les étudiants ont rendu leur copie", default: true },
-                      { title: "Nouveaux étudiants inscrits", desc: "Email quand un nouvel étudiant rejoint la plateforme", default: false },
                     ].map(item => (
                       <div key={item.title} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
