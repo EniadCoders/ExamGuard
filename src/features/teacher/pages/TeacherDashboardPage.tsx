@@ -108,6 +108,32 @@ int main() {
 }`,
 };
 
+interface ExamRules {
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  allowBacktrack: boolean;
+  showResultsImmediately: boolean;
+  requireFullscreen: boolean;
+  blockTabSwitch: boolean;
+  preventCopyPaste: boolean;
+  showTimer: boolean;
+  warnBeforeEnd: boolean;
+  attempts: number;
+}
+
+const DEFAULT_EXAM_RULES: ExamRules = {
+  shuffleQuestions: true,
+  shuffleOptions: true,
+  allowBacktrack: true,
+  showResultsImmediately: false,
+  requireFullscreen: true,
+  blockTabSwitch: true,
+  preventCopyPaste: true,
+  showTimer: true,
+  warnBeforeEnd: true,
+  attempts: 1,
+};
+
 interface Exam {
   id: number;
   title: string;
@@ -124,6 +150,7 @@ interface Exam {
   draftQuestions?: DraftQuestion[];
   launchMode?: "auto" | "manual";
   previousStatus?: "scheduled" | "draft" | "completed";
+  rules?: ExamRules;
 }
 
 interface Student {
@@ -225,13 +252,27 @@ const trendData = [
 ];
 
 // ─── Toggle Switch ─────────────────────────────────────────────────────────────
-function ToggleSwitch({ defaultChecked = false }: { defaultChecked?: boolean }) {
-  const [on, setOn] = useState(defaultChecked);
+function ToggleSwitch({
+  defaultChecked = false,
+  checked,
+  onChange,
+}: {
+  defaultChecked?: boolean;
+  checked?: boolean;
+  onChange?: (next: boolean) => void;
+}) {
+  const [internalOn, setInternalOn] = useState(defaultChecked);
+  const isControlled = checked !== undefined;
+  const on = isControlled ? checked : internalOn;
+  const handleClick = () => {
+    if (isControlled) onChange?.(!on);
+    else { setInternalOn(!on); onChange?.(!on); }
+  };
   return (
     <button
       type="button"
       data-ui="switch"
-      onClick={() => setOn(!on)}
+      onClick={handleClick}
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ${
         on
           ? "bg-[var(--cyber-accent-strong)] border-[var(--cyber-accent-strong)] shadow-[0_0_0_1px_rgba(123,241,255,0.35),0_0_8px_rgba(123,241,255,0.4)]"
@@ -588,7 +629,10 @@ function isoToFrDate(iso: string): string {
 // ─── Create Exam Modal ─────────────────────────────────────────────────────────
 function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { onClose: () => void; onCreated?: (exam: Exam) => void; initialExam?: Exam; mode?: "edit" | "duplicate" }) {
   const isDuplicate = mode === "duplicate" && !!initialExam;
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [examRules, setExamRules] = useState<ExamRules>(initialExam?.rules ?? DEFAULT_EXAM_RULES);
+  const updateRule = <K extends keyof ExamRules>(key: K, value: ExamRules[K]) =>
+    setExamRules(prev => ({ ...prev, [key]: value }));
   const [examTitle, setExamTitle] = useState(
     isDuplicate ? `Copie de ${initialExam!.title}` : (initialExam?.title ?? "")
   );
@@ -667,6 +711,7 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
     importedFileName,
     draftQuestions: questions,
     launchMode,
+    rules: examRules,
   });
   const saveAsDraft = () => { onCreated?.(buildExam("draft")); onClose(); };
   const schedule = () => { onCreated?.(buildExam("scheduled")); onClose(); };
@@ -675,7 +720,11 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
     <ModalBase title={
       (() => {
         const verb = isDuplicate ? "Dupliquer" : initialExam ? "Éditer" : "Créer";
-        const part = step === 1 ? "1/3 Détails" : step === 2 ? "2/3 Étudiants" : "3/3 Questions";
+        const part =
+          step === 1 ? "1/4 Détails"
+          : step === 2 ? "2/4 Étudiants"
+          : step === 3 ? "3/4 Questions"
+          : "4/4 Règles";
         return `${verb} un examen — ${part}`;
       })()
     } onClose={onClose} wide>
@@ -1116,9 +1165,100 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
         </div>
       )}
 
+      {step === 4 && (
+        <div className="p-6 space-y-6">
+          <div className="rounded-xl border border-[#E5E5E5] bg-[#F8F8F8] px-4 py-3">
+            <p className="text-xs text-[#666666] flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-[#888888] flex-shrink-0" />
+              Configurez les règles qui s'appliqueront pendant l'examen. Ces paramètres influencent l'expérience étudiant et la surveillance.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-black mb-3 flex items-center gap-2">
+              <Hash className="w-4 h-4" />
+              Présentation des questions
+            </h3>
+            <div className="rounded-xl border border-[#E5E5E5] divide-y divide-[#E5E5E5] bg-white">
+              {[
+                { key: "shuffleQuestions" as const, title: "Mélanger l'ordre des questions", desc: "Chaque étudiant voit les questions dans un ordre différent" },
+                { key: "shuffleOptions" as const, title: "Mélanger les options des QCM", desc: "L'ordre des choix de réponse est aléatoire" },
+                { key: "allowBacktrack" as const, title: "Autoriser le retour aux questions précédentes", desc: "L'étudiant peut naviguer librement entre les questions" },
+                { key: "showResultsImmediately" as const, title: "Afficher la note à la fin", desc: "L'étudiant voit son score immédiatement après soumission" },
+              ].map(rule => (
+                <div key={rule.key} className="flex items-center justify-between gap-4 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-black">{rule.title}</p>
+                    <p className="text-xs text-[#666666] mt-0.5">{rule.desc}</p>
+                  </div>
+                  <ToggleSwitch checked={examRules[rule.key]} onChange={(v) => updateRule(rule.key, v)} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-black mb-3 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Surveillance & sécurité
+            </h3>
+            <div className="rounded-xl border border-[#E5E5E5] divide-y divide-[#E5E5E5] bg-white">
+              {[
+                { key: "requireFullscreen" as const, title: "Mode plein écran obligatoire", desc: "L'examen se lance en plein écran et bloque la sortie" },
+                { key: "blockTabSwitch" as const, title: "Bloquer les changements d'onglet", desc: "Détecter et signaler tout changement vers une autre fenêtre" },
+                { key: "preventCopyPaste" as const, title: "Désactiver le copier-coller", desc: "Bloque les raccourcis clavier et la sélection de texte" },
+              ].map(rule => (
+                <div key={rule.key} className="flex items-center justify-between gap-4 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-black">{rule.title}</p>
+                    <p className="text-xs text-[#666666] mt-0.5">{rule.desc}</p>
+                  </div>
+                  <ToggleSwitch checked={examRules[rule.key]} onChange={(v) => updateRule(rule.key, v)} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-black mb-3 flex items-center gap-2">
+              <CheckSquare className="w-4 h-4" />
+              Outils & tentatives
+            </h3>
+            <div className="rounded-xl border border-[#E5E5E5] divide-y divide-[#E5E5E5] bg-white">
+              {[
+                { key: "showTimer" as const, title: "Afficher le chrono à l'étudiant", desc: "Le temps restant est visible en permanence pendant l'examen" },
+                { key: "warnBeforeEnd" as const, title: "Avertissement avant la fin", desc: "Notification automatique 5 minutes avant la fermeture" },
+              ].map(rule => (
+                <div key={rule.key} className="flex items-center justify-between gap-4 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-black">{rule.title}</p>
+                    <p className="text-xs text-[#666666] mt-0.5">{rule.desc}</p>
+                  </div>
+                  <ToggleSwitch checked={examRules[rule.key]} onChange={(v) => updateRule(rule.key, v)} />
+                </div>
+              ))}
+              <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-black">Tentatives autorisées</p>
+                  <p className="text-xs text-[#666666] mt-0.5">Nombre de fois où l'étudiant peut passer l'examen</p>
+                </div>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={examRules.attempts}
+                  onChange={(e) => updateRule("attempts", Math.max(1, Math.min(5, Number(e.target.value) || 1)))}
+                  className="w-20 px-3 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <button
-          onClick={step === 1 ? onClose : () => setStep((step - 1) as 1 | 2)}
+          onClick={step === 1 ? onClose : () => setStep((step - 1) as 1 | 2 | 3)}
           className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
         >
           {step === 1 ? "Annuler" : "Retour"}
@@ -1152,8 +1292,8 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
           )}
           {step === 3 && (
             <button
-              onClick={schedule}
-              disabled={(selectedStudents.length === 0 && !importedFileName) || !questionsValid || !pointsValid || !allPointsInRange}
+              onClick={() => setStep(4)}
+              disabled={!questionsValid || !pointsValid || !allPointsInRange}
               title={
                 !questionsValid
                   ? `Le nombre de questions doit être compris entre ${MIN_QUESTIONS} et ${MAX_QUESTIONS}.`
@@ -1163,6 +1303,16 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
                       ? `Le total des points doit être exactement ${TOTAL_POINTS} (actuel : ${totalPointsRounded}).`
                       : undefined
               }
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+            >
+              Suivant
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+          {step === 4 && (
+            <button
+              onClick={schedule}
+              disabled={(selectedStudents.length === 0 && !importedFileName) || !questionsValid || !pointsValid || !allPointsInRange}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
             >
               {initialExam?.status === "scheduled" ? (
