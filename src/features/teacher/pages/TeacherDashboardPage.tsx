@@ -2076,115 +2076,6 @@ function AnalyticsTab({ exams }: { exams: Exam[] }) {
   );
 }
 
-// ─── Settings Tab ─────────────────────────────────────────────────────────────
-function SettingsTab({ onGoToProfile }: { onGoToProfile: () => void }) {
-  const [saved, setSaved] = useState(false);
-
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
-
-  return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div className="space-y-6 lg:col-span-2">
-      {/* Profile card CTA */}
-      <DashboardCard tone="accent" className="p-6">
-        <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="dashboard-icon-badge">
-            <User className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-[var(--cyber-text)]">Paramètres du profil</h3>
-            <p className="text-sm text-[var(--cyber-muted-text)]">Modifiez vos informations personnelles, photo et mot de passe</p>
-          </div>
-        </div>
-        <button
-          onClick={onGoToProfile}
-          className="cyber-button-secondary flex-shrink-0 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium"
-        >
-          Accéder
-          <ChevronRight className="w-4 h-4" />
-        </button>
-        </div>
-      </DashboardCard>
-
-      {/* Exam defaults */}
-      <DashboardSectionCard title="Paramètres par défaut des examens" icon={FileText}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Durée par défaut (min)</label>
-            <input type="number" defaultValue={90}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Note de passage par défaut (/20)</label>
-            <input type="number" defaultValue={12} min={0} max={20} step={0.5}
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Langue des examens</label>
-            <select defaultValue="fr"
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
-              <option value="fr">Français</option>
-              <option value="en">English</option>
-              <option value="ar">العربية</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-black mb-2">Fuseau horaire</label>
-            <select defaultValue="europe/paris"
-              className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all">
-              <option value="europe/paris">Europe/Paris (UTC+1)</option>
-              <option value="utc">UTC</option>
-              <option value="africa/algiers">Africa/Algiers (UTC+1)</option>
-            </select>
-          </div>
-        </div>
-      </DashboardSectionCard>
-
-      {/* Save */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={handleSave}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
-        >
-          <Save className="w-4 h-4" />
-          Enregistrer les paramètres
-        </button>
-        {saved && (
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F0F0F0] border border-[#E5E5E5]">
-            <CheckCircle2 className="w-4 h-4 text-black" />
-            <span className="text-sm font-medium text-black">Paramètres sauvegardés</span>
-          </div>
-        )}
-      </div>
-      </div>
-
-      {/* Right sidebar */}
-      <aside className="space-y-6 lg:col-span-1">
-        <DashboardSectionCard title="Support" icon={Info}>
-          <div className="space-y-3">
-            <div className="rounded-lg bg-[rgba(11,27,38,0.5)] border border-[rgba(117,195,214,0.14)] px-3 py-2.5">
-              <p className="text-xs text-[var(--cyber-subtle-text)]">Version</p>
-              <p className="text-sm font-medium text-[var(--cyber-text)]">ExamGuard v2.4.1</p>
-            </div>
-            <div className="rounded-lg bg-[rgba(11,27,38,0.5)] border border-[rgba(117,195,214,0.14)] px-3 py-2.5">
-              <p className="text-xs text-[var(--cyber-subtle-text)]">Contact</p>
-              <p className="text-sm font-medium text-[var(--cyber-text)]">support@examguard.io</p>
-            </div>
-            <button className="cyber-button-secondary w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium">
-              <BookOpen className="w-4 h-4" />
-              Centre d'aide
-            </button>
-          </div>
-        </DashboardSectionCard>
-      </aside>
-    </div>
-  );
-}
-
 // ─── Live Exam Monitor ────────────────────────────────────────────────────────
 function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => void; onEnd: () => void }) {
   const [paused, setPaused] = useState(false);
@@ -2963,7 +2854,13 @@ export function TeacherDashboard() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    if (tab.id === "settings") {
+                      navigate("/teacher/profile");
+                      return;
+                    }
+                    setActiveTab(tab.id);
+                  }}
                   className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 whitespace-nowrap ${
                     isActive
                       ? "text-black border-black"
@@ -2994,7 +2891,6 @@ export function TeacherDashboard() {
         {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} exams={exams} setExams={setExams} onMonitor={(exam) => setLiveExamId(exam.id)} />}
         {activeTab === "students" && <StudentsTab exams={exams} />}
         {activeTab === "analytics" && <AnalyticsTab exams={exams} />}
-        {activeTab === "settings" && <SettingsTab onGoToProfile={() => navigate("/teacher/profile")} />}
       </main>
       </div>
     </div>

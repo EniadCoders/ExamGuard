@@ -18,6 +18,7 @@ import {
   Lock,
   X as XIcon,
   Check,
+  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
@@ -153,8 +154,8 @@ export function TeacherProfilePage() {
       <main className="max-w-[1200px] mx-auto px-4 py-6 sm:px-6 sm:py-8">
         {/* Page title */}
         <div className="cyber-page-intro mb-8">
-          <h1 className="text-xl font-bold text-black sm:text-2xl">Paramètres du profil</h1>
-          <p className="text-sm text-[#666666] mt-1">Gérez vos informations personnelles, sécurité et préférences</p>
+          <h1 className="text-xl font-bold text-black sm:text-2xl">Paramètres</h1>
+          <p className="text-sm text-[#666666] mt-1">Gérez votre profil, sécurité, notifications et préférences examens</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -459,6 +460,64 @@ export function TeacherProfilePage() {
                   </div>
                 </Section>
               </>
+            )}
+
+            {/* Exam Preferences Section */}
+            {activeSection === "exams" && (
+              <Section title="Préférences examens" icon={FileText}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--cyber-text)] mb-2">Durée par défaut (min)</label>
+                    <input
+                      type="number"
+                      defaultValue={90}
+                      className="cyber-input w-full px-4 py-3 rounded-xl text-sm text-black focus:outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--cyber-text)] mb-2">Note de passage par défaut (/20)</label>
+                    <input
+                      type="number"
+                      defaultValue={12}
+                      min={0}
+                      max={20}
+                      step={0.5}
+                      className="cyber-input w-full px-4 py-3 rounded-xl text-sm text-black focus:outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--cyber-text)] mb-2">Langue des examens</label>
+                    <select
+                      defaultValue="fr"
+                      className="cyber-input w-full px-4 py-3 rounded-xl text-sm text-black focus:outline-none transition-all"
+                    >
+                      <option value="fr">Français</option>
+                      <option value="en">English</option>
+                      <option value="ar">العربية</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--cyber-text)] mb-2">Fuseau horaire</label>
+                    <select
+                      defaultValue="europe/paris"
+                      className="cyber-input w-full px-4 py-3 rounded-xl text-sm text-black focus:outline-none transition-all"
+                    >
+                      <option value="europe/paris">Europe/Paris (UTC+1)</option>
+                      <option value="utc">UTC</option>
+                      <option value="africa/algiers">Africa/Algiers (UTC+1)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-6 flex items-center justify-stretch border-t border-[#E5E5E5] pt-5 sm:justify-end">
+                  <button
+                    onClick={() => showToast("Préférences examens enregistrées.")}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
+                  >
+                    <Save className="w-4 h-4" />
+                    Enregistrer les préférences
+                  </button>
+                </div>
+              </Section>
             )}
 
             {/* Sessions Section */}
