@@ -27,6 +27,8 @@ export function SuperAdminDashboard() {
   const [userSearch, setUserSearch] = useState("");
   const [users, setUsers] = useState<PlatformUser[]>(platformUsers);
   const [detailUser, setDetailUser] = useState<PlatformUser | null>(null);
+  const [suspendUser, setSuspendUser] = useState<PlatformUser | null>(null);
+  const [suspendReason, setSuspendReason] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -60,18 +62,33 @@ export function SuperAdminDashboard() {
   };
 
   const toggleSuspend = (user: PlatformUser) => {
-    const nextStatus = user.status === "suspended" ? "active" : "suspended";
+    if (user.status === "suspended") {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, status: "active" } : u))
+      );
+      setDetailUser((prev) =>
+        prev && prev.id === user.id ? { ...prev, status: "active" } : prev
+      );
+      showToast(`${user.name} a été réactivé.`);
+      return;
+    }
+    setSuspendReason("");
+    setSuspendUser(user);
+  };
+
+  const confirmSuspend = () => {
+    if (!suspendUser) return;
+    const reason = suspendReason.trim();
+    if (!reason) return;
     setUsers((prev) =>
-      prev.map((u) => (u.id === user.id ? { ...u, status: nextStatus } : u))
+      prev.map((u) => (u.id === suspendUser.id ? { ...u, status: "suspended" } : u))
     );
     setDetailUser((prev) =>
-      prev && prev.id === user.id ? { ...prev, status: nextStatus } : prev
+      prev && prev.id === suspendUser.id ? { ...prev, status: "suspended" } : prev
     );
-    showToast(
-      nextStatus === "suspended"
-        ? `${user.name} a été suspendu.`
-        : `${user.name} a été réactivé.`
-    );
+    showToast(`${suspendUser.name} suspendu — email envoyé à ${suspendUser.email}.`);
+    setSuspendUser(null);
+    setSuspendReason("");
   };
 
   const resetPassword = (user: PlatformUser) => {
@@ -551,6 +568,90 @@ export function SuperAdminDashboard() {
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Suspension reason modal ─── */}
+        {suspendUser && (
+          <div
+            className="fixed inset-0 z-[55] flex items-center justify-center bg-black/40 p-4"
+            onClick={() => setSuspendUser(null)}
+          >
+            <div
+              className="w-full max-w-md rounded-2xl bg-white border border-[#E5E5E5] shadow-xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between px-6 py-5 border-b border-[#E5E5E5]">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0">
+                    <PauseCircle className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-bold text-black">Suspendre le compte</h2>
+                    <p className="text-xs text-[#888888] truncate">
+                      {suspendUser.name} · {suspendUser.email}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSuspendUser(null)}
+                  className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors flex-shrink-0"
+                  title="Annuler"
+                >
+                  <X className="w-4 h-4 text-[#555555]" />
+                </button>
+              </div>
+
+              <div className="px-6 py-5 space-y-4">
+                <p className="text-xs text-[#666666]">
+                  La raison sera incluse dans l'email de notification envoyé à l'utilisateur.
+                </p>
+
+                <div>
+                  <label className="block text-xs font-medium text-black mb-1.5">
+                    Motif de suspension
+                  </label>
+                  <textarea
+                    value={suspendReason}
+                    onChange={(e) => setSuspendReason(e.target.value)}
+                    rows={4}
+                    placeholder="Décrivez la raison de la suspension..."
+                    className="w-full px-3 py-2 bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all resize-none"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="px-3 py-2.5 rounded-xl bg-[#FAFAFA] border border-[#E5E5E5]">
+                  <p className="text-[10px] font-semibold uppercase text-[#888888] mb-1">
+                    Aperçu de l'email
+                  </p>
+                  <p className="text-xs text-black">
+                    Bonjour {suspendUser.name},<br />
+                    Votre compte ExamGuard a été suspendu pour le motif suivant :{" "}
+                    <span className="font-medium">
+                      {suspendReason.trim() || "—"}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-[#E5E5E5] bg-[#FAFAFA]">
+                <button
+                  onClick={() => setSuspendUser(null)}
+                  className="px-3 py-2 rounded-lg text-xs font-medium bg-white border border-[#E5E5E5] text-black hover:bg-[#F5F5F5] transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={confirmSuspend}
+                  disabled={!suspendReason.trim()}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-black text-white hover:bg-[#222222] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <PauseCircle className="w-3.5 h-3.5" />
+                  Confirmer & envoyer l'email
                 </button>
               </div>
             </div>
