@@ -1,27 +1,33 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  Shield, Users, Server, Lock, LogOut, Search, AlertTriangle,
+  Shield, Users, Server, LogOut, Search, AlertTriangle,
   XCircle, Clock, ChevronRight, BarChart3, Activity,
-  LayoutDashboard,
+  LayoutDashboard, GraduationCap, UserCog, KeyRound, Trash2,
+  PauseCircle, PlayCircle, Eye, X, Mail, Building2, CalendarDays,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
 import { Logo } from "@/shared/components/BrandLogo";
 import { NotificationPanel } from "@/shared/components/NotificationPanel";
 import {
-  DashboardCard,
   DashboardMetricCard,
   DashboardSectionCard,
 } from "@/shared/components/dashboard/DashboardCard";
 import {
   platformStats, systemHealth, platformUsers, auditLogs, securityEvents,
+  type PlatformUser,
 } from "../superadmin.data";
 
 type Tab = "overview" | "users" | "system" | "audit";
+type UsersSubTab = "professors" | "students";
 
 export function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [usersSubTab, setUsersSubTab] = useState<UsersSubTab>("professors");
   const [userSearch, setUserSearch] = useState("");
+  const [users, setUsers] = useState<PlatformUser[]>(platformUsers);
+  const [detailUser, setDetailUser] = useState<PlatformUser | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const tabs: { key: Tab; label: string; icon: typeof Shield }[] = [
@@ -31,11 +37,53 @@ export function SuperAdminDashboard() {
     { key: "audit", label: "Audit & Sécurité", icon: Shield },
   ];
 
-  const filteredUsers = platformUsers.filter(
+  const professors = useMemo(
+    () => users.filter((u) => u.role === "professor"),
+    [users]
+  );
+  const students = useMemo(
+    () => users.filter((u) => u.role === "student"),
+    [users]
+  );
+
+  const activeUserList = usersSubTab === "professors" ? professors : students;
+  const filteredUsers = activeUserList.filter(
     (u) =>
       u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(userSearch.toLowerCase())
+      u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.department.toLowerCase().includes(userSearch.toLowerCase())
   );
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 2500);
+  };
+
+  const toggleSuspend = (user: PlatformUser) => {
+    const nextStatus = user.status === "suspended" ? "active" : "suspended";
+    setUsers((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, status: nextStatus } : u))
+    );
+    setDetailUser((prev) =>
+      prev && prev.id === user.id ? { ...prev, status: nextStatus } : prev
+    );
+    showToast(
+      nextStatus === "suspended"
+        ? `${user.name} a été suspendu.`
+        : `${user.name} a été réactivé.`
+    );
+  };
+
+  const resetPassword = (user: PlatformUser) => {
+    showToast(`Lien de réinitialisation envoyé à ${user.email}.`);
+  };
+
+  const deleteUser = (user: PlatformUser) => {
+    if (!window.confirm(`Supprimer définitivement ${user.name} ?`)) return;
+    setUsers((prev) => prev.filter((u) => u.id !== user.id));
+    if (detailUser?.id === user.id) setDetailUser(null);
+    showToast(`${user.name} a été supprimé.`);
+  };
 
   const statusColor = (s: string) =>
     s === "operational" ? "bg-emerald-500" : s === "degraded" ? "bg-amber-400" : "bg-red-500";
@@ -219,19 +267,51 @@ export function SuperAdminDashboard() {
           {/* ─── USERS TAB ─── */}
           {activeTab === "users" && (
             <DashboardSectionCard
-              title={`Utilisateurs de la plateforme (${platformUsers.length})`}
-              icon={Users}
-              subtitle="Gestion des comptes utilisateurs"
+              title={
+                usersSubTab === "professors"
+                  ? `Professeurs (${professors.length})`
+                  : `Étudiants (${students.length})`
+              }
+              icon={usersSubTab === "professors" ? UserCog : GraduationCap}
+              subtitle="Gestion des comptes et actions administrateur"
               action={
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
-                  <input
-                    type="text"
-                    value={userSearch}
-                    onChange={(e) => setUserSearch(e.target.value)}
-                    placeholder="Rechercher..."
-                    className="w-full pl-10 pr-4 py-2 bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
-                  />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                  <div className="inline-flex p-1 rounded-xl bg-[#F5F5F5] border border-[#E5E5E5]">
+                    <button
+                      onClick={() => { setUsersSubTab("professors"); setUserSearch(""); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        usersSubTab === "professors"
+                          ? "bg-white text-black shadow-sm"
+                          : "text-[#666666] hover:text-black"
+                      }`}
+                    >
+                      <UserCog className="w-3.5 h-3.5" />
+                      Professeurs
+                      <span className="ml-1 text-[10px] text-[#888888]">{professors.length}</span>
+                    </button>
+                    <button
+                      onClick={() => { setUsersSubTab("students"); setUserSearch(""); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        usersSubTab === "students"
+                          ? "bg-white text-black shadow-sm"
+                          : "text-[#666666] hover:text-black"
+                      }`}
+                    >
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      Étudiants
+                      <span className="ml-1 text-[10px] text-[#888888]">{students.length}</span>
+                    </button>
+                  </div>
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888]" />
+                    <input
+                      type="text"
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      placeholder="Rechercher..."
+                      className="w-full pl-10 pr-4 py-2 bg-[#F8F8F8] border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all"
+                    />
+                  </div>
                 </div>
               }
               bodyClassName="p-0"
@@ -248,6 +328,9 @@ export function SuperAdminDashboard() {
                       <p className="text-sm font-medium text-black">{u.name}</p>
                       <p className="text-xs text-[#888888] truncate">{u.email}</p>
                     </div>
+                    <span className="hidden lg:block text-xs text-[#666666] w-36 truncate">
+                      {u.department}
+                    </span>
                     <span className={`px-2 py-0.5 rounded-lg text-[11px] font-medium ${roleBadgeClass(u.role)}`}>
                       {roleLabel(u.role)}
                     </span>
@@ -255,10 +338,50 @@ export function SuperAdminDashboard() {
                       {u.status === "active" ? "Actif" : u.status === "suspended" ? "Suspendu" : "En attente"}
                     </span>
                     <span className="text-xs text-[#888888] hidden md:block w-24 text-right">{u.lastLogin}</span>
+
+                    {/* ── Inline admin actions ── */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setDetailUser(u)}
+                        className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors"
+                        title="Voir les détails"
+                      >
+                        <Eye className="w-4 h-4 text-[#555555]" />
+                      </button>
+                      <button
+                        onClick={() => toggleSuspend(u)}
+                        className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors"
+                        title={u.status === "suspended" ? "Réactiver le compte" : "Suspendre le compte"}
+                      >
+                        {u.status === "suspended" ? (
+                          <PlayCircle className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <PauseCircle className="w-4 h-4 text-amber-600" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => resetPassword(u)}
+                        className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors"
+                        title="Réinitialiser le mot de passe"
+                      >
+                        <KeyRound className="w-4 h-4 text-[#555555]" />
+                      </button>
+                      <button
+                        onClick={() => deleteUser(u)}
+                        className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                        title="Supprimer le compte"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {filteredUsers.length === 0 && (
-                  <p className="px-6 py-8 text-center text-sm text-[#888888]">Aucun utilisateur trouvé.</p>
+                  <p className="px-6 py-8 text-center text-sm text-[#888888]">
+                    {usersSubTab === "professors"
+                      ? "Aucun professeur trouvé."
+                      : "Aucun étudiant trouvé."}
+                  </p>
                 )}
               </div>
             </DashboardSectionCard>
@@ -331,6 +454,115 @@ export function SuperAdminDashboard() {
             </div>
           )}
         </main>
+
+        {/* ─── User details modal ─── */}
+        {detailUser && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={() => setDetailUser(null)}
+          >
+            <div
+              className="w-full max-w-md rounded-2xl bg-white border border-[#E5E5E5] shadow-xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between px-6 py-5 border-b border-[#E5E5E5]">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-white">
+                      {detailUser.name.split(" ").map((n) => n[0]).join("")}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-bold text-black truncate">{detailUser.name}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium ${roleBadgeClass(detailUser.role)}`}>
+                        {roleLabel(detailUser.role)}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium ${userStatusBadge(detailUser.status)}`}>
+                        {detailUser.status === "active" ? "Actif" : detailUser.status === "suspended" ? "Suspendu" : "En attente"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setDetailUser(null)}
+                  className="p-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors flex-shrink-0"
+                  title="Fermer"
+                >
+                  <X className="w-4 h-4 text-[#555555]" />
+                </button>
+              </div>
+
+              <div className="px-6 py-5 space-y-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <Mail className="w-4 h-4 text-[#888888] flex-shrink-0" />
+                  <span className="text-[#666666] w-24 flex-shrink-0">Email</span>
+                  <span className="text-black truncate">{detailUser.email}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Building2 className="w-4 h-4 text-[#888888] flex-shrink-0" />
+                  <span className="text-[#666666] w-24 flex-shrink-0">Département</span>
+                  <span className="text-black truncate">{detailUser.department}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <CalendarDays className="w-4 h-4 text-[#888888] flex-shrink-0" />
+                  <span className="text-[#666666] w-24 flex-shrink-0">Inscrit</span>
+                  <span className="text-black">{detailUser.createdAt}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Clock className="w-4 h-4 text-[#888888] flex-shrink-0" />
+                  <span className="text-[#666666] w-24 flex-shrink-0">Dernier accès</span>
+                  <span className="text-black">{detailUser.lastLogin}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Shield className="w-4 h-4 text-[#888888] flex-shrink-0" />
+                  <span className="text-[#666666] w-24 flex-shrink-0">ID</span>
+                  <span className="text-black font-mono text-xs">#{detailUser.id.toString().padStart(6, "0")}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 px-6 py-4 border-t border-[#E5E5E5] bg-[#FAFAFA]">
+                <button
+                  onClick={() => toggleSuspend(detailUser)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-white border border-[#E5E5E5] text-black hover:bg-[#F5F5F5] transition-colors"
+                >
+                  {detailUser.status === "suspended" ? (
+                    <>
+                      <PlayCircle className="w-3.5 h-3.5 text-emerald-600" />
+                      Réactiver
+                    </>
+                  ) : (
+                    <>
+                      <PauseCircle className="w-3.5 h-3.5 text-amber-600" />
+                      Suspendre
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => resetPassword(detailUser)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-white border border-[#E5E5E5] text-black hover:bg-[#F5F5F5] transition-colors"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-[#555555]" />
+                  Réinitialiser MDP
+                </button>
+                <button
+                  onClick={() => deleteUser(detailUser)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-white border border-red-200 text-red-600 hover:bg-red-50 transition-colors ml-auto"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Toast ─── */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-[60] px-4 py-2.5 rounded-xl bg-black text-white text-sm shadow-lg">
+            {toast}
+          </div>
+        )}
       </div>
     </div>
   );
