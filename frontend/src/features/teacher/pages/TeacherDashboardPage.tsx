@@ -95,6 +95,7 @@ import {
   type StudentLite,
   type ExamPayload,
 } from "../api";
+import { fetchMe, type AuthUser } from "@/features/auth/api";
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 type Exam = TeacherExam;
@@ -2932,6 +2933,7 @@ export function TeacherDashboard() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [examsLoading, setExamsLoading] = useState(true);
   const [liveExamId, setLiveExamId] = useState<string | null>(null);
+  const [me, setMe] = useState<AuthUser | null>(null);
   const liveExam = liveExamId !== null ? exams.find(e => e.id === liveExamId) ?? null : null;
 
   useEffect(() => {
@@ -2939,7 +2941,15 @@ export function TeacherDashboard() {
       .then(setExams)
       .catch(() => {})
       .finally(() => setExamsLoading(false));
+    fetchMe().then(setMe).catch(() => {});
   }, []);
+
+  const meInitials = (me?.fullName ?? "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("") || "?";
 
   const handleLogoClick = () => {
     setActiveTab("overview");
@@ -3022,11 +3032,13 @@ export function TeacherDashboard() {
               className="hidden sm:flex items-center gap-3 pl-3 border-l border-[#E5E5E5] hover:bg-[#F5F5F5] rounded-xl px-3 py-2 transition-colors group"
             >
               <div className="text-right">
-                <p className="text-sm font-medium text-black group-hover:underline">Prof. Dupont</p>
+                <p className="text-sm font-medium text-black group-hover:underline">{me?.fullName ?? "…"}</p>
                 <p className="text-xs text-[#666666]">Professeur</p>
               </div>
-              <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-bold text-white">PD</span>
+              <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {me?.avatarUrl
+                  ? <img src={me.avatarUrl} alt="Profil" className="w-full h-full object-cover" />
+                  : <span className="text-xs font-bold text-white">{meInitials}</span>}
               </div>
             </button>
 
