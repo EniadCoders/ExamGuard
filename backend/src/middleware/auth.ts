@@ -1,9 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { ActiveSessionModel } from "../models/ActiveSession.js";
 
 export type AuthPayload = {
   userId: string;
   role: "student" | "teacher" | "superadmin";
+  /** Identifiant de la session active liée au token (révocation). */
+  sessionId?: string;
 };
 
 declare global {
@@ -15,7 +18,11 @@ declare global {
   }
 }
 
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+export async function requireAuth(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
     return res.status(401).json({ error: "missing token" });
@@ -23,6 +30,11 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = header.slice("Bearer ".length);
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET!) as AuthPayload;
+    // Token rattaché à une session : rejeté si la session a été révoquée.
+    if (payload.sessionId) {
+      const session = await ActiveSessionModel.exists({ _id: payload.sessionId });
+      if (!session) return res.status(401).json({ error: "session revoked" });
+    }
     req.auth = payload;
     next();
   } catch {

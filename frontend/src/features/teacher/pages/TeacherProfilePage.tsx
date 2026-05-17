@@ -38,11 +38,19 @@ import {
   ToggleSwitch,
 } from "@/features/teacher/components/TeacherProfileControls";
 import {
-  mockActiveSessions as activeSessions,
   teacherProfileSections as sections,
   type TeacherProfileSectionId,
 } from "@/features/teacher/teacher.data";
-import { fetchMe, updateProfile, changePassword, type TeacherPreferences } from "@/features/auth/api";
+import {
+  fetchMe,
+  updateProfile,
+  changePassword,
+  fetchSessions,
+  revokeSession,
+  revokeOtherSessions,
+  type TeacherPreferences,
+  type ActiveSession,
+} from "@/features/auth/api";
 import { ApiError } from "@/shared/lib/api";
 
 const DEFAULT_PREFERENCES: TeacherPreferences = {
@@ -78,6 +86,13 @@ export function TeacherProfilePage() {
   // Preferences state
   const [prefs, setPrefs] = useState<TeacherPreferences>(DEFAULT_PREFERENCES);
   const [savingPrefs, setSavingPrefs] = useState(false);
+
+  // Active sessions
+  const [sessions, setSessions] = useState<ActiveSession[]>([]);
+
+  const loadSessions = () => {
+    fetchSessions().then(setSessions).catch(() => {});
+  };
   const setPref = <K extends keyof TeacherPreferences>(key: K, value: TeacherPreferences[K]) =>
     setPrefs((p) => ({ ...p, [key]: value }));
 
@@ -113,7 +128,28 @@ export function TeacherProfilePage() {
         }
       })
       .catch(() => showToast("Impossible de charger votre profil.", "error"));
+    loadSessions();
   }, []);
+
+  const handleRevokeSession = async (id: string) => {
+    try {
+      await revokeSession(id);
+      setSessions((list) => list.filter((s) => s.id !== id));
+      showToast("Session révoquée.");
+    } catch {
+      showToast("Échec de la révocation de la session.", "error");
+    }
+  };
+
+  const handleRevokeOtherSessions = async () => {
+    try {
+      await revokeOtherSessions();
+      setSessions((list) => list.filter((s) => s.current));
+      showToast("Toutes les autres sessions ont été révoquées.");
+    } catch {
+      showToast("Échec de la révocation des sessions.", "error");
+    }
+  };
 
   const handleSavePreferences = async () => {
     setSavingPrefs(true);
@@ -495,7 +531,7 @@ export function TeacherProfilePage() {
                         <p className="text-xs text-[#666666]">Mettra fin à toutes les sessions actives sur tous les appareils</p>
                       </div>
                       <button
-                        onClick={() => showToast("Toutes les sessions ont été déconnectées.")}
+                        onClick={handleRevokeOtherSessions}
                         className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-black text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
@@ -635,8 +671,11 @@ export function TeacherProfilePage() {
             {activeSection === "sessions" && (
               <Section title="Sessions actives" icon={Globe}>
                 <div className="space-y-3">
-                  {activeSessions.map((session, i) => (
-                    <div key={i} className={`flex flex-col gap-4 rounded-xl border px-5 py-4 transition-colors sm:flex-row sm:items-center sm:justify-between ${
+                  {sessions.length === 0 && (
+                    <p className="py-6 text-center text-sm text-[#888888]">Aucune session active.</p>
+                  )}
+                  {sessions.map((session) => (
+                    <div key={session.id} className={`flex flex-col gap-4 rounded-xl border px-5 py-4 transition-colors sm:flex-row sm:items-center sm:justify-between ${
                       session.current
                         ? "bg-[rgba(61,216,233,0.12)] border-[rgba(61,216,233,0.16)]"
                         : "bg-[rgba(11,27,38,0.5)] border-[rgba(117,195,214,0.12)] hover:border-[rgba(123,241,255,0.22)]"
@@ -657,13 +696,13 @@ export function TeacherProfilePage() {
                             )}
                           </p>
                           <p className={`text-xs mt-0.5 ${session.current ? "text-white/60" : "text-[#888888]"}`}>
-                            {session.location} · {session.time}
+                            {session.location ? `${session.location} · ` : ""}{session.lastActive}
                           </p>
                         </div>
                       </div>
                       {!session.current && (
                         <button
-                          onClick={() => showToast("Session déconnectée avec succès.")}
+                          onClick={() => handleRevokeSession(session.id)}
                           className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E5E5] bg-white hover:bg-[#F5F5F5] text-xs font-medium text-black transition-colors"
                         >
                           <XIcon className="w-3.5 h-3.5" />
@@ -674,9 +713,9 @@ export function TeacherProfilePage() {
                   ))}
                 </div>
                 <div className="mt-6 flex flex-col gap-3 border-t border-[#E5E5E5] pt-5 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-[#888888]">{activeSessions.length} session(s) active(s) au total</p>
+                  <p className="text-xs text-[#888888]">{sessions.length} session(s) active(s) au total</p>
                   <button
-                    onClick={() => showToast("Toutes les autres sessions ont été révoquées.")}
+                    onClick={handleRevokeOtherSessions}
                     className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-black px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-[#F5F5F5] sm:w-auto"
                   >
                     <LogOut className="w-4 h-4" />

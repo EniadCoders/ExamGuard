@@ -15,8 +15,3 @@ export const teacherProfileSections = [
   { id: "sessions" as const, label: "Sessions actives", icon: Globe },
 ];
 
-export const mockActiveSessions = [
-  { device: "Chrome - macOS Monterey", location: "Paris, France", time: "Actif maintenant", current: true },
-  { device: "Safari - iPhone 14", location: "Paris, France", time: "Il y a 2 heures", current: false },
-  { device: "Firefox - Windows 11", location: "Lyon, France", time: "Il y a 1 jour", current: false },
-];

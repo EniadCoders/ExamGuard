@@ -98,6 +98,27 @@ export function changePassword(
   });
 }
 
+export type ActiveSession = {
+  id: string;
+  device: string;
+  location: string;
+  lastActive: string;
+  current: boolean;
+};
+
+export async function fetchSessions(): Promise<ActiveSession[]> {
+  const data = await api<{ sessions: ActiveSession[] }>("/auth/sessions");
+  return data.sessions;
+}
+
+export function revokeSession(id: string): Promise<{ ok: true }> {
+  return api(`/auth/sessions/${id}`, { method: "DELETE" });
+}
+
+export function revokeOtherSessions(): Promise<{ ok: true }> {
+  return api("/auth/sessions", { method: "DELETE" });
+}
+
 export function routeForRole(role: AuthUser["role"]): string {
   if (role === "student") return "/student";
   if (role === "teacher") return "/teacher";
