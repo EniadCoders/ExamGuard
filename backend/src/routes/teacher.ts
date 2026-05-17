@@ -360,6 +360,16 @@ const ALERT_LABELS: Record<string, string> = {
   "window-blur": "Fenêtre quittée",
 };
 
+/** Initiales (max 2 lettres) à partir d'un nom complet. */
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 /** Déduit une sévérité à partir du type d'évènement anti-triche. */
 function alertSeverity(type: string): "high" | "medium" | "low" {
   const t = type.toLowerCase();
@@ -434,6 +444,40 @@ router.get("/exams/:id/monitor", async (req, res) => {
     participants,
     alerts: alerts.map(({ ts, ...rest }) => rest),
   });
+});
+
+// ─── Alertes de fraude (tous examens du professeur) ───────────────────────
+
+router.get("/fraud-alerts", async (req, res) => {
+  const teacherId = req.auth!.userId;
+  const exams = await ExamModel.find({ createdBy: teacherId }).lean();
+  const examIds = exams.map((e) => e._id);
+  const examById = new Map(exams.map((e) => [String(e._id), e]));
+  const attempts = await ExamAttemptModel.find({ examId: { $in: examIds } }).lean();
+
+  const studentIds = [...new Set(attempts.map((a) => String(a.studentId)))];
+  const students = await UserModel.find({ _id: { $in: studentIds } }).lean();
+  const studentById = new Map(students.map((s) => [String(s._id), s]));
+
+  let seq = 0;
+  const alerts = attempts.flatMap((a) => {
+    const student = studentById.get(String(a.studentId));
+    const exam = examById.get(String(a.examId));
+    const name = student?.fullName ?? "Étudiant";
+    return (a.antiCheatEvents ?? []).map((ev: any) => ({
+      id: `${a._id}-${seq++}`,
+      student: name,
+      initials: initialsOf(name),
+      exam: exam?.title ?? "Examen",
+      type: ALERT_LABELS[ev.type] ?? ev.type,
+      severity: alertSeverity(ev.type ?? ""),
+      time: relativeFr(ev.timestamp),
+      ts: new Date(ev.timestamp ?? Date.now()).getTime(),
+    }));
+  });
+  alerts.sort((x, y) => y.ts - x.ts);
+
+  res.json({ alerts: alerts.slice(0, 20).map(({ ts, ...rest }) => rest) });
 });
 
 // ─── Vue d'ensemble du dashboard ───────────────────────────────────────────

@@ -83,11 +83,13 @@ import {
   fetchTeacherStudentDetail,
   fetchTeacherAnalytics,
   fetchExamMonitor,
+  fetchFraudAlerts,
   type TeacherExam,
   type TeacherDashboardData,
   type ExamHistoryItem,
   type TeacherAnalytics,
   type ExamMonitor,
+  type FraudAlert,
   type DraftQuestion,
   type ExamRules,
   type StudentLite,
@@ -191,13 +193,6 @@ const allStudentsData: Student[] = [
   { id: "22", name: "Mehdi Blanc", email: "mehdi.blanc@univ.fr", exams: 8, avg: 14.2, status: "active", lastActive: "Il y a 35 min", department: "Réseaux", year: "L2", studentId: "ETU-2024-022" },
   { id: "23", name: "Zoé Aubert", email: "zoe.aubert@univ.fr", exams: 11, avg: 17.6, status: "active", lastActive: "Actif maintenant", department: "Cybersécurité", year: "M1", studentId: "ETU-2024-023" },
   { id: "24", name: "Noah Carpentier", email: "noah.carpentier@univ.fr", exams: 9, avg: 15.8, status: "active", lastActive: "Il y a 6 min", department: "IA & Data", year: "M2", studentId: "ETU-2024-024" },
-];
-
-const fraudAlerts = [
-  { id: 1, student: "Marie Dubois", initials: "MD", exam: "Réseaux & Sécurité", type: "Changement d'onglet multiple", time: "Il y a 2 min", severity: "high" },
-  { id: 2, student: "Thomas Martin", initials: "TM", exam: "Algorithmique Avancée", type: "Détection de mouvement suspect", time: "Il y a 5 min", severity: "medium" },
-  { id: 3, student: "Sophie Bernard", initials: "SB", exam: "Réseaux & Sécurité", type: "Comportement suspect détecté", time: "Il y a 8 min", severity: "high" },
-  { id: 4, student: "Lucas Petit", initials: "LP", exam: "Architecture Java EE", type: "Tentative de copier-coller", time: "Il y a 12 min", severity: "medium" },
 ];
 
 // ─── Toggle Switch ─────────────────────────────────────────────────────────────
@@ -448,16 +443,6 @@ function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () =
 }
 
 // ─── Fraud Alert Details Modal ────────────────────────────────────────────────
-type FraudAlert = {
-  id: number;
-  student: string;
-  initials: string;
-  exam: string;
-  type: string;
-  time: string;
-  severity: string;
-};
-
 function FraudAlertDetailsModal({ alert, onClose, onAction }: { alert: FraudAlert; onClose: () => void; onAction: (action: string) => void }) {
   const isHigh = alert.severity === "high";
   const [escalated, setEscalated] = useState(false);
@@ -1519,8 +1504,10 @@ function OverviewTab({
   onImportData: () => void;
 }) {
   const [dashboard, setDashboard] = useState<TeacherDashboardData | null>(null);
+  const [fraudAlerts, setFraudAlerts] = useState<FraudAlert[]>([]);
   useEffect(() => {
     fetchTeacherDashboard().then(setDashboard).catch(() => {});
+    fetchFraudAlerts().then(setFraudAlerts).catch(() => {});
   }, []);
   const recentExams = exams.slice(0, 4);
 
@@ -1643,6 +1630,11 @@ function OverviewTab({
         bodyClassName="p-0"
       >
         <div>
+          {fraudAlerts.length === 0 && (
+            <p className="px-6 py-8 text-center text-sm text-[var(--cyber-muted-text)]">
+              Aucune alerte de fraude.
+            </p>
+          )}
           {fraudAlerts.map((alert) => (
             <div key={alert.id} className="dashboard-list-row">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(117,195,214,0.14)] bg-[rgba(11,27,38,0.72)]">

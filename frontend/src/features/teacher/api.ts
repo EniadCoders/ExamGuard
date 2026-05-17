@@ -260,3 +260,20 @@ export interface ExamMonitor {
 export function fetchExamMonitor(examId: string): Promise<ExamMonitor> {
   return api<ExamMonitor>(`/teacher/exams/${examId}/monitor`);
 }
+
+// ─── Fraud alerts ──────────────────────────────────────────────────────────
+
+export interface FraudAlert {
+  id: string;
+  student: string;
+  initials: string;
+  exam: string;
+  type: string;
+  time: string;
+  severity: string;
+}
+
+export async function fetchFraudAlerts(): Promise<FraudAlert[]> {
+  const data = await api<{ alerts: FraudAlert[] }>("/teacher/fraud-alerts");
+  return data.alerts;
+}
