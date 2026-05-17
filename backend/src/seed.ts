@@ -22,15 +22,16 @@ const TEACHER = {
   department: "Informatique",
 };
 
+// Étudiants de l'ENIAD (Université Mohammed Premier) — filières IA, ROC, GINF, IRSI.
 const STUDENTS = [
-  { email: "zakariatest@gmail.com", password: "zakariaTest123", fullName: "Zakaria Test", program: "Informatique", department: "Informatique", identifier: "ZT2026" },
-  { email: "marie.dubois@univ.fr", password: "student123", fullName: "Marie Dubois", program: "Génie Logiciel", department: "Génie Logiciel", identifier: "MD2026" },
-  { email: "thomas.martin@univ.fr", password: "student123", fullName: "Thomas Martin", program: "Cybersécurité", department: "Cybersécurité", identifier: "TM2026" },
-  { email: "sophie.bernard@univ.fr", password: "student123", fullName: "Sophie Bernard", program: "Data Engineering", department: "Data Engineering", identifier: "SB2026" },
-  { email: "lucas.petit@univ.fr", password: "student123", fullName: "Lucas Petit", program: "Informatique", department: "Informatique", identifier: "LP2026" },
-  { email: "emma.rousseau@univ.fr", password: "student123", fullName: "Emma Rousseau", program: "Génie Logiciel", department: "Génie Logiciel", identifier: "ER2026" },
-  { email: "hugo.lefebvre@univ.fr", password: "student123", fullName: "Hugo Lefebvre", program: "Cybersécurité", department: "Cybersécurité", identifier: "HL2026" },
-  { email: "lea.moreau@univ.fr", password: "student123", fullName: "Léa Moreau", program: "Data Engineering", department: "Data Engineering", identifier: "LM2026" },
+  { email: "yassine.elamrani@ump.ac.ma", password: "student123", fullName: "Yassine El Amrani", program: "IA", department: "IA", identifier: "EN24001" },
+  { email: "salma.benali@ump.ac.ma", password: "student123", fullName: "Salma Benali", program: "IA", department: "IA", identifier: "EN24002" },
+  { email: "mehdi.tazi@ump.ac.ma", password: "student123", fullName: "Mehdi Tazi", program: "ROC", department: "ROC", identifier: "EN24003" },
+  { email: "imane.chraibi@ump.ac.ma", password: "student123", fullName: "Imane Chraibi", program: "ROC", department: "ROC", identifier: "EN24004" },
+  { email: "anas.elfassi@ump.ac.ma", password: "student123", fullName: "Anas El Fassi", program: "GINF", department: "GINF", identifier: "EN24005" },
+  { email: "hajar.bouazza@ump.ac.ma", password: "student123", fullName: "Hajar Bouazza", program: "GINF", department: "GINF", identifier: "EN24006" },
+  { email: "othmane.idrissi@ump.ac.ma", password: "student123", fullName: "Othmane Idrissi", program: "IRSI", department: "IRSI", identifier: "EN24007" },
+  { email: "khadija.alaoui@ump.ac.ma", password: "student123", fullName: "Khadija Alaoui", program: "IRSI", department: "IRSI", identifier: "EN24008" },
 ];
 
 const mockQuestions = [
@@ -154,21 +155,23 @@ async function seed() {
   if (!uri) throw new Error("MONGODB_URI missing");
   await connectToDatabase(uri);
 
-  const allEmails = [TEACHER.email, ...STUDENTS.map((s) => s.email)];
-
   console.log("[seed] wiping previous seed data…");
-  const prevUsers = await UserModel.find({ email: { $in: allEmails } });
-  const prevIds = prevUsers.map((u) => u._id);
-  const prevExams = await ExamModel.find({ createdBy: { $in: prevIds } });
+  // Réinitialisation : on supprime le professeur Dupont et TOUS les étudiants
+  // (peu importe leur email), ainsi que leurs examens / tentatives / notifications.
+  const prevTeacher = await UserModel.findOne({ email: TEACHER.email });
+  const prevStudents = await UserModel.find({ role: "student" }).select("_id");
+  const prevStudentIds = prevStudents.map((u) => u._id);
+  const prevIds = [...prevStudentIds, ...(prevTeacher ? [prevTeacher._id] : [])];
+  const prevExams = await ExamModel.find({ createdBy: { $in: prevIds } }).select("_id");
   await ExamAttemptModel.deleteMany({
     $or: [
-      { studentId: { $in: prevIds } },
+      { studentId: { $in: prevStudentIds } },
       { examId: { $in: prevExams.map((e) => e._id) } },
     ],
   });
   await NotificationModel.deleteMany({ userId: { $in: prevIds } });
   await ExamModel.deleteMany({ createdBy: { $in: prevIds } });
-  await UserModel.deleteMany({ email: { $in: allEmails } });
+  await UserModel.deleteMany({ _id: { $in: prevIds } });
 
   console.log("[seed] creating teacher…");
   const teacher = await UserModel.create({
@@ -189,7 +192,7 @@ async function seed() {
         passwordHash: await bcrypt.hash(s.password, 10),
         role: "student",
         fullName: s.fullName,
-        school: "Faculté des Sciences d'Oujda (FSO)",
+        school: "ENIAD — Université Mohammed Premier",
         program: s.program,
         department: s.department,
         studentIdentifierType: "apogee",
@@ -296,7 +299,8 @@ async function seed() {
 
   console.log("[seed] done.");
   console.log(`[seed] teacher: ${TEACHER.email} / ${TEACHER.password}`);
-  console.log(`[seed] students: ${STUDENTS.length} (mot de passe "student123", sauf Zakaria)`);
+  console.log(`[seed] students ENIAD (${STUDENTS.length}) — mot de passe "student123" :`);
+  for (const s of STUDENTS) console.log(`  - ${s.email} (${s.program})`);
   await mongoose.disconnect();
 }
 
