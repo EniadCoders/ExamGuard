@@ -66,6 +66,8 @@ import {
   type AttemptResult,
 } from "@/features/student/api";
 import { ApiError } from "@/shared/lib/api";
+import { umpSchools } from "@/shared/lib/ump-schools";
+import { updateProfile } from "@/features/auth/api";
 import { logout } from "@/features/auth/api";
 import {
   ExamTypeChip as TypeChip,
@@ -106,6 +108,55 @@ export function StudentDashboard() {
   // Selected attempt detail (for the Results modal)
   const [attemptDetail, setAttemptDetail] = useState<AttemptResult | null>(null);
   const [attemptDetailLoading, setAttemptDetailLoading] = useState(false);
+
+  // Profile form state (hydrated from `user`)
+  const [profileFirstName, setProfileFirstName] = useState("");
+  const [profileLastName, setProfileLastName] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [profileSchool, setProfileSchool] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    setProfileFirstName(user.firstName ?? "");
+    setProfileLastName(user.lastName ?? "");
+    setProfilePhone(user.phone ?? "");
+    setProfileSchool(user.school ?? "");
+  }, [user]);
+
+  const handleSaveProfile = useCallback(async () => {
+    setProfileSaving(true);
+    setProfileMessage(null);
+    try {
+      const updated = await updateProfile({
+        fullName: `${profileFirstName.trim()} ${profileLastName.trim()}`.trim(),
+        phone: profilePhone.trim(),
+        school: profileSchool,
+      });
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              fullName: updated.fullName,
+              firstName: profileFirstName.trim(),
+              lastName: profileLastName.trim(),
+              phone: updated.phone,
+              school: updated.school,
+            }
+          : prev,
+      );
+      setProfileMessage({ kind: "ok", text: "Profil enregistré." });
+    } catch (err) {
+      setProfileMessage({
+        kind: "err",
+        text:
+          err instanceof ApiError ? err.message : "Échec de l'enregistrement.",
+      });
+    } finally {
+      setProfileSaving(false);
+    }
+  }, [profileFirstName, profileLastName, profilePhone, profileSchool]);
 
   useEffect(() => {
     if (!selectedResult) {
@@ -1199,35 +1250,37 @@ export function StudentDashboard() {
                       <div>
                         <label className="block text-sm font-medium text-black mb-2">Prénom</label>
                         <input
-                          key={user?.firstName ?? "prenom"}
                           type="text"
-                          defaultValue={user?.firstName ?? ""}
+                          value={profileFirstName}
+                          onChange={(e) => setProfileFirstName(e.target.value)}
                           className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-black mb-2">Nom</label>
                         <input
-                          key={user?.lastName ?? "nom"}
                           type="text"
-                          defaultValue={user?.lastName ?? ""}
+                          value={profileLastName}
+                          onChange={(e) => setProfileLastName(e.target.value)}
                           className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-black mb-2">Email</label>
                         <input
-                          key={user?.email ?? "email"}
                           type="email"
-                          defaultValue={user?.email ?? ""}
-                          className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
+                          value={user?.email ?? ""}
+                          readOnly
+                          className="w-full bg-[#F0F0F0] border border-[#E5E5E5] rounded-xl px-4 py-3 text-[#666] cursor-not-allowed"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-black mb-2">Téléphone</label>
                         <input
                           type="tel"
-                          defaultValue="+33 6 12 34 56 78"
+                          value={profilePhone}
+                          onChange={(e) => setProfilePhone(e.target.value)}
+                          placeholder="ex: +212 6 12 34 56 78"
                           className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
@@ -1235,24 +1288,38 @@ export function StudentDashboard() {
                         <label className="block text-sm font-medium text-black mb-2">Établissement</label>
                         <div className="relative">
                           <select
-                            defaultValue="Université Paris-Saclay"
+                            value={profileSchool}
+                            onChange={(e) => setProfileSchool(e.target.value)}
                             className="w-full appearance-none bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
                           >
-                            <option value="Université Paris-Saclay">Université Paris-Saclay</option>
-                            <option value="Sorbonne Université">Sorbonne Université</option>
-                            <option value="École Polytechnique">École Polytechnique</option>
-                            <option value="Université PSL">Université PSL</option>
-                            <option value="CentraleSupélec">CentraleSupélec</option>
-                            <option value="Autre">Autre</option>
+                            <option value="">Sélectionnez votre établissement</option>
+                            {umpSchools.map((schoolName) => (
+                              <option key={schoolName} value={schoolName}>
+                                {schoolName}
+                              </option>
+                            ))}
                           </select>
                           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666666] pointer-events-none" />
                         </div>
                       </div>
                     </div>
+                    {profileMessage ? (
+                      <p
+                        className={`text-sm font-semibold ${
+                          profileMessage.kind === "ok" ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {profileMessage.text}
+                      </p>
+                    ) : null}
                     <div className="flex justify-stretch pt-4 sm:justify-end">
-                      <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00809D] px-6 py-3 font-bold text-white transition-all hover:bg-[#1C1C1C] sm:w-auto">
+                      <button
+                        onClick={handleSaveProfile}
+                        disabled={profileSaving}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00809D] px-6 py-3 font-bold text-white transition-all hover:bg-[#1C1C1C] disabled:opacity-60 sm:w-auto"
+                      >
                         <Save className="w-4 h-4" />
-                        <span>Enregistrer</span>
+                        <span>{profileSaving ? "Enregistrement…" : "Enregistrer"}</span>
                       </button>
                     </div>
                   </div>

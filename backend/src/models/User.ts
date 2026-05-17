@@ -15,6 +15,7 @@ const userSchema = new Schema(
     program: { type: String, default: "" },
     studentIdentifierType: { type: String, enum: ["apogee", "cne"] },
     studentIdentifier: { type: String },
+    phone: { type: String, default: "" },
     status: {
       type: String,
       enum: ["active", "suspended", "pending"],

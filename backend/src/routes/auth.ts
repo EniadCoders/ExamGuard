@@ -82,6 +82,7 @@ const PROFILE_FIELDS = [
   "program",
   "studentIdentifierType",
   "studentIdentifier",
+  "phone",
 ] as const;
 
 router.patch("/me", requireAuth, async (req, res) => {
@@ -127,6 +128,7 @@ function publicUser(user: any) {
     department: user.department,
     school: user.school,
     program: user.program,
+    phone: user.phone,
     status: user.status,
   };
 }

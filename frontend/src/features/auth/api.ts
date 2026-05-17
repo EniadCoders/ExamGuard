@@ -54,6 +54,7 @@ export async function updateProfile(updates: {
   department?: string;
   school?: string;
   program?: string;
+  phone?: string;
 }): Promise<AuthUser> {
   const data = await api<{ user: AuthUser }>("/auth/me", {
     method: "PATCH",

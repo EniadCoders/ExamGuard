@@ -39,6 +39,7 @@ export type DashboardUser = {
   department?: string;
   school?: string;
   program?: string;
+  phone?: string;
 };
 
 export type DashboardPayload = {

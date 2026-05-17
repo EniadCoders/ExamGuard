@@ -125,6 +125,7 @@ router.get("/dashboard", async (req, res) => {
       department: user.department,
       school: user.school,
       program: user.program,
+      phone: user.phone,
     },
     stats,
     exams: enriched,
