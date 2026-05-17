@@ -33,3 +33,13 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 export function signToken(payload: AuthPayload): string {
   return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "7d" });
 }
+
+export function requireRole(...roles: AuthPayload["role"][]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.auth) return res.status(401).json({ error: "missing token" });
+    if (!roles.includes(req.auth.role)) {
+      return res.status(403).json({ error: "forbidden" });
+    }
+    next();
+  };
+}

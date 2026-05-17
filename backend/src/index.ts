@@ -6,6 +6,7 @@ import { connectToDatabase } from "./db.js";
 import "./models/index.js";
 import authRouter from "./routes/auth.js";
 import studentRouter from "./routes/student.js";
+import teacherRouter from "./routes/teacher.js";
 
 const app = express();
 app.use(cors());
@@ -13,6 +14,7 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/auth", authRouter);
 app.use("/api/student", studentRouter);
+app.use("/api/teacher", teacherRouter);
 
 app.get("/api/health", (_req, res) => {
   const states = ["disconnected", "connected", "connecting", "disconnecting"];
