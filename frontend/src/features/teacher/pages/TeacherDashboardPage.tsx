@@ -69,12 +69,24 @@ import {
   Line,
   Legend,
 } from "recharts";
+import { ApiError } from "@/shared/lib/api";
+import {
+  fetchExams,
+  createExam,
+  updateExam,
+  archiveExam as apiArchiveExam,
+  unarchiveExam as apiUnarchiveExam,
+  launchExam as apiLaunchExam,
+  fetchTeacherStudents,
+  type TeacherExam,
+  type DraftQuestion,
+  type ExamRules,
+  type StudentLite,
+  type ExamPayload,
+} from "../api";
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
-type DraftQuestion =
-  | { id: number; type: "mcq"; text: string; points: number; options: string[]; multiple: boolean; correct: number[] }
-  | { id: number; type: "text"; text: string; points: number }
-  | { id: number; type: "code"; text: string; points: number; language: string; starterCode: string };
+type Exam = TeacherExam;
 
 const CODE_TEMPLATES: Record<string, string> = {
   java: `public class Main {
@@ -108,19 +120,6 @@ int main() {
 }`,
 };
 
-interface ExamRules {
-  shuffleQuestions: boolean;
-  shuffleOptions: boolean;
-  allowBacktrack: boolean;
-  showResultsImmediately: boolean;
-  requireFullscreen: boolean;
-  blockTabSwitch: boolean;
-  preventCopyPaste: boolean;
-  showTimer: boolean;
-  warnBeforeEnd: boolean;
-  attempts: number;
-}
-
 const DEFAULT_EXAM_RULES: ExamRules = {
   shuffleQuestions: true,
   shuffleOptions: true,
@@ -134,27 +133,8 @@ const DEFAULT_EXAM_RULES: ExamRules = {
   attempts: 1,
 };
 
-interface Exam {
-  id: number;
-  title: string;
-  subject: string;
-  duration: number;
-  date: string;
-  students: number;
-  status: "scheduled" | "draft" | "completed" | "live" | "archived";
-  questions: number;
-  description?: string;
-  passingScore?: number;
-  selectedStudentIds?: number[];
-  importedFileName?: string;
-  draftQuestions?: DraftQuestion[];
-  launchMode?: "auto" | "manual";
-  previousStatus?: "scheduled" | "draft" | "completed";
-  rules?: ExamRules;
-}
-
 interface Student {
-  id: number;
+  id: string;
   name: string;
   email: string;
   exams: number;
@@ -175,48 +155,46 @@ const stats = [
 ];
 
 const recentExams: Exam[] = [
-  { id: 1, title: "Architecture Java EE", subject: "Génie logiciel", duration: 90, date: "09 Avril à 18:00", students: 45, status: "scheduled", questions: 12, description: "Examen couvrant les architectures d'entreprise Java, les patterns JEE, et les frameworks Spring/Hibernate.", passingScore: 12 },
-  { id: 2, title: "Base de données avancées", subject: "Systèmes d'information", duration: 120, date: "10 Avril à 14:00", students: 38, status: "scheduled", questions: 15, description: "Examen sur les bases de données relationnelles avancées, SQL, NoSQL et optimisation.", passingScore: 11 },
-  { id: 3, title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril à 10:00", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité des systèmes d'information et protection des données.", passingScore: 12 },
-];
-
-const allExamsData: Exam[] = [
-  { id: 1, title: "Architecture Java EE", subject: "Génie logiciel", duration: 90, date: "09 Avril 2026", students: 45, status: "scheduled", questions: 12, description: "Examen couvrant les architectures d'entreprise Java.", passingScore: 12 },
-  { id: 2, title: "Base de données avancées", subject: "Systèmes d'information", duration: 120, date: "10 Avril 2026", students: 38, status: "scheduled", questions: 15, description: "Examen sur les bases de données.", passingScore: 11 },
-  { id: 3, title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril 2026", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité informatique.", passingScore: 12 },
-  { id: 4, title: "Programmation Web", subject: "Développement", duration: 60, date: "15 Avril 2026", students: 31, status: "draft", questions: 10, description: "HTML, CSS, JavaScript et frameworks modernes.", passingScore: 10 },
-  { id: 5, title: "Intelligence Artificielle", subject: "IA & ML", duration: 150, date: "18 Avril 2026", students: 28, status: "scheduled", questions: 20, description: "Machine learning, réseaux de neurones et IA appliquée.", passingScore: 13 },
-  { id: 6, title: "Algorithmique Avancée", subject: "Informatique", duration: 120, date: "02 Avril 2026 à 09:00", students: 42, status: "completed", questions: 18, description: "Structures de données, complexité et algorithmes de graphes.", passingScore: 12, selectedStudentIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+  { id: "1", title: "Architecture Java EE", subject: "Génie logiciel", duration: 90, date: "09 Avril à 18:00", students: 45, status: "scheduled", questions: 12, description: "Examen couvrant les architectures d'entreprise Java, les patterns JEE, et les frameworks Spring/Hibernate.", passingScore: 12 },
+  { id: "2", title: "Base de données avancées", subject: "Systèmes d'information", duration: 120, date: "10 Avril à 14:00", students: 38, status: "scheduled", questions: 15, description: "Examen sur les bases de données relationnelles avancées, SQL, NoSQL et optimisation.", passingScore: 11 },
+  { id: "3", title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril à 10:00", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité des systèmes d'information et protection des données.", passingScore: 12 },
 ];
 
 const defaultModules = ["Génie logiciel", "Systèmes d'information", "Cybersécurité", "Développement", "IA & ML", "Réseaux"];
-const teacherModules = Array.from(new Set([...defaultModules, ...allExamsData.map(e => e.subject)]));
+const teacherModules = defaultModules;
+
+/** Hash déterministe d'un identifiant (les ids sont des ObjectId, pas des nombres). */
+function hashId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
 
 const allStudentsData: Student[] = [
-  { id: 1, name: "Marie Dubois", email: "marie.dubois@univ.fr", exams: 12, avg: 17.4, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-001" },
-  { id: 2, name: "Thomas Martin", email: "thomas.martin@univ.fr", exams: 10, avg: 18.4, status: "active", lastActive: "Il y a 5 min", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-002" },
-  { id: 3, name: "Sophie Bernard", email: "sophie.bernard@univ.fr", exams: 15, avg: 15.6, status: "inactive", lastActive: "Il y a 2 jours", department: "Cybersécurité", year: "M2", studentId: "ETU-2024-003" },
-  { id: 4, name: "Lucas Petit", email: "lucas.petit@univ.fr", exams: 8, avg: 17.0, status: "active", lastActive: "Il y a 1 heure", department: "IA & Data", year: "L3", studentId: "ETU-2024-004" },
-  { id: 5, name: "Emma Rousseau", email: "emma.rousseau@univ.fr", exams: 11, avg: 18.2, status: "active", lastActive: "Il y a 30 min", department: "Réseaux", year: "M1", studentId: "ETU-2024-005" },
-  { id: 6, name: "Hugo Lefebvre", email: "hugo.lefebvre@univ.fr", exams: 7, avg: 14.6, status: "inactive", lastActive: "Il y a 5 jours", department: "Informatique", year: "L3", studentId: "ETU-2024-006" },
-  { id: 7, name: "Léa Moreau", email: "lea.moreau@univ.fr", exams: 9, avg: 16.2, status: "active", lastActive: "Actif maintenant", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-007" },
-  { id: 8, name: "Adam Garcia", email: "adam.garcia@univ.fr", exams: 13, avg: 15.0, status: "active", lastActive: "Il y a 2 min", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-008" },
-  { id: 9, name: "Chloé Roux", email: "chloe.roux@univ.fr", exams: 8, avg: 18.8, status: "active", lastActive: "Il y a 10 min", department: "IA & Data", year: "M1", studentId: "ETU-2024-009" },
-  { id: 10, name: "Nathan Fournier", email: "nathan.fournier@univ.fr", exams: 11, avg: 13.4, status: "active", lastActive: "Il y a 25 min", department: "Réseaux", year: "L3", studentId: "ETU-2024-010" },
-  { id: 11, name: "Inès Vincent", email: "ines.vincent@univ.fr", exams: 14, avg: 17.9, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-011" },
-  { id: 12, name: "Maxime Girard", email: "maxime.girard@univ.fr", exams: 10, avg: 14.8, status: "inactive", lastActive: "Il y a 3 jours", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-012" },
-  { id: 13, name: "Camille Bonnet", email: "camille.bonnet@univ.fr", exams: 12, avg: 16.6, status: "active", lastActive: "Il y a 1 heure", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-013" },
-  { id: 14, name: "Yanis Lambert", email: "yanis.lambert@univ.fr", exams: 6, avg: 12.8, status: "active", lastActive: "Il y a 15 min", department: "IA & Data", year: "L2", studentId: "ETU-2024-014" },
-  { id: 15, name: "Mila Henry", email: "mila.henry@univ.fr", exams: 9, avg: 19.2, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M1", studentId: "ETU-2024-015" },
-  { id: 16, name: "Raphaël Mercier", email: "raphael.mercier@univ.fr", exams: 13, avg: 15.4, status: "active", lastActive: "Il y a 4 min", department: "Réseaux", year: "M2", studentId: "ETU-2024-016" },
-  { id: 17, name: "Sara Lopez", email: "sara.lopez@univ.fr", exams: 11, avg: 17.0, status: "active", lastActive: "Il y a 50 min", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-017" },
-  { id: 18, name: "Ilyas Robert", email: "ilyas.robert@univ.fr", exams: 7, avg: 13.6, status: "inactive", lastActive: "Il y a 1 semaine", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-018" },
-  { id: 19, name: "Lina Faure", email: "lina.faure@univ.fr", exams: 12, avg: 18.0, status: "active", lastActive: "Il y a 8 min", department: "IA & Data", year: "M1", studentId: "ETU-2024-019" },
-  { id: 20, name: "Tom Leroy", email: "tom.leroy@univ.fr", exams: 10, avg: 16.2, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "L3", studentId: "ETU-2024-020" },
-  { id: 21, name: "Anaïs Perrin", email: "anais.perrin@univ.fr", exams: 14, avg: 18.4, status: "active", lastActive: "Il y a 12 min", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-021" },
-  { id: 22, name: "Mehdi Blanc", email: "mehdi.blanc@univ.fr", exams: 8, avg: 14.2, status: "active", lastActive: "Il y a 35 min", department: "Réseaux", year: "L2", studentId: "ETU-2024-022" },
-  { id: 23, name: "Zoé Aubert", email: "zoe.aubert@univ.fr", exams: 11, avg: 17.6, status: "active", lastActive: "Actif maintenant", department: "Cybersécurité", year: "M1", studentId: "ETU-2024-023" },
-  { id: 24, name: "Noah Carpentier", email: "noah.carpentier@univ.fr", exams: 9, avg: 15.8, status: "active", lastActive: "Il y a 6 min", department: "IA & Data", year: "M2", studentId: "ETU-2024-024" },
+  { id: "1", name: "Marie Dubois", email: "marie.dubois@univ.fr", exams: 12, avg: 17.4, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-001" },
+  { id: "2", name: "Thomas Martin", email: "thomas.martin@univ.fr", exams: 10, avg: 18.4, status: "active", lastActive: "Il y a 5 min", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-002" },
+  { id: "3", name: "Sophie Bernard", email: "sophie.bernard@univ.fr", exams: 15, avg: 15.6, status: "inactive", lastActive: "Il y a 2 jours", department: "Cybersécurité", year: "M2", studentId: "ETU-2024-003" },
+  { id: "4", name: "Lucas Petit", email: "lucas.petit@univ.fr", exams: 8, avg: 17.0, status: "active", lastActive: "Il y a 1 heure", department: "IA & Data", year: "L3", studentId: "ETU-2024-004" },
+  { id: "5", name: "Emma Rousseau", email: "emma.rousseau@univ.fr", exams: 11, avg: 18.2, status: "active", lastActive: "Il y a 30 min", department: "Réseaux", year: "M1", studentId: "ETU-2024-005" },
+  { id: "6", name: "Hugo Lefebvre", email: "hugo.lefebvre@univ.fr", exams: 7, avg: 14.6, status: "inactive", lastActive: "Il y a 5 jours", department: "Informatique", year: "L3", studentId: "ETU-2024-006" },
+  { id: "7", name: "Léa Moreau", email: "lea.moreau@univ.fr", exams: 9, avg: 16.2, status: "active", lastActive: "Actif maintenant", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-007" },
+  { id: "8", name: "Adam Garcia", email: "adam.garcia@univ.fr", exams: 13, avg: 15.0, status: "active", lastActive: "Il y a 2 min", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-008" },
+  { id: "9", name: "Chloé Roux", email: "chloe.roux@univ.fr", exams: 8, avg: 18.8, status: "active", lastActive: "Il y a 10 min", department: "IA & Data", year: "M1", studentId: "ETU-2024-009" },
+  { id: "10", name: "Nathan Fournier", email: "nathan.fournier@univ.fr", exams: 11, avg: 13.4, status: "active", lastActive: "Il y a 25 min", department: "Réseaux", year: "L3", studentId: "ETU-2024-010" },
+  { id: "11", name: "Inès Vincent", email: "ines.vincent@univ.fr", exams: 14, avg: 17.9, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-011" },
+  { id: "12", name: "Maxime Girard", email: "maxime.girard@univ.fr", exams: 10, avg: 14.8, status: "inactive", lastActive: "Il y a 3 jours", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-012" },
+  { id: "13", name: "Camille Bonnet", email: "camille.bonnet@univ.fr", exams: 12, avg: 16.6, status: "active", lastActive: "Il y a 1 heure", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-013" },
+  { id: "14", name: "Yanis Lambert", email: "yanis.lambert@univ.fr", exams: 6, avg: 12.8, status: "active", lastActive: "Il y a 15 min", department: "IA & Data", year: "L2", studentId: "ETU-2024-014" },
+  { id: "15", name: "Mila Henry", email: "mila.henry@univ.fr", exams: 9, avg: 19.2, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M1", studentId: "ETU-2024-015" },
+  { id: "16", name: "Raphaël Mercier", email: "raphael.mercier@univ.fr", exams: 13, avg: 15.4, status: "active", lastActive: "Il y a 4 min", department: "Réseaux", year: "M2", studentId: "ETU-2024-016" },
+  { id: "17", name: "Sara Lopez", email: "sara.lopez@univ.fr", exams: 11, avg: 17.0, status: "active", lastActive: "Il y a 50 min", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-017" },
+  { id: "18", name: "Ilyas Robert", email: "ilyas.robert@univ.fr", exams: 7, avg: 13.6, status: "inactive", lastActive: "Il y a 1 semaine", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-018" },
+  { id: "19", name: "Lina Faure", email: "lina.faure@univ.fr", exams: 12, avg: 18.0, status: "active", lastActive: "Il y a 8 min", department: "IA & Data", year: "M1", studentId: "ETU-2024-019" },
+  { id: "20", name: "Tom Leroy", email: "tom.leroy@univ.fr", exams: 10, avg: 16.2, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "L3", studentId: "ETU-2024-020" },
+  { id: "21", name: "Anaïs Perrin", email: "anais.perrin@univ.fr", exams: 14, avg: 18.4, status: "active", lastActive: "Il y a 12 min", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-021" },
+  { id: "22", name: "Mehdi Blanc", email: "mehdi.blanc@univ.fr", exams: 8, avg: 14.2, status: "active", lastActive: "Il y a 35 min", department: "Réseaux", year: "L2", studentId: "ETU-2024-022" },
+  { id: "23", name: "Zoé Aubert", email: "zoe.aubert@univ.fr", exams: 11, avg: 17.6, status: "active", lastActive: "Actif maintenant", department: "Cybersécurité", year: "M1", studentId: "ETU-2024-023" },
+  { id: "24", name: "Noah Carpentier", email: "noah.carpentier@univ.fr", exams: 9, avg: 15.8, status: "active", lastActive: "Il y a 6 min", department: "IA & Data", year: "M2", studentId: "ETU-2024-024" },
 ];
 
 const fraudAlerts = [
@@ -617,15 +595,6 @@ function frDateToIso(input: string): string {
   return `${year}-${String(monthIdx + 1).padStart(2, "0")}-${day}T${hours}:${minutes}`;
 }
 
-function isoToFrDate(iso: string): string {
-  if (!iso) return "";
-  const [datePart, timePart] = iso.split("T");
-  const [y, mo, d] = datePart.split("-");
-  if (!y || !mo || !d) return iso;
-  const base = `${d} ${FR_MONTHS[Number(mo) - 1]} ${y}`;
-  return timePart ? `${base} à ${timePart.slice(0, 5)}` : base;
-}
-
 // ─── Create Exam Modal ─────────────────────────────────────────────────────────
 function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { onClose: () => void; onCreated?: (exam: Exam) => void; initialExam?: Exam; mode?: "edit" | "duplicate" }) {
   const isDuplicate = mode === "duplicate" && !!initialExam;
@@ -643,7 +612,7 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
   );
   const [examDesc, setExamDesc] = useState(initialExam?.description ?? "");
   const [passingScore, setPassingScore] = useState(initialExam?.passingScore ?? 12);
-  const [selectedStudents, setSelectedStudents] = useState<number[]>(
+  const [selectedStudents, setSelectedStudents] = useState<string[]>(
     isDuplicate ? [] : (initialExam?.selectedStudentIds ?? [])
   );
   const [launchMode, setLaunchMode] = useState<"auto" | "manual">(initialExam?.launchMode ?? "auto");
@@ -654,13 +623,22 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
       ? (initialExam!.draftQuestions ?? []).map(q => ({ ...q, id: Date.now() + Math.random() }))
       : (initialExam?.draftQuestions ?? [])
   );
+  const [students, setStudents] = useState<StudentLite[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchTeacherStudents()
+      .then(setStudents)
+      .catch(() => setError("Impossible de charger la liste des étudiants."));
+  }, []);
 
   const step1Complete = examTitle.trim() !== "" && examSubject.trim() !== "" && examDuration > 0 && examDate !== "";
-  const filteredStudents = allStudentsData.filter(s =>
+  const filteredStudents = students.filter(s =>
     s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
     s.email.toLowerCase().includes(studentSearch.toLowerCase())
   );
-  const toggleStudent = (id: number) =>
+  const toggleStudent = (id: string) =>
     setSelectedStudents(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   const MIN_QUESTIONS = 5;
@@ -696,25 +674,39 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
     setQuestions(prev => prev.map(q => q.id === id ? { ...q, ...patch } as DraftQuestion : q));
   const removeQuestion = (id: number) => setQuestions(prev => prev.filter(q => q.id !== id));
 
-  const buildExam = (status: "draft" | "scheduled"): Exam => ({
-    id: isDuplicate || !initialExam ? Date.now() : initialExam.id,
+  const buildPayload = (status: "draft" | "scheduled"): ExamPayload => ({
     title: examTitle.trim() || "Examen sans titre",
     subject: examSubject.trim() || "Non spécifié",
     duration: examDuration,
-    date: examDate ? isoToFrDate(examDate) : "",
-    students: selectedStudents.length,
-    status,
-    questions: questions.length,
+    date: examDate,
     description: examDesc,
     passingScore,
-    selectedStudentIds: selectedStudents,
-    importedFileName,
-    draftQuestions: questions,
+    studentIds: selectedStudents,
     launchMode,
+    importedFileName,
+    questions,
     rules: examRules,
+    status,
   });
-  const saveAsDraft = () => { onCreated?.(buildExam("draft")); onClose(); };
-  const schedule = () => { onCreated?.(buildExam("scheduled")); onClose(); };
+  const persist = async (status: "draft" | "scheduled") => {
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const payload = buildPayload(status);
+      const isEdit = !!initialExam && !isDuplicate;
+      const exam = isEdit
+        ? await updateExam(initialExam!.id, payload)
+        : await createExam(payload);
+      onCreated?.(exam);
+      onClose();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Échec de l'enregistrement de l'examen.");
+      setSubmitting(false);
+    }
+  };
+  const saveAsDraft = () => { void persist("draft"); };
+  const schedule = () => { void persist("scheduled"); };
 
   return (
     <ModalBase title={
@@ -1256,6 +1248,11 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
         </div>
       )}
 
+      {error && (
+        <div className="mx-4 mt-1 rounded-xl border border-red-200 bg-red-50 px-4 py-3 sm:mx-6">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
       <div className="flex flex-col gap-3 rounded-b-2xl border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <button
           onClick={step === 1 ? onClose : () => setStep((step - 1) as 1 | 2 | 3)}
@@ -1266,9 +1263,10 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={saveAsDraft}
-            className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
+            disabled={submitting}
+            className="px-4 py-2.5 rounded-xl border border-[#E5E5E5] text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Enregistrer comme brouillon
+            {submitting ? "Enregistrement…" : "Enregistrer comme brouillon"}
           </button>
           {step === 1 && (
             <button
@@ -1312,7 +1310,7 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
           {step === 4 && (
             <button
               onClick={schedule}
-              disabled={(selectedStudents.length === 0 && !importedFileName) || !questionsValid || !pointsValid || !allPointsInRange}
+              disabled={submitting || (selectedStudents.length === 0 && !importedFileName) || !questionsValid || !pointsValid || !allPointsInRange}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-[#222222] text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
             >
               {initialExam?.status === "scheduled" ? (
@@ -1665,7 +1663,7 @@ function OverviewTab({
 }
 
 // ─── Exams Tab ─────────────────────────────────────────────────────────────────
-function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: () => void; exams: Exam[]; setExams: React.Dispatch<React.SetStateAction<Exam[]>>; onMonitor: (exam: Exam) => void }) {
+function ExamsTab({ onCreateExam, exams, setExams, onMonitor, loading }: { onCreateExam: () => void; exams: Exam[]; setExams: React.Dispatch<React.SetStateAction<Exam[]>>; onMonitor: (exam: Exam) => void; loading: boolean }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
@@ -1673,6 +1671,7 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
   const [duplicatingExam, setDuplicatingExam] = useState<Exam | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const filtered = exams.filter(e => {
     const matchSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) || e.subject.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1682,14 +1681,30 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
     return matchSearch && matchStatus;
   });
 
-  const archiveExam = (id: number) => setExams(prev => prev.map(e => {
-    if (e.id !== id || e.status === "archived" || e.status === "live") return e;
-    return { ...e, status: "archived", previousStatus: e.status as "scheduled" | "draft" | "completed" };
-  }));
-  const unarchiveExam = (id: number) => setExams(prev => prev.map(e => {
-    if (e.id !== id || e.status !== "archived") return e;
-    return { ...e, status: e.previousStatus ?? "completed", previousStatus: undefined };
-  }));
+  const replaceExam = (updated: Exam) =>
+    setExams(prev => prev.map(e => e.id === updated.id ? updated : e));
+
+  const archiveExam = async (id: string) => {
+    setBusyId(id);
+    try { replaceExam(await apiArchiveExam(id)); }
+    catch { /* l'examen reste inchangé */ }
+    finally { setBusyId(null); }
+  };
+  const unarchiveExam = async (id: string) => {
+    setBusyId(id);
+    try { replaceExam(await apiUnarchiveExam(id)); }
+    catch { /* l'examen reste inchangé */ }
+    finally { setBusyId(null); }
+  };
+  const launchExam = async (exam: Exam) => {
+    setBusyId(exam.id);
+    try {
+      const updated = await apiLaunchExam(exam.id);
+      replaceExam(updated);
+      onMonitor(updated);
+    } catch { /* l'examen reste inchangé */ }
+    finally { setBusyId(null); }
+  };
 
   return (
     <div className="space-y-6">
@@ -1754,7 +1769,12 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
       </div>
 
       {/* Exams Grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <DashboardCard className="p-12 flex flex-col items-center gap-3">
+          <Clock className="w-10 h-10 text-[#CCCCCC] animate-pulse" />
+          <p className="text-sm text-[#666666]">Chargement des examens…</p>
+        </DashboardCard>
+      ) : filtered.length === 0 ? (
         <DashboardCard className="p-12 flex flex-col items-center gap-3">
           <FileText className="w-10 h-10 text-[#CCCCCC]" />
           <p className="text-sm text-[#666666]">Aucun examen trouvé</p>
@@ -1809,12 +1829,9 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
               <div className="flex flex-wrap items-center gap-2">
                 {exam.status === "scheduled" && (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setExams(prev => prev.map(x => x.id === exam.id ? { ...x, status: "live" } : x));
-                      onMonitor({ ...exam, status: "live" });
-                    }}
-                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors"
+                    onClick={(e) => { e.stopPropagation(); void launchExam(exam); }}
+                    disabled={busyId === exam.id}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Play className="w-3.5 h-3.5" />
                     Lancer
@@ -1850,8 +1867,9 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                 )}
                 {exam.status !== "live" && exam.status !== "archived" && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); archiveExam(exam.id); }}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium border border-[rgba(117,195,214,0.22)] text-[var(--cyber-muted-text)] hover:text-[var(--cyber-text)] hover:border-[rgba(123,241,255,0.4)] transition-colors"
+                    onClick={(e) => { e.stopPropagation(); void archiveExam(exam.id); }}
+                    disabled={busyId === exam.id}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium border border-[rgba(117,195,214,0.22)] text-[var(--cyber-muted-text)] hover:text-[var(--cyber-text)] hover:border-[rgba(123,241,255,0.4)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Archiver l'examen"
                   >
                     <Archive className="w-3.5 h-3.5" />
@@ -1859,8 +1877,9 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor }: { onCreateExam: 
                 )}
                 {exam.status === "archived" && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); unarchiveExam(exam.id); }}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium border border-[rgba(117,195,214,0.22)] text-[var(--cyber-muted-text)] hover:text-[var(--cyber-text)] hover:border-[rgba(123,241,255,0.4)] transition-colors"
+                    onClick={(e) => { e.stopPropagation(); void unarchiveExam(exam.id); }}
+                    disabled={busyId === exam.id}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium border border-[rgba(117,195,214,0.22)] text-[var(--cyber-muted-text)] hover:text-[var(--cyber-text)] hover:border-[rgba(123,241,255,0.4)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Désarchiver l'examen"
                   >
                     <ArchiveRestore className="w-3.5 h-3.5" />
@@ -1895,7 +1914,7 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
   //   JOIN exams ON exams.id = submissions.exam_id
   //  WHERE exams.teacher_id = :currentTeacherId AND exams.status IN ('completed', 'live')
   const takenExams = exams.filter(e => e.status === "completed" || e.status === "live");
-  const rosterStudentIds = new Set<number>(
+  const rosterStudentIds = new Set<string>(
     takenExams.flatMap(e => e.selectedStudentIds ?? [])
   );
   const teacherStudents = allStudentsData.filter(s => rosterStudentIds.has(s.id));
@@ -1917,7 +1936,7 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
   const examFilterStudentIds = examFilter === "all"
     ? null
     : new Set(takenExams.find(e => e.id.toString() === examFilter)?.selectedStudentIds ?? []);
-  const liveExamStudentIds = new Set<number>(
+  const liveExamStudentIds = new Set<string>(
     exams.filter(e => e.status === "live").flatMap(e => e.selectedStudentIds ?? [])
   );
   // Actif = étudiant dans un examen en cours ou marqué actif par une activité récente.
@@ -2142,7 +2161,7 @@ function AnalyticsTab({ exams }: { exams: Exam[] }) {
     : rankingExamOptions.find(e => e.id.toString() === rankingExamFilter) ?? null;
   const getExamScore = (student: Student, exam: Exam | null) => {
     if (!exam) return student.avg;
-    const variation = (((student.id * 7 + exam.id * 5) % 9) - 4) * 0.35;
+    const variation = (((hashId(student.id) * 7 + hashId(exam.id) * 5) % 9) - 4) * 0.35;
     return Math.min(20, Math.max(0, Math.round((student.avg + variation) * 10) / 10));
   };
   const rankedStudents = (selectedRankingExam
@@ -2317,11 +2336,11 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   const [locked, setLocked] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [messageDraft, setMessageDraft] = useState("");
-  const [messageTarget, setMessageTarget] = useState<{ id: number; name: string } | null>(null);
+  const [messageTarget, setMessageTarget] = useState<{ id: string; name: string } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [kickTarget, setKickTarget] = useState<{ id: number; name: string } | null>(null);
+  const [kickTarget, setKickTarget] = useState<{ id: string; name: string } | null>(null);
   const [kickReason, setKickReason] = useState("");
-  const [kickedIds, setKickedIds] = useState<number[]>([]);
+  const [kickedIds, setKickedIds] = useState<string[]>([]);
   const [quickConfirm, setQuickConfirm] = useState<"extend" | "lock-on" | "lock-off" | null>(null);
   const quickConfirmCancelRef = useRef<HTMLButtonElement>(null);
   const [messageConfirmOpen, setMessageConfirmOpen] = useState(false);
@@ -2972,9 +2991,17 @@ export function TeacherDashboard() {
   const [showImport, setShowImport] = useState(false);
   const [overviewExamDetails, setOverviewExamDetails] = useState<Exam | null>(null);
   const [reviewAlert, setReviewAlert] = useState<FraudAlert | null>(null);
-  const [exams, setExams] = useState<Exam[]>(allExamsData);
-  const [liveExamId, setLiveExamId] = useState<number | null>(null);
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [examsLoading, setExamsLoading] = useState(true);
+  const [liveExamId, setLiveExamId] = useState<string | null>(null);
   const liveExam = liveExamId !== null ? exams.find(e => e.id === liveExamId) ?? null : null;
+
+  useEffect(() => {
+    fetchExams()
+      .then(setExams)
+      .catch(() => {})
+      .finally(() => setExamsLoading(false));
+  }, []);
 
   const handleLogoClick = () => {
     setActiveTab("overview");
@@ -3120,7 +3147,7 @@ export function TeacherDashboard() {
             onImportData={() => setShowImport(true)}
           />
         )}
-        {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} exams={exams} setExams={setExams} onMonitor={(exam) => setLiveExamId(exam.id)} />}
+        {activeTab === "exams" && <ExamsTab onCreateExam={() => setShowCreateExam(true)} exams={exams} setExams={setExams} onMonitor={(exam) => setLiveExamId(exam.id)} loading={examsLoading} />}
         {activeTab === "students" && <StudentsTab exams={exams} />}
         {activeTab === "analytics" && <AnalyticsTab exams={exams} />}
       </main>

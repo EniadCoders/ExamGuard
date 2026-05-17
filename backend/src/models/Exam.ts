@@ -14,12 +14,30 @@ const questionSchema = new Schema(
     // mcq
     options: { type: [mcqOptionSchema], default: undefined },
     correctOptionId: { type: String },
+    correctOptionIds: { type: [String], default: undefined },
+    multiple: { type: Boolean },
     // text
     placeholder: { type: String },
     minWords: { type: Number },
     // code
     language: { type: String, enum: ["java", "python", "cpp", "javascript", "c"] },
     starterCode: { type: String },
+  },
+  { _id: false },
+);
+
+const examRulesSchema = new Schema(
+  {
+    shuffleQuestions: { type: Boolean, default: true },
+    shuffleOptions: { type: Boolean, default: true },
+    allowBacktrack: { type: Boolean, default: true },
+    showResultsImmediately: { type: Boolean, default: false },
+    requireFullscreen: { type: Boolean, default: true },
+    blockTabSwitch: { type: Boolean, default: true },
+    preventCopyPaste: { type: Boolean, default: true },
+    showTimer: { type: Boolean, default: true },
+    warnBeforeEnd: { type: Boolean, default: true },
+    attempts: { type: Number, default: 1 },
   },
   { _id: false },
 );
@@ -34,9 +52,17 @@ const examSchema = new Schema(
     scheduledAt: { type: Date },
     status: {
       type: String,
-      enum: ["draft", "scheduled", "ongoing", "completed"],
+      enum: ["draft", "scheduled", "ongoing", "live", "completed", "archived"],
       default: "draft",
     },
+    previousStatus: {
+      type: String,
+      enum: ["draft", "scheduled", "completed"],
+    },
+    passingScore: { type: Number, default: 12 },
+    launchMode: { type: String, enum: ["auto", "manual"], default: "auto" },
+    importedFileName: { type: String, default: "" },
+    rules: { type: examRulesSchema, default: () => ({}) },
     createdBy: { type: Types.ObjectId, ref: "User", required: true },
     enrolledStudents: { type: [{ type: Types.ObjectId, ref: "User" }], default: [] },
     totalPoints: { type: Number, default: 0 },
