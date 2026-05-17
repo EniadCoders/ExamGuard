@@ -300,6 +300,92 @@ router.delete("/exams/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── Vue d'ensemble du dashboard ───────────────────────────────────────────
+
+router.get("/dashboard", async (req, res) => {
+  const teacherId = req.auth!.userId;
+
+  const exams = await ExamModel.find({ createdBy: teacherId }).lean();
+  const examIds = exams.map((e) => e._id);
+  const examById = new Map(exams.map((e) => [String(e._id), e]));
+
+  const attempts = await ExamAttemptModel.find({ examId: { $in: examIds } })
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  // Statistiques
+  const activeExams = exams.filter(
+    (e) => e.status === "live" || e.status === "scheduled",
+  ).length;
+  const studentsOnline = new Set(
+    attempts
+      .filter((a) => a.status === "in-progress")
+      .map((a) => String(a.studentId)),
+  ).size;
+  const fraudAlerts = attempts.reduce(
+    (sum, a) => sum + (a.antiCheatEvents?.length ?? 0),
+    0,
+  );
+  const gradedAttempts = attempts.filter(
+    (a) => a.status === "graded" && a.score != null,
+  );
+  const passedCount = gradedAttempts.filter((a) => {
+    const exam = examById.get(String(a.examId));
+    return (a.score ?? 0) >= (exam?.passingScore ?? 12);
+  }).length;
+  const successRate = gradedAttempts.length
+    ? Math.round((passedCount / gradedAttempts.length) * 100)
+    : 0;
+
+  // Flux d'activité
+  const events: { id: string; text: string; ts: Date; type: "info" | "alert" }[] = [];
+  for (const e of exams) {
+    if (e.createdAt) {
+      events.push({
+        id: `exam-${e._id}`,
+        text: `Examen « ${e.title} » créé`,
+        ts: new Date(e.createdAt),
+        type: "info",
+      });
+    }
+  }
+  for (const a of attempts) {
+    const exam = examById.get(String(a.examId));
+    if (!exam) continue;
+    if (a.submittedAt) {
+      events.push({
+        id: `sub-${a._id}`,
+        text: `${exam.title} — copie rendue`,
+        ts: new Date(a.submittedAt),
+        type: "info",
+      });
+    }
+    if ((a.antiCheatEvents?.length ?? 0) > 0) {
+      const last = a.antiCheatEvents[a.antiCheatEvents.length - 1];
+      events.push({
+        id: `ac-${a._id}`,
+        text: `${exam.title} — alerte anti-triche`,
+        ts: new Date(last?.timestamp ?? a.updatedAt ?? Date.now()),
+        type: "alert",
+      });
+    }
+  }
+  const activity = events
+    .sort((x, y) => y.ts.getTime() - x.ts.getTime())
+    .slice(0, 6)
+    .map((e) => ({
+      id: e.id,
+      text: e.text,
+      time: `${pad(e.ts.getUTCHours())}:${pad(e.ts.getUTCMinutes())}`,
+      type: e.type,
+    }));
+
+  res.json({
+    stats: { activeExams, studentsOnline, fraudAlerts, successRate },
+    activity,
+  });
+});
+
 // ─── Étudiants — liste légère (pour l'inscription à un examen) ─────────────
 
 router.get("/students", async (_req, res) => {

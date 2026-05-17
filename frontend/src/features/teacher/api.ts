@@ -122,6 +122,31 @@ export async function deleteExam(id: string): Promise<void> {
   await api(`/teacher/exams/${id}`, { method: "DELETE" });
 }
 
+// ─── Dashboard overview ────────────────────────────────────────────────────
+
+export interface DashboardStats {
+  activeExams: number;
+  studentsOnline: number;
+  fraudAlerts: number;
+  successRate: number;
+}
+
+export interface ActivityItem {
+  id: string;
+  text: string;
+  time: string;
+  type: "info" | "alert";
+}
+
+export interface TeacherDashboardData {
+  stats: DashboardStats;
+  activity: ActivityItem[];
+}
+
+export function fetchTeacherDashboard(): Promise<TeacherDashboardData> {
+  return api<TeacherDashboardData>("/teacher/dashboard");
+}
+
 // ─── Students ──────────────────────────────────────────────────────────────
 
 export async function fetchTeacherStudents(): Promise<StudentLite[]> {

@@ -78,7 +78,9 @@ import {
   unarchiveExam as apiUnarchiveExam,
   launchExam as apiLaunchExam,
   fetchTeacherStudents,
+  fetchTeacherDashboard,
   type TeacherExam,
+  type TeacherDashboardData,
   type DraftQuestion,
   type ExamRules,
   type StudentLite,
@@ -147,17 +149,11 @@ interface Student {
 }
 
 // ─── Dashboard data ──────────────────────────────────────────────────────────
-const stats = [
-  { label: "Examens actifs", value: "12", change: "+3", trend: "up" as const, icon: FileText, desc: "vs. semaine dernière" },
-  { label: "Étudiants en ligne", value: "247", change: "+18", trend: "up" as const, icon: Users, desc: "en ce moment" },
-  { label: "Alertes fraude", value: "8", change: "+2", trend: "alert" as const, icon: AlertTriangle, desc: "dernières 24h" },
-  { label: "Taux de réussite", value: "87%", change: "+5%", trend: "up" as const, icon: TrendingUp, desc: "ce semestre" },
-];
-
-const recentExams: Exam[] = [
-  { id: "1", title: "Architecture Java EE", subject: "Génie logiciel", duration: 90, date: "09 Avril à 18:00", students: 45, status: "scheduled", questions: 12, description: "Examen couvrant les architectures d'entreprise Java, les patterns JEE, et les frameworks Spring/Hibernate.", passingScore: 12 },
-  { id: "2", title: "Base de données avancées", subject: "Systèmes d'information", duration: 120, date: "10 Avril à 14:00", students: 38, status: "scheduled", questions: 15, description: "Examen sur les bases de données relationnelles avancées, SQL, NoSQL et optimisation.", passingScore: 11 },
-  { id: "3", title: "Sécurité informatique", subject: "Cybersécurité", duration: 90, date: "12 Avril à 10:00", students: 52, status: "draft", questions: 8, description: "Introduction à la sécurité des systèmes d'information et protection des données.", passingScore: 12 },
+const STAT_TEMPLATES = [
+  { key: "activeExams" as const, label: "Examens actifs", icon: FileText, trend: "up" as const, desc: "planifiés et en cours" },
+  { key: "studentsOnline" as const, label: "Étudiants en ligne", icon: Users, trend: "up" as const, desc: "en ce moment" },
+  { key: "fraudAlerts" as const, label: "Alertes fraude", icon: AlertTriangle, trend: "alert" as const, desc: "total détecté" },
+  { key: "successRate" as const, label: "Taux de réussite", icon: TrendingUp, trend: "up" as const, desc: "examens corrigés" },
 ];
 
 const defaultModules = ["Génie logiciel", "Systèmes d'information", "Cybersécurité", "Développement", "IA & ML", "Réseaux"];
@@ -202,14 +198,6 @@ const fraudAlerts = [
   { id: 2, student: "Thomas Martin", initials: "TM", exam: "Algorithmique Avancée", type: "Détection de mouvement suspect", time: "Il y a 5 min", severity: "medium" },
   { id: 3, student: "Sophie Bernard", initials: "SB", exam: "Réseaux & Sécurité", type: "Comportement suspect détecté", time: "Il y a 8 min", severity: "high" },
   { id: 4, student: "Lucas Petit", initials: "LP", exam: "Architecture Java EE", type: "Tentative de copier-coller", time: "Il y a 12 min", severity: "medium" },
-];
-
-const activityFeed = [
-  { id: 1, text: "Examen 'Java EE' démarré", time: "10:02", type: "start" },
-  { id: 2, text: "Marie Dubois — alerte fraude", time: "10:05", type: "alert" },
-  { id: 3, text: "47 étudiants connectés", time: "10:08", type: "info" },
-  { id: 4, text: "Thomas Martin — avertissement", time: "10:11", type: "warn" },
-  { id: 5, text: "Examen 'BDD' planifié", time: "10:15", type: "info" },
 ];
 
 const analyticsData = [
@@ -1520,6 +1508,7 @@ function ImportDataModal({ onClose }: { onClose: () => void }) {
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 function OverviewTab({
+  exams,
   onGoToExams,
   onGoToAnalytics,
   onExamDetails,
@@ -1527,6 +1516,7 @@ function OverviewTab({
   onCreateExam,
   onImportData,
 }: {
+  exams: Exam[];
   onGoToExams: () => void;
   onGoToAnalytics: () => void;
   onExamDetails: (exam: Exam) => void;
@@ -1534,13 +1524,30 @@ function OverviewTab({
   onCreateExam: () => void;
   onImportData: () => void;
 }) {
+  const [dashboard, setDashboard] = useState<TeacherDashboardData | null>(null);
+  useEffect(() => {
+    fetchTeacherDashboard().then(setDashboard).catch(() => {});
+  }, []);
+  const recentExams = exams.slice(0, 4);
+
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <StatCard key={stat.label} {...stat} />
-        ))}
+        {STAT_TEMPLATES.map((t) => {
+          const raw = dashboard?.stats[t.key] ?? 0;
+          return (
+            <StatCard
+              key={t.key}
+              label={t.label}
+              value={t.key === "successRate" ? `${raw}%` : String(raw)}
+              change=""
+              trend={t.trend}
+              icon={t.icon}
+              desc={t.desc}
+            />
+          );
+        })}
       </div>
 
       {/* Two Column Layout */}
@@ -1555,6 +1562,11 @@ function OverviewTab({
           bodyClassName="p-0"
         >
           <div>
+            {recentExams.length === 0 && (
+              <p className="px-6 py-8 text-center text-sm text-[var(--cyber-muted-text)]">
+                Aucun examen pour le moment.
+              </p>
+            )}
             {recentExams.map((exam) => (
               <div
                 key={exam.id}
@@ -1605,7 +1617,12 @@ function OverviewTab({
             icon={Activity}
           >
             <div className="space-y-3">
-              {activityFeed.map((item) => (
+              {(dashboard?.activity ?? []).length === 0 && (
+                <p className="py-4 text-center text-sm text-[var(--cyber-muted-text)]">
+                  Aucune activité récente.
+                </p>
+              )}
+              {(dashboard?.activity ?? []).map((item) => (
                 <div key={item.id} className="rounded-2xl border border-[rgba(117,195,214,0.1)] bg-[rgba(11,27,38,0.5)] p-3">
                   <div className="flex items-start gap-3">
                     <div className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${
@@ -3139,6 +3156,7 @@ export function TeacherDashboard() {
       <main className="max-w-[1600px] mx-auto px-4 py-6 sm:px-6 sm:py-8">
         {activeTab === "overview" && (
           <OverviewTab
+            exams={exams}
             onGoToExams={() => setActiveTab("exams")}
             onGoToAnalytics={() => setActiveTab("analytics")}
             onExamDetails={(exam) => setOverviewExamDetails(exam)}
