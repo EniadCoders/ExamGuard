@@ -168,32 +168,6 @@ const STAT_TEMPLATES = [
 const defaultModules = ["Génie logiciel", "Systèmes d'information", "Cybersécurité", "Développement", "IA & ML", "Réseaux"];
 const teacherModules = defaultModules;
 
-const allStudentsData: Student[] = [
-  { id: "1", name: "Marie Dubois", email: "marie.dubois@univ.fr", exams: 12, avg: 17.4, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-001" },
-  { id: "2", name: "Thomas Martin", email: "thomas.martin@univ.fr", exams: 10, avg: 18.4, status: "active", lastActive: "Il y a 5 min", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-002" },
-  { id: "3", name: "Sophie Bernard", email: "sophie.bernard@univ.fr", exams: 15, avg: 15.6, status: "inactive", lastActive: "Il y a 2 jours", department: "Cybersécurité", year: "M2", studentId: "ETU-2024-003" },
-  { id: "4", name: "Lucas Petit", email: "lucas.petit@univ.fr", exams: 8, avg: 17.0, status: "active", lastActive: "Il y a 1 heure", department: "IA & Data", year: "L3", studentId: "ETU-2024-004" },
-  { id: "5", name: "Emma Rousseau", email: "emma.rousseau@univ.fr", exams: 11, avg: 18.2, status: "active", lastActive: "Il y a 30 min", department: "Réseaux", year: "M1", studentId: "ETU-2024-005" },
-  { id: "6", name: "Hugo Lefebvre", email: "hugo.lefebvre@univ.fr", exams: 7, avg: 14.6, status: "inactive", lastActive: "Il y a 5 jours", department: "Informatique", year: "L3", studentId: "ETU-2024-006" },
-  { id: "7", name: "Léa Moreau", email: "lea.moreau@univ.fr", exams: 9, avg: 16.2, status: "active", lastActive: "Actif maintenant", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-007" },
-  { id: "8", name: "Adam Garcia", email: "adam.garcia@univ.fr", exams: 13, avg: 15.0, status: "active", lastActive: "Il y a 2 min", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-008" },
-  { id: "9", name: "Chloé Roux", email: "chloe.roux@univ.fr", exams: 8, avg: 18.8, status: "active", lastActive: "Il y a 10 min", department: "IA & Data", year: "M1", studentId: "ETU-2024-009" },
-  { id: "10", name: "Nathan Fournier", email: "nathan.fournier@univ.fr", exams: 11, avg: 13.4, status: "active", lastActive: "Il y a 25 min", department: "Réseaux", year: "L3", studentId: "ETU-2024-010" },
-  { id: "11", name: "Inès Vincent", email: "ines.vincent@univ.fr", exams: 14, avg: 17.9, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-011" },
-  { id: "12", name: "Maxime Girard", email: "maxime.girard@univ.fr", exams: 10, avg: 14.8, status: "inactive", lastActive: "Il y a 3 jours", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-012" },
-  { id: "13", name: "Camille Bonnet", email: "camille.bonnet@univ.fr", exams: 12, avg: 16.6, status: "active", lastActive: "Il y a 1 heure", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-013" },
-  { id: "14", name: "Yanis Lambert", email: "yanis.lambert@univ.fr", exams: 6, avg: 12.8, status: "active", lastActive: "Il y a 15 min", department: "IA & Data", year: "L2", studentId: "ETU-2024-014" },
-  { id: "15", name: "Mila Henry", email: "mila.henry@univ.fr", exams: 9, avg: 19.2, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M1", studentId: "ETU-2024-015" },
-  { id: "16", name: "Raphaël Mercier", email: "raphael.mercier@univ.fr", exams: 13, avg: 15.4, status: "active", lastActive: "Il y a 4 min", department: "Réseaux", year: "M2", studentId: "ETU-2024-016" },
-  { id: "17", name: "Sara Lopez", email: "sara.lopez@univ.fr", exams: 11, avg: 17.0, status: "active", lastActive: "Il y a 50 min", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-017" },
-  { id: "18", name: "Ilyas Robert", email: "ilyas.robert@univ.fr", exams: 7, avg: 13.6, status: "inactive", lastActive: "Il y a 1 semaine", department: "Cybersécurité", year: "L3", studentId: "ETU-2024-018" },
-  { id: "19", name: "Lina Faure", email: "lina.faure@univ.fr", exams: 12, avg: 18.0, status: "active", lastActive: "Il y a 8 min", department: "IA & Data", year: "M1", studentId: "ETU-2024-019" },
-  { id: "20", name: "Tom Leroy", email: "tom.leroy@univ.fr", exams: 10, avg: 16.2, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "L3", studentId: "ETU-2024-020" },
-  { id: "21", name: "Anaïs Perrin", email: "anais.perrin@univ.fr", exams: 14, avg: 18.4, status: "active", lastActive: "Il y a 12 min", department: "Génie logiciel", year: "M2", studentId: "ETU-2024-021" },
-  { id: "22", name: "Mehdi Blanc", email: "mehdi.blanc@univ.fr", exams: 8, avg: 14.2, status: "active", lastActive: "Il y a 35 min", department: "Réseaux", year: "L2", studentId: "ETU-2024-022" },
-  { id: "23", name: "Zoé Aubert", email: "zoe.aubert@univ.fr", exams: 11, avg: 17.6, status: "active", lastActive: "Actif maintenant", department: "Cybersécurité", year: "M1", studentId: "ETU-2024-023" },
-  { id: "24", name: "Noah Carpentier", email: "noah.carpentier@univ.fr", exams: 9, avg: 15.8, status: "active", lastActive: "Il y a 6 min", department: "IA & Data", year: "M2", studentId: "ETU-2024-024" },
-];
 
 // ─── Toggle Switch ─────────────────────────────────────────────────────────────
 function ToggleSwitch({
@@ -304,8 +278,12 @@ function ModalBase({ children, onClose, title, wide = false }: {
 
 // ─── Exam Details Modal ────────────────────────────────────────────────────────
 function ExamDetailsModal({ exam, onClose, onEdit }: { exam: Exam; onClose: () => void; onEdit: () => void }) {
-  const rosterCount = Math.min(exam.students, allStudentsData.length);
-  const roster = allStudentsData.slice(0, rosterCount).map(s => ({ name: s.name, score: s.avg }));
+  const [roster, setRoster] = useState<{ name: string; score: number }[]>([]);
+  useEffect(() => {
+    fetchExamMonitor(exam.id)
+      .then((d) => setRoster(d.participants.map((p) => ({ name: p.name, score: p.score }))))
+      .catch(() => {});
+  }, [exam.id]);
 
   return (
     <ModalBase title="Détails de l'examen" onClose={onClose} wide>
