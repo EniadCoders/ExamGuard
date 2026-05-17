@@ -48,7 +48,7 @@ const userSchema = new Schema(
     },
     lastLoginAt: { type: Date },
   },
-  { timestamps: { createdAt: "createdAt", updatedAt: false } },
+  { timestamps: true },
 );
 
 export type User = InferSchemaType<typeof userSchema>;

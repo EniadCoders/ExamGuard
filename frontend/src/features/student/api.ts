@@ -53,6 +53,19 @@ export function fetchDashboard(): Promise<DashboardPayload> {
   return api<DashboardPayload>("/student/dashboard");
 }
 
+export type ExamRules = {
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  allowBacktrack: boolean;
+  showResultsImmediately: boolean;
+  requireFullscreen: boolean;
+  blockTabSwitch: boolean;
+  preventCopyPaste: boolean;
+  showTimer: boolean;
+  warnBeforeEnd: boolean;
+  attempts: number;
+};
+
 export type ExamDetail = {
   id: string;
   title: string;
@@ -60,6 +73,8 @@ export type ExamDetail = {
   description: string;
   durationMinutes: number;
   totalPoints: number;
+  passingScore?: number;
+  rules?: ExamRules;
   questions: Question[];
 };
 
@@ -129,6 +144,8 @@ export type SubmitResponse = {
     status: "submitted" | "graded";
     score: number;
     maxScore: number;
+    passingScore?: number;
+    passed?: boolean;
     submittedAt: string;
   };
 };
@@ -153,6 +170,9 @@ export type AttemptResult = {
     submittedAt?: string;
     score?: number;
     maxScore?: number;
+    passingScore?: number;
+    passed?: boolean | null;
+    autoSubmitted?: boolean;
     antiCheatEventsCount: number;
   };
   exam: {
@@ -161,12 +181,14 @@ export type AttemptResult = {
     subject: string;
     durationMinutes: number;
     totalPoints: number;
+    passingScore?: number;
   };
   questions: Array<
     Question & {
       yourAnswer?: unknown;
       isCorrect?: boolean | null;
       correctOptionId?: string;
+      correctOptionIds?: string[];
     }
   >;
 };

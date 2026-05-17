@@ -24,6 +24,7 @@ const TEACHER = {
 
 // Étudiants de l'ENIAD (Université Mohammed Premier) — filières IA, ROC, GINF, IRSI.
 const STUDENTS = [
+  { email: "zakariatest@gmail.com", password: "zakariaTest123", fullName: "Zakaria Test", program: "IA", department: "IA", identifier: "ZT2026" },
   { email: "yassine.elamrani@ump.ac.ma", password: "student123", fullName: "Yassine El Amrani", program: "IA", department: "IA", identifier: "EN24001" },
   { email: "salma.benali@ump.ac.ma", password: "student123", fullName: "Salma Benali", program: "IA", department: "IA", identifier: "EN24002" },
   { email: "mehdi.tazi@ump.ac.ma", password: "student123", fullName: "Mehdi Tazi", program: "ROC", department: "ROC", identifier: "EN24003" },

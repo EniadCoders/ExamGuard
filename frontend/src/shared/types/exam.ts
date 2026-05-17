@@ -28,6 +28,8 @@ export interface MCQQuestion {
   text: string;
   points: number;
   options: MCQOption[];
+  /** Si `true`, la question accepte plusieurs réponses (cases à cocher). */
+  multiple?: boolean;
 }
 
 export interface TextQuestion {
@@ -50,7 +52,8 @@ export interface CodeQuestion {
 
 export type Question = MCQQuestion | TextQuestion | CodeQuestion;
 
-export type MCQAnswer = string;
+/** Une seule option pour un MCQ simple, un tableau pour un MCQ multi. */
+export type MCQAnswer = string | string[];
 export type TextAnswer = string;
 export interface CodeAnswer {
   code: string;

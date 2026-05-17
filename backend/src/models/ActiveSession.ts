@@ -9,7 +9,7 @@ const activeSessionSchema = new Schema(
     lastActiveAt: { type: Date, default: Date.now },
     current: { type: Boolean, default: false },
   },
-  { timestamps: { createdAt: "createdAt", updatedAt: false } },
+  { timestamps: true },
 );
 
 export type ActiveSession = InferSchemaType<typeof activeSessionSchema>;

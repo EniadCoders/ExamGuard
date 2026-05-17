@@ -32,6 +32,8 @@ const examAttemptSchema = new Schema(
     maxScore: { type: Number },
     answers: { type: [answerSchema], default: [] },
     antiCheatEvents: { type: [antiCheatEventSchema], default: [] },
+    questionOrder: { type: [Number], default: [] },
+    autoSubmitted: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

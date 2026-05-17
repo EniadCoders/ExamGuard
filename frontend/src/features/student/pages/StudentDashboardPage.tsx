@@ -1001,6 +1001,30 @@ export function StudentDashboard() {
                           </div>
                         </div>
 
+                        {attemptDetail?.attempt.passed != null && (
+                          <div
+                            className={`mb-4 rounded-xl px-4 py-3 flex items-center justify-between ${
+                              attemptDetail.attempt.passed
+                                ? "bg-green-50 border-2 border-green-300 text-green-800"
+                                : "bg-red-50 border-2 border-red-300 text-red-800"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 font-bold text-base">
+                              {attemptDetail.attempt.passed ? "✓ Validé" : "✗ Échec"}
+                            </div>
+                            {attemptDetail.attempt.passingScore != null && (
+                              <span className="text-sm">
+                                Note minimale : {attemptDetail.attempt.passingScore}/
+                                {attemptDetail.attempt.maxScore}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {attemptDetail?.attempt.autoSubmitted && (
+                          <div className="mb-4 rounded-xl bg-amber-50 border-2 border-amber-300 px-4 py-3 text-amber-800 text-sm font-semibold">
+                            Soumission automatique : le temps imparti était écoulé.
+                          </div>
+                        )}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                           {[
                             {

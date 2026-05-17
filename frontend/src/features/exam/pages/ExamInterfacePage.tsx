@@ -32,6 +32,7 @@ import {
   submitAttempt,
   logAntiCheatEvent,
   type AttemptAnswer,
+  type ExamRules,
 } from "@/features/student/api";
 import {
   AutoSaveStatus as AutoSaveIndicator,
@@ -47,6 +48,8 @@ export function ExamInterface() {
   const { examId } = useParams<{ examId: string }>();
   const [examQuestions, setExamQuestions] = useState<Question[]>([]);
   const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [examRules, setExamRules] = useState<ExamRules | null>(null);
+  const [warnedEndShown, setWarnedEndShown] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<number, Answer>>({});
@@ -138,6 +141,7 @@ export function ExamInterface() {
         if (cancelled) return;
         setExamQuestions(exam.questions);
         setAttemptId(attempt.id);
+        setExamRules(exam.rules ?? null);
         setTimeLeft(attempt.remainingSeconds || exam.durationMinutes * 60);
         // Hydrate previously-saved answers
         if (attempt.answers && attempt.answers.length > 0) {
@@ -221,10 +225,37 @@ export function ExamInterface() {
         doSubmit();
         return 0;
       }
+      // Avertir 5 minutes avant la fin si la règle l'autorise
+      if (
+        examRules?.warnBeforeEnd &&
+        p === 300 &&
+        !warnedEndShown
+      ) {
+        setWarnedEndShown(true);
+      }
       return p > 0 ? p - 1 : 0;
     }), 1000);
     return () => clearInterval(timer);
-  }, [submitted, examQuestions.length, doSubmit]);
+  }, [submitted, examQuestions.length, doSubmit, examRules?.warnBeforeEnd, warnedEndShown]);
+
+  // preventCopyPaste : bloque copier/coller sur tout le document pendant l'examen
+  useEffect(() => {
+    if (!examRules?.preventCopyPaste || submitted) return;
+    const block = (e: ClipboardEvent) => {
+      e.preventDefault();
+      if (attemptId) {
+        logAntiCheatEvent(attemptId, `clipboard-${e.type}`).catch(() => undefined);
+      }
+    };
+    document.addEventListener("copy", block);
+    document.addEventListener("paste", block);
+    document.addEventListener("cut", block);
+    return () => {
+      document.removeEventListener("copy", block);
+      document.removeEventListener("paste", block);
+      document.removeEventListener("cut", block);
+    };
+  }, [examRules?.preventCopyPaste, submitted, attemptId]);
 
   const formatTime = (s: number) => ({
     h: String(Math.floor(s / 3600)).padStart(2, "0"),
@@ -363,6 +394,24 @@ export function ExamInterface() {
           <WarningBanner count={warnings} onDismiss={() => setShowWarning(false)} />
         )}
 
+        {/* 5-minutes-left warning */}
+        {warnedEndShown && !submitted && (
+          <div className="bg-amber-100 border-b-2 border-amber-400 px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-700" />
+              <p className="text-sm font-semibold text-amber-900">
+                Il reste moins de 5 minutes. Pensez à finaliser vos réponses.
+              </p>
+            </div>
+            <button
+              onClick={() => setWarnedEndShown(false)}
+              className="text-amber-900 hover:text-amber-700"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Timer progress line */}
         <div className="h-1 bg-[#E5E5E5] relative overflow-hidden">
           <div
@@ -389,24 +438,26 @@ export function ExamInterface() {
             </div>
 
             {/* Center: Timer */}
-            <div
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 sm:gap-2.5 sm:px-5 ${
-                isLowTime
-                  ? "bg-black border-black shadow-[0_2px_8px_rgba(0,0,0,0.16)]"
-                  : "bg-white border-[#E5E5E5]"
-              }`}
-            >
-              <Clock
-                className={`w-4 h-4 ${isLowTime ? "text-white" : "text-black"}`}
-              />
-              <span
-                className={`text-xl tabular-nums tracking-tight font-bold sm:text-2xl ${
-                  isLowTime ? "text-white" : "text-black"
+            {examRules?.showTimer !== false && (
+              <div
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 sm:gap-2.5 sm:px-5 ${
+                  isLowTime
+                    ? "bg-black border-black shadow-[0_2px_8px_rgba(0,0,0,0.16)]"
+                    : "bg-white border-[#E5E5E5]"
                 }`}
               >
-                {t.h}:{t.m}:{t.s}
-              </span>
-            </div>
+                <Clock
+                  className={`w-4 h-4 ${isLowTime ? "text-white" : "text-black"}`}
+                />
+                <span
+                  className={`text-xl tabular-nums tracking-tight font-bold sm:text-2xl ${
+                    isLowTime ? "text-white" : "text-black"
+                  }`}
+                >
+                  {t.h}:{t.m}:{t.s}
+                </span>
+              </div>
+            )}
 
             {/* Right */}
             <div className="flex flex-wrap items-center gap-2">
@@ -559,15 +610,32 @@ export function ExamInterface() {
               {/* MCQ Answer */}
               {question.type === "mcq" && (
                 <div className="space-y-3 px-5 pb-6 sm:px-7 sm:pb-7">
+                  {question.multiple ? (
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#666]">
+                      Plusieurs réponses possibles
+                    </p>
+                  ) : null}
                   {question.options.map((opt) => {
-                    const sel = Array.isArray(answers[current]) ? answers[current].includes(opt.id) : answers[current] === opt.id;
+                    const currentAns = answers[current];
+                    const isMulti = question.multiple === true;
+                    const selectedArr = Array.isArray(currentAns) ? currentAns : [];
+                    const sel = isMulti
+                      ? selectedArr.includes(opt.id)
+                      : currentAns === opt.id;
                     return (
                       <button
                         type="button"
                         key={opt.id}
                         onClick={(e) => {
                           e.preventDefault();
-                          setAnswer(opt.id as MCQAnswer);
+                          if (isMulti) {
+                            const next = selectedArr.includes(opt.id)
+                              ? selectedArr.filter((x) => x !== opt.id)
+                              : [...selectedArr, opt.id];
+                            setAnswer(next as MCQAnswer);
+                          } else {
+                            setAnswer(opt.id as MCQAnswer);
+                          }
                         }}
                         className={`group w-full rounded-xl border-2 px-4 py-3.5 text-left transition-all sm:px-5 sm:py-4 ${
                           sel
@@ -593,13 +661,23 @@ export function ExamInterface() {
                             {opt.text}
                           </p>
                           <div
-                            className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                            className={`w-5 h-5 ${
+                              question.multiple ? "rounded" : "rounded-full"
+                            } border-2 flex-shrink-0 flex items-center justify-center transition-all ${
                               sel
                                 ? "border-white bg-white"
                                 : "border-[#CCCCCC] group-hover:border-[#888888]"
                             }`}
                           >
-                            {sel && <div className="w-2 h-2 rounded-full bg-black" />}
+                            {sel && (
+                              <div
+                                className={`${
+                                  question.multiple
+                                    ? "w-3 h-3 rounded-sm"
+                                    : "w-2 h-2 rounded-full"
+                                } bg-black`}
+                              />
+                            )}
                           </div>
                         </div>
                       </button>
@@ -688,7 +766,12 @@ export function ExamInterface() {
             <div className="flex items-center justify-between gap-3">
               <button
                 onClick={() => setCurrent(Math.max(0, current - 1))}
-                disabled={current === 0}
+                disabled={current === 0 || examRules?.allowBacktrack === false}
+                title={
+                  examRules?.allowBacktrack === false
+                    ? "Le retour aux questions précédentes est désactivé pour cet examen"
+                    : undefined
+                }
                 className="flex items-center gap-2 rounded-xl border-2 border-[#E5E5E5] px-3 py-2.5 text-xs font-medium text-black transition-all hover:border-[#CCCCCC] hover:bg-[#F5F5F5] disabled:cursor-not-allowed disabled:opacity-30 sm:px-5 sm:text-sm"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -700,13 +783,21 @@ export function ExamInterface() {
                 {examQuestions.map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => setCurrent(i)}
+                    onClick={() => {
+                      if (examRules?.allowBacktrack === false && i < current) return;
+                      setCurrent(i);
+                    }}
+                    disabled={examRules?.allowBacktrack === false && i < current}
                     className={`rounded-full transition-all ${
                       i === current
                         ? "w-6 h-2 bg-black"
                         : isAnswered(i)
                         ? "w-2 h-2 bg-[#666666] hover:bg-black"
                         : "w-2 h-2 bg-[#CCCCCC] hover:bg-[#888888]"
+                    } ${
+                      examRules?.allowBacktrack === false && i < current
+                        ? "opacity-30 cursor-not-allowed"
+                        : ""
                     }`}
                   />
                 ))}

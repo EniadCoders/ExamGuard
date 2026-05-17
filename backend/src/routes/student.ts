@@ -33,9 +33,106 @@ function statusFromAttempt(
 
 function stripCorrectAnswers(questions: any[]) {
   return questions.map((q) => {
-    const { correctOptionId, ...rest } = q;
+    const { correctOptionId, correctOptionIds, ...rest } = q;
     return rest;
   });
+}
+
+function shuffleInPlace<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/** Tri MCQ multi : compare deux ensembles d'options sans tenir compte de l'ordre. */
+function sameOptionSet(a: unknown, b: unknown): boolean {
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  const sa = [...a].map(String).sort();
+  const sb = [...b].map(String).sort();
+  return sa.every((v, i) => v === sb[i]);
+}
+
+/** Score automatique pour les MCQ (simples + multi). Retourne { score, hasOpen }. */
+function autoGrade(
+  questions: any[],
+  answersById: Map<number, any>,
+): { score: number; hasOpen: boolean } {
+  let score = 0;
+  let hasOpen = false;
+  for (const q of questions) {
+    if (q.type !== "mcq") {
+      hasOpen = true;
+      continue;
+    }
+    const given = answersById.get(q.id);
+    if (q.multiple && Array.isArray(q.correctOptionIds)) {
+      if (sameOptionSet(given, q.correctOptionIds)) score += q.points;
+    } else if (given === q.correctOptionId) {
+      score += q.points;
+    }
+  }
+  return { score, hasOpen };
+}
+
+/** Finalise un attempt (auto-corrige MCQ, met à jour status, crée la notif). */
+async function finalizeAttempt(
+  attempt: any,
+  exam: any,
+  options: { autoSubmitted?: boolean } = {},
+) {
+  const answersById = new Map<number, any>(
+    (attempt.answers ?? []).map((a: any) => [a.questionId, a.value]),
+  );
+  const { score, hasOpen } = autoGrade(exam.questions ?? [], answersById);
+
+  attempt.submittedAt = new Date();
+  attempt.status = hasOpen ? "submitted" : "graded";
+  attempt.score = score;
+  attempt.maxScore = exam.totalPoints;
+  if (options.autoSubmitted) attempt.autoSubmitted = true;
+  await attempt.save();
+
+  await NotificationModel.create({
+    userId: attempt.studentId,
+    type: hasOpen ? "exam-submitted" : "exam-graded",
+    title: options.autoSubmitted
+      ? "Temps écoulé — examen soumis"
+      : hasOpen
+        ? "Examen soumis"
+        : "Examen corrigé",
+    message: hasOpen
+      ? `${exam.title} : en attente de correction par le professeur.`
+      : `${exam.title} : ${score}/${exam.totalPoints}`,
+  });
+
+  return { score, hasOpen };
+}
+
+/** Si le temps est écoulé pour un attempt in-progress, finalise-le. */
+async function autoSubmitIfExpired(attempt: any, exam: any): Promise<boolean> {
+  if (attempt.status !== "in-progress") return false;
+  const elapsed = Date.now() - new Date(attempt.startedAt).getTime();
+  const durationMs = exam.durationMinutes * 60 * 1000;
+  if (elapsed >= durationMs) {
+    await finalizeAttempt(attempt, exam, { autoSubmitted: true });
+    return true;
+  }
+  return false;
+}
+
+function isExamLaunchable(exam: any): { ok: boolean; reason?: string } {
+  const status = exam.status;
+  if (status === "draft") return { ok: false, reason: "exam not published" };
+  if (status === "archived") return { ok: false, reason: "exam archived" };
+  if (status === "completed") return { ok: false, reason: "exam closed" };
+  // scheduled vs live : autoriser dès l'heure planifiée
+  if (exam.scheduledAt && new Date(exam.scheduledAt).getTime() > Date.now()) {
+    return { ok: false, reason: "exam not started yet" };
+  }
+  return { ok: true };
 }
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────
@@ -66,11 +163,13 @@ router.get("/dashboard", async (req, res) => {
       title: exam.title,
       subject: exam.subject,
       status,
+      examStatus: exam.status,
       date: date ? formatDateFr(date) : "",
       time: date ? formatTimeFr(date) : "",
       duration: exam.durationMinutes,
       types: questionTypes,
       attemptId: attempt ? String(attempt._id) : null,
+      passingScore: exam.passingScore ?? 12,
       ...(attempt?.score != null
         ? { score: attempt.score, maxScore: attempt.maxScore }
         : {}),
@@ -133,7 +232,7 @@ router.get("/dashboard", async (req, res) => {
   });
 });
 
-// ─── Détail d'un examen (pour l'interface de passage) ──────────────────────
+// ─── Détail d'un examen (lecture seule, hors session) ──────────────────────
 
 router.get("/exams/:id", async (req, res) => {
   const studentId = req.auth!.userId;
@@ -150,6 +249,10 @@ router.get("/exams/:id", async (req, res) => {
       description: exam.description,
       durationMinutes: exam.durationMinutes,
       totalPoints: exam.totalPoints,
+      passingScore: exam.passingScore,
+      status: exam.status,
+      scheduledAt: exam.scheduledAt,
+      rules: exam.rules,
       questions: stripCorrectAnswers(exam.questions ?? []),
     },
   });
@@ -191,8 +294,18 @@ router.post("/exams/:id/start", async (req, res) => {
   });
   if (!exam) return res.status(404).json({ error: "exam not found" });
 
+  const launchable = isExamLaunchable(exam);
+
   let attempt = await ExamAttemptModel.findOne({ examId: exam._id, studentId });
+
   if (!attempt) {
+    // Création initiale — refuse si l'examen n'est pas lançable
+    if (!launchable.ok) return res.status(409).json({ error: launchable.reason });
+
+    // Ordre des questions (shuffle si activé)
+    const ids = (exam.questions ?? []).map((q: any) => q.id);
+    const order = exam.rules?.shuffleQuestions ? shuffleInPlace([...ids]) : ids;
+
     attempt = await ExamAttemptModel.create({
       examId: exam._id,
       studentId,
@@ -201,10 +314,39 @@ router.post("/exams/:id/start", async (req, res) => {
       maxScore: exam.totalPoints,
       answers: [],
       antiCheatEvents: [],
+      questionOrder: order,
     });
   } else if (attempt.status !== "in-progress") {
     return res.status(409).json({ error: "exam already submitted" });
+  } else {
+    // Reprise : auto-submit si déjà expiré
+    const expired = await autoSubmitIfExpired(attempt, exam.toObject());
+    if (expired) return res.status(409).json({ error: "time expired" });
   }
+
+  // Réordonne les questions selon l'ordre persisté
+  const byId = new Map<number, any>(
+    (exam.questions ?? []).map((q: any) => [q.id, q]),
+  );
+  const orderedQuestions = (attempt.questionOrder ?? [])
+    .map((id) => byId.get(id))
+    .filter(Boolean);
+  // Fallback si l'ordre est vide ou questions ajoutées depuis
+  const finalQuestions =
+    orderedQuestions.length === (exam.questions ?? []).length
+      ? orderedQuestions
+      : exam.questions ?? [];
+
+  // Shuffle des options MCQ (en mémoire seulement, non persisté côté étudiant
+  // pour rester simple — le mapping est stable car les ids d'options sont stockés
+  // dans la réponse).
+  const renderQuestions = finalQuestions.map((q: any) => {
+    const { correctOptionId, correctOptionIds, ...rest } = q;
+    if (q.type === "mcq" && exam.rules?.shuffleOptions && Array.isArray(rest.options)) {
+      return { ...rest, options: shuffleInPlace([...rest.options]) };
+    }
+    return rest;
+  });
 
   const elapsedMs = Date.now() - new Date(attempt.startedAt).getTime();
   const remainingSeconds = Math.max(
@@ -227,7 +369,9 @@ router.post("/exams/:id/start", async (req, res) => {
       subject: exam.subject,
       durationMinutes: exam.durationMinutes,
       totalPoints: exam.totalPoints,
-      questions: stripCorrectAnswers(exam.questions ?? []),
+      passingScore: exam.passingScore,
+      rules: exam.rules,
+      questions: renderQuestions,
     },
   });
 });
@@ -241,6 +385,14 @@ router.patch("/attempts/:id", async (req, res) => {
   if (attempt.status !== "in-progress") {
     return res.status(409).json({ error: "attempt already submitted" });
   }
+
+  // Vérifie l'expiration : si oui, on finalise et on refuse la sauvegarde.
+  const exam = await ExamModel.findById(attempt.examId).lean();
+  if (exam) {
+    const expired = await autoSubmitIfExpired(attempt, exam);
+    if (expired) return res.status(409).json({ error: "time expired" });
+  }
+
   const answers = Array.isArray(req.body?.answers) ? req.body.answers : null;
   if (!answers) return res.status(400).json({ error: "answers array required" });
 
@@ -286,39 +438,7 @@ router.post("/attempts/:id/submit", async (req, res) => {
     attempt.answers = req.body.answers;
   }
 
-  // Auto-correction MCQ uniquement
-  const answerByQuestion = new Map<number, any>(
-    (attempt.answers ?? []).map((a: any) => [a.questionId, a.value]),
-  );
-  let mcqScore = 0;
-  let mcqMax = 0;
-  let hasOpenQuestions = false;
-  for (const q of exam.questions ?? []) {
-    if (q.type === "mcq") {
-      mcqMax += q.points;
-      if (answerByQuestion.get(q.id) === (q as any).correctOptionId) {
-        mcqScore += q.points;
-      }
-    } else {
-      hasOpenQuestions = true;
-    }
-  }
-
-  attempt.submittedAt = new Date();
-  attempt.status = hasOpenQuestions ? "submitted" : "graded";
-  attempt.score = mcqScore;
-  attempt.maxScore = exam.totalPoints;
-  await attempt.save();
-
-  // Notification "examen terminé"
-  await NotificationModel.create({
-    userId: studentId,
-    type: hasOpenQuestions ? "exam-submitted" : "exam-graded",
-    title: hasOpenQuestions ? "Examen soumis" : "Examen corrigé",
-    message: hasOpenQuestions
-      ? `${exam.title} : en attente de correction par le professeur.`
-      : `${exam.title} : ${mcqScore}/${exam.totalPoints}`,
-  });
+  await finalizeAttempt(attempt, exam);
 
   res.json({
     attempt: {
@@ -326,6 +446,8 @@ router.post("/attempts/:id/submit", async (req, res) => {
       status: attempt.status,
       score: attempt.score,
       maxScore: attempt.maxScore,
+      passingScore: exam.passingScore,
+      passed: (attempt.score ?? 0) >= (exam.passingScore ?? 0),
       submittedAt: attempt.submittedAt,
     },
   });
@@ -338,41 +460,57 @@ router.get("/attempts/:id", async (req, res) => {
   const attempt = await ExamAttemptModel.findOne({
     _id: req.params.id,
     studentId,
-  }).lean();
+  });
   if (!attempt) return res.status(404).json({ error: "attempt not found" });
 
   const exam = await ExamModel.findById(attempt.examId).lean();
   if (!exam) return res.status(404).json({ error: "exam not found" });
 
+  // Auto-submit silencieux si l'attempt est expiré (on lit puis renvoie l'état final)
+  await autoSubmitIfExpired(attempt, exam);
+
+  const attemptLean = attempt.toObject();
+
   const answerByQuestion = new Map<number, any>(
-    (attempt.answers ?? []).map((a: any) => [a.questionId, a.value]),
+    (attemptLean.answers ?? []).map((a: any) => [a.questionId, a.value]),
   );
 
   const questions = (exam.questions ?? []).map((q: any) => {
     const yourAnswer = answerByQuestion.get(q.id);
     let isCorrect: boolean | null = null;
-    if (q.type === "mcq" && attempt.status !== "in-progress") {
-      isCorrect = yourAnswer === q.correctOptionId;
+    if (q.type === "mcq" && attemptLean.status !== "in-progress") {
+      if (q.multiple && Array.isArray(q.correctOptionIds)) {
+        isCorrect = sameOptionSet(yourAnswer, q.correctOptionIds);
+      } else {
+        isCorrect = yourAnswer === q.correctOptionId;
+      }
     }
-    const { correctOptionId, ...safeQ } = q;
+    const { correctOptionId, correctOptionIds, ...safeQ } = q;
     return {
       ...safeQ,
       yourAnswer,
       isCorrect,
-      // Pour les MCQ on révèle la bonne réponse une fois soumis
-      correctOptionId: attempt.status === "in-progress" ? undefined : correctOptionId,
+      // Pour les MCQ, on révèle la / les bonne(s) réponse(s) une fois soumis
+      correctOptionId: attemptLean.status === "in-progress" ? undefined : correctOptionId,
+      correctOptionIds: attemptLean.status === "in-progress" ? undefined : correctOptionIds,
     };
   });
 
   res.json({
     attempt: {
-      id: String(attempt._id),
-      status: attempt.status,
-      startedAt: attempt.startedAt,
-      submittedAt: attempt.submittedAt,
-      score: attempt.score,
-      maxScore: attempt.maxScore,
-      antiCheatEventsCount: attempt.antiCheatEvents?.length ?? 0,
+      id: String(attemptLean._id),
+      status: attemptLean.status,
+      startedAt: attemptLean.startedAt,
+      submittedAt: attemptLean.submittedAt,
+      score: attemptLean.score,
+      maxScore: attemptLean.maxScore,
+      passingScore: exam.passingScore,
+      passed:
+        attemptLean.status !== "in-progress" && attemptLean.score != null
+          ? attemptLean.score >= (exam.passingScore ?? 0)
+          : null,
+      autoSubmitted: attemptLean.autoSubmitted ?? false,
+      antiCheatEventsCount: attemptLean.antiCheatEvents?.length ?? 0,
     },
     exam: {
       id: String(exam._id),
@@ -380,6 +518,7 @@ router.get("/attempts/:id", async (req, res) => {
       subject: exam.subject,
       durationMinutes: exam.durationMinutes,
       totalPoints: exam.totalPoints,
+      passingScore: exam.passingScore,
     },
     questions,
   });

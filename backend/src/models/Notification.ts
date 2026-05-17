@@ -8,7 +8,7 @@ const notificationSchema = new Schema(
     message: { type: String, default: "" },
     read: { type: Boolean, default: false },
   },
-  { timestamps: { createdAt: "createdAt", updatedAt: false } },
+  { timestamps: true },
 );
 
 export type Notification = InferSchemaType<typeof notificationSchema>;
