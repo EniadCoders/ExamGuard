@@ -42,8 +42,21 @@ import {
   teacherProfileSections as sections,
   type TeacherProfileSectionId,
 } from "@/features/teacher/teacher.data";
-import { fetchMe, updateProfile, changePassword } from "@/features/auth/api";
+import { fetchMe, updateProfile, changePassword, type TeacherPreferences } from "@/features/auth/api";
 import { ApiError } from "@/shared/lib/api";
+
+const DEFAULT_PREFERENCES: TeacherPreferences = {
+  emailFraudCritical: true,
+  emailDailyDigest: true,
+  emailExamSubmissions: true,
+  realtimeFraud: true,
+  realtimeStudentActivity: false,
+  realtimeTechnical: true,
+  defaultExamDuration: 90,
+  defaultPassingScore: 12,
+  examLanguage: "fr",
+  timezone: "europe/paris",
+};
 
 export function TeacherProfilePage() {
   const navigate = useNavigate();
@@ -61,6 +74,12 @@ export function TeacherProfilePage() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+
+  // Preferences state
+  const [prefs, setPrefs] = useState<TeacherPreferences>(DEFAULT_PREFERENCES);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const setPref = <K extends keyof TeacherPreferences>(key: K, value: TeacherPreferences[K]) =>
+    setPrefs((p) => ({ ...p, [key]: value }));
 
   // Password state
   const [currentPwd, setCurrentPwd] = useState("");
@@ -89,9 +108,27 @@ export function TeacherProfilePage() {
         setLocation(u.location ?? "");
         setBio(u.bio ?? "");
         setProfileImage(u.avatarUrl || null);
+        if (u.preferences) {
+          setPrefs({ ...DEFAULT_PREFERENCES, ...u.preferences });
+        }
       })
       .catch(() => showToast("Impossible de charger votre profil.", "error"));
   }, []);
+
+  const handleSavePreferences = async () => {
+    setSavingPrefs(true);
+    try {
+      await updateProfile({ preferences: prefs });
+      showToast("Préférences enregistrées.");
+    } catch (err) {
+      showToast(
+        err instanceof ApiError ? err.message : "Échec de l'enregistrement des préférences.",
+        "error",
+      );
+    } finally {
+      setSavingPrefs(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!firstName.trim() || !lastName.trim() || !email.trim()) {
@@ -485,17 +522,17 @@ export function TeacherProfilePage() {
               <>
                 <Section title="Notifications par email" icon={Mail}>
                   <div className="divide-y divide-[#F0F0F0]">
-                    {[
-                      { title: "Alertes fraude critique", desc: "Recevoir immédiatement un email pour les alertes de niveau élevé", default: true },
-                      { title: "Résumé quotidien", desc: "Un rapport quotidien des activités et statistiques de la plateforme", default: true },
-                      { title: "Soumissions d'examens", desc: "Notifié quand tous les étudiants ont rendu leur copie", default: true },
-                    ].map(item => (
-                      <div key={item.title} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+                    {([
+                      { key: "emailFraudCritical", title: "Alertes fraude critique", desc: "Recevoir immédiatement un email pour les alertes de niveau élevé" },
+                      { key: "emailDailyDigest", title: "Résumé quotidien", desc: "Un rapport quotidien des activités et statistiques de la plateforme" },
+                      { key: "emailExamSubmissions", title: "Soumissions d'examens", desc: "Notifié quand tous les étudiants ont rendu leur copie" },
+                    ] as const).map(item => (
+                      <div key={item.key} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h3 className="text-sm font-medium text-black mb-0.5">{item.title}</h3>
                           <p className="text-xs text-[#666666]">{item.desc}</p>
                         </div>
-                        <ToggleSwitch defaultChecked={item.default} />
+                        <ToggleSwitch checked={prefs[item.key]} onChange={v => setPref(item.key, v)} />
                       </div>
                     ))}
                   </div>
@@ -503,27 +540,28 @@ export function TeacherProfilePage() {
 
                 <Section title="Notifications en temps réel" icon={Bell}>
                   <div className="divide-y divide-[#F0F0F0]">
-                    {[
-                      { title: "Alertes fraude en direct", desc: "Notifications pop-up immédiates lors de détection d'anomalies", default: true },
-                      { title: "Activité étudiante", desc: "Informé des connexions et déconnexions pendant les examens", default: false },
-                      { title: "Problèmes techniques", desc: "Alertes en cas de problèmes de connexion ou de serveur", default: true },
-                    ].map(item => (
-                      <div key={item.title} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+                    {([
+                      { key: "realtimeFraud", title: "Alertes fraude en direct", desc: "Notifications pop-up immédiates lors de détection d'anomalies" },
+                      { key: "realtimeStudentActivity", title: "Activité étudiante", desc: "Informé des connexions et déconnexions pendant les examens" },
+                      { key: "realtimeTechnical", title: "Problèmes techniques", desc: "Alertes en cas de problèmes de connexion ou de serveur" },
+                    ] as const).map(item => (
+                      <div key={item.key} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h3 className="text-sm font-medium text-black mb-0.5">{item.title}</h3>
                           <p className="text-xs text-[#666666]">{item.desc}</p>
                         </div>
-                        <ToggleSwitch defaultChecked={item.default} />
+                        <ToggleSwitch checked={prefs[item.key]} onChange={v => setPref(item.key, v)} />
                       </div>
                     ))}
                   </div>
                   <div className="mt-6 flex items-center justify-stretch border-t border-[#E5E5E5] pt-5 sm:justify-end">
                     <button
-                      onClick={() => showToast("Préférences de notifications sauvegardées.")}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
+                      onClick={handleSavePreferences}
+                      disabled={savingPrefs}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                     >
                       <Save className="w-4 h-4" />
-                      Enregistrer les préférences
+                      {savingPrefs ? "Enregistrement…" : "Enregistrer les préférences"}
                     </button>
                   </div>
                 </Section>
@@ -538,7 +576,8 @@ export function TeacherProfilePage() {
                     <label className="block text-sm font-medium text-[var(--cyber-text)] mb-2">Durée par défaut (min)</label>
                     <input
                       type="number"
-                      defaultValue={90}
+                      value={prefs.defaultExamDuration}
+                      onChange={e => setPref("defaultExamDuration", Number(e.target.value))}
                       className="cyber-input w-full px-4 py-3 rounded-xl text-sm text-black focus:outline-none transition-all"
                     />
                   </div>
@@ -546,7 +585,8 @@ export function TeacherProfilePage() {
                     <label className="block text-sm font-medium text-[var(--cyber-text)] mb-2">Note de passage par défaut (/20)</label>
                     <input
                       type="number"
-                      defaultValue={12}
+                      value={prefs.defaultPassingScore}
+                      onChange={e => setPref("defaultPassingScore", Number(e.target.value))}
                       min={0}
                       max={20}
                       step={0.5}
@@ -556,7 +596,8 @@ export function TeacherProfilePage() {
                   <div>
                     <label className="block text-sm font-medium text-[var(--cyber-text)] mb-2">Langue des examens</label>
                     <select
-                      defaultValue="fr"
+                      value={prefs.examLanguage}
+                      onChange={e => setPref("examLanguage", e.target.value)}
                       className="cyber-input w-full px-4 py-3 rounded-xl text-sm text-black focus:outline-none transition-all"
                     >
                       <option value="fr">Français</option>
@@ -567,7 +608,8 @@ export function TeacherProfilePage() {
                   <div>
                     <label className="block text-sm font-medium text-[var(--cyber-text)] mb-2">Fuseau horaire</label>
                     <select
-                      defaultValue="europe/paris"
+                      value={prefs.timezone}
+                      onChange={e => setPref("timezone", e.target.value)}
                       className="cyber-input w-full px-4 py-3 rounded-xl text-sm text-black focus:outline-none transition-all"
                     >
                       <option value="europe/paris">Europe/Paris (UTC+1)</option>
@@ -578,11 +620,12 @@ export function TeacherProfilePage() {
                 </div>
                 <div className="mt-6 flex items-center justify-stretch border-t border-[#E5E5E5] pt-5 sm:justify-end">
                   <button
-                    onClick={() => showToast("Préférences examens enregistrées.")}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
+                    onClick={handleSavePreferences}
+                    disabled={savingPrefs}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                   >
                     <Save className="w-4 h-4" />
-                    Enregistrer les préférences
+                    {savingPrefs ? "Enregistrement…" : "Enregistrer les préférences"}
                   </button>
                 </div>
               </Section>

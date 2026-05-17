@@ -1,5 +1,21 @@
 import { Schema, model, type InferSchemaType } from "mongoose";
 
+const preferencesSchema = new Schema(
+  {
+    emailFraudCritical: { type: Boolean, default: true },
+    emailDailyDigest: { type: Boolean, default: true },
+    emailExamSubmissions: { type: Boolean, default: true },
+    realtimeFraud: { type: Boolean, default: true },
+    realtimeStudentActivity: { type: Boolean, default: false },
+    realtimeTechnical: { type: Boolean, default: true },
+    defaultExamDuration: { type: Number, default: 90 },
+    defaultPassingScore: { type: Number, default: 12 },
+    examLanguage: { type: String, default: "fr" },
+    timezone: { type: String, default: "europe/paris" },
+  },
+  { _id: false },
+);
+
 const userSchema = new Schema(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -20,6 +36,7 @@ const userSchema = new Schema(
     location: { type: String, default: "" },
     bio: { type: String, default: "" },
     avatarUrl: { type: String, default: "" },
+    preferences: { type: preferencesSchema, default: () => ({}) },
     status: {
       type: String,
       enum: ["active", "suspended", "pending"],

@@ -110,6 +110,14 @@ router.patch("/me", requireAuth, async (req, res) => {
       (user as any)[key] = updates[key];
     }
   }
+
+  if (updates.preferences && typeof updates.preferences === "object") {
+    const current = (user.preferences as any)?.toObject
+      ? (user.preferences as any).toObject()
+      : { ...(user.preferences ?? {}) };
+    user.set("preferences", { ...current, ...updates.preferences });
+  }
+
   await user.save();
   res.json({ user: publicUser(user) });
 });
@@ -148,6 +156,7 @@ function publicUser(user: any) {
     location: user.location,
     bio: user.bio,
     avatarUrl: user.avatarUrl,
+    preferences: user.preferences,
     status: user.status,
   };
 }

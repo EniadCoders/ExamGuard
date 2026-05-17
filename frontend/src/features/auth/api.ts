@@ -1,5 +1,18 @@
 import { api, setToken } from "@/shared/lib/api";
 
+export type TeacherPreferences = {
+  emailFraudCritical: boolean;
+  emailDailyDigest: boolean;
+  emailExamSubmissions: boolean;
+  realtimeFraud: boolean;
+  realtimeStudentActivity: boolean;
+  realtimeTechnical: boolean;
+  defaultExamDuration: number;
+  defaultPassingScore: number;
+  examLanguage: string;
+  timezone: string;
+};
+
 export type AuthUser = {
   id: string;
   email: string;
@@ -13,6 +26,7 @@ export type AuthUser = {
   location?: string;
   bio?: string;
   avatarUrl?: string;
+  preferences?: TeacherPreferences;
   status: "active" | "suspended" | "pending";
 };
 
@@ -65,6 +79,7 @@ export async function updateProfile(updates: {
   location?: string;
   bio?: string;
   avatarUrl?: string;
+  preferences?: Partial<TeacherPreferences>;
 }): Promise<AuthUser> {
   const data = await api<{ user: AuthUser }>("/auth/me", {
     method: "PATCH",
