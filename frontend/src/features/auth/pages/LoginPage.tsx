@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Building2, Eye, EyeOff, Github, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import imgGoogleIcon from "@/assets/8e4241399baefbe8f8feffab0fe67682e140e1b1.png";
-import { login, routeForRole } from "@/features/auth/api";
+import { login, verifyLoginTwoFactor, routeForRole } from "@/features/auth/api";
 import { ApiError } from "@/shared/lib/api";
 import {
   AuthCard,
@@ -25,14 +25,22 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [step, setStep] = useState<"credentials" | "2fa">("credentials");
+  const [challengeToken, setChallengeToken] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
     try {
-      const user = await login(email, password);
-      navigate(routeForRole(user.role));
+      const result = await login(email, password);
+      if (result.twoFactorRequired) {
+        setChallengeToken(result.challengeToken);
+        setStep("2fa");
+      } else {
+        navigate(routeForRole(result.user.role));
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 401) {
@@ -52,11 +60,94 @@ export function LoginPage() {
     }
   };
 
+  const handleVerify2fa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+    try {
+      const user = await verifyLoginTwoFactor(challengeToken, twoFactorCode.trim());
+      navigate(routeForRole(user.role));
+    } catch (err) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 400)) {
+        setError("Code invalide ou expiré.");
+      } else {
+        setError("Vérification impossible. Réessayez.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGoogleLogin = () => {
     console.log("Google login clicked");
   };
   const roleButtonBaseClass =
     "rounded-[0.78rem] px-3 py-[clamp(0.58rem,1.15vh,0.72rem)] text-[clamp(0.68rem,1.2vh,0.84rem)] font-semibold transition sm:rounded-[0.9rem] sm:px-4 md:rounded-[0.95rem]";
+
+  if (step === "2fa") {
+    return (
+      <AuthPageLayout>
+        <AuthCard>
+          <AuthHeading
+            title="Vérification en deux étapes"
+            description="Saisissez le code à 6 chiffres de votre application d'authentification."
+          />
+          <form onSubmit={handleVerify2fa} className="flex flex-col gap-[clamp(0.62rem,1.2vh,0.9rem)]">
+            <div>
+              <label className={authLabelClass} htmlFor="twofa-code">
+                Code de vérification
+              </label>
+              <input
+                id="twofa-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                value={twoFactorCode}
+                onChange={(e) => {
+                  setTwoFactorCode(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="123456 ou code de secours"
+                required
+                aria-invalid={Boolean(error)}
+                className={`${authFieldClass} ${
+                  error ? "border-[var(--cyber-danger)] focus:border-[var(--cyber-danger)]" : ""
+                }`}
+              />
+              {error ? (
+                <p
+                  role="alert"
+                  className="mt-[clamp(0.32rem,0.7vh,0.45rem)] text-[clamp(0.68rem,1.05vh,0.8rem)] font-semibold text-[var(--cyber-danger)]"
+                >
+                  {error}
+                </p>
+              ) : null}
+            </div>
+            <button type="submit" disabled={isLoading} className={authPrimaryButtonClass}>
+              {isLoading ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgba(4,17,23,0.18)] border-t-[rgba(4,17,23,0.95)]" />
+              ) : (
+                "Vérifier"
+              )}
+            </button>
+          </form>
+          <button
+            type="button"
+            onClick={() => {
+              setStep("credentials");
+              setError("");
+              setTwoFactorCode("");
+              setChallengeToken("");
+            }}
+            className={`${authTextLinkClass} text-center`}
+          >
+            Retour à la connexion
+          </button>
+        </AuthCard>
+      </AuthPageLayout>
+    );
+  }
 
   return (
     <AuthPageLayout>

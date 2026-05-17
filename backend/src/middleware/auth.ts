@@ -29,7 +29,13 @@ export async function requireAuth(
   }
   const token = header.slice("Bearer ".length);
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!) as AuthPayload;
+    const payload = jwt.verify(token, process.env.JWT_SECRET!) as AuthPayload & {
+      twoFactorPending?: boolean;
+    };
+    // Un token de défi 2FA ne donne pas accès aux routes protégées.
+    if (payload.twoFactorPending) {
+      return res.status(401).json({ error: "invalid token" });
+    }
     // Token rattaché à une session : rejeté si la session a été révoquée.
     if (payload.sessionId) {
       const session = await ActiveSessionModel.exists({ _id: payload.sessionId });
@@ -44,6 +50,13 @@ export async function requireAuth(
 
 export function signToken(payload: AuthPayload): string {
   return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "7d" });
+}
+
+/** Token court-vivant émis entre le mot de passe et la vérification 2FA. */
+export function signChallengeToken(userId: string): string {
+  return jwt.sign({ userId, twoFactorPending: true }, process.env.JWT_SECRET!, {
+    expiresIn: "5m",
+  });
 }
 
 export function requireRole(...roles: AuthPayload["role"][]) {

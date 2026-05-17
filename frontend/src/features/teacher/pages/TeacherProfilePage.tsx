@@ -48,8 +48,12 @@ import {
   fetchSessions,
   revokeSession,
   revokeOtherSessions,
+  setupTwoFactor,
+  enableTwoFactor,
+  disableTwoFactor,
   type TeacherPreferences,
   type ActiveSession,
+  type TwoFactorSetup,
 } from "@/features/auth/api";
 import { ApiError } from "@/shared/lib/api";
 
@@ -65,6 +69,223 @@ const DEFAULT_PREFERENCES: TeacherPreferences = {
   examLanguage: "fr",
   timezone: "europe/paris",
 };
+
+function TwoFactorPanel({
+  enabled,
+  onEnabledChange,
+  showToast,
+}: {
+  enabled: boolean;
+  onEnabledChange: (value: boolean) => void;
+  showToast: (message: string, type?: "success" | "error") => void;
+}) {
+  const [mode, setMode] = useState<"idle" | "setup" | "disable">("idle");
+  const [setup, setSetup] = useState<TwoFactorSetup | null>(null);
+  const [code, setCode] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const reset = () => {
+    setMode("idle");
+    setSetup(null);
+    setCode("");
+  };
+
+  const startSetup = async () => {
+    setBusy(true);
+    try {
+      setSetup(await setupTwoFactor());
+      setCode("");
+      setBackupCodes(null);
+      setMode("setup");
+    } catch {
+      showToast("Impossible de démarrer la configuration 2FA.", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmEnable = async () => {
+    setBusy(true);
+    try {
+      const codes = await enableTwoFactor(code.trim());
+      setBackupCodes(codes);
+      reset();
+      onEnabledChange(true);
+      showToast("Authentification à deux facteurs activée.");
+    } catch (err) {
+      showToast(err instanceof ApiError ? "Code invalide." : "Échec de l'activation.", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmDisable = async () => {
+    setBusy(true);
+    try {
+      await disableTwoFactor(code.trim());
+      reset();
+      setBackupCodes(null);
+      onEnabledChange(false);
+      showToast("Authentification à deux facteurs désactivée.");
+    } catch (err) {
+      showToast(err instanceof ApiError ? "Code invalide." : "Échec de la désactivation.", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-sm font-medium text-black mb-1 flex items-center gap-2">
+            Application d'authentification
+            {enabled && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#22C55E] px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+                <Check className="w-3 h-3" strokeWidth={3} /> Activée
+              </span>
+            )}
+          </h3>
+          <p className="text-xs text-[#666666]">
+            Sécurisez votre compte avec un code temporaire via une application mobile
+            (Google Authenticator, Authy…).
+          </p>
+        </div>
+        {mode === "idle" && (
+          <button
+            onClick={() => (enabled ? setMode("disable") : startSetup())}
+            disabled={busy}
+            className={`flex-shrink-0 flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              enabled
+                ? "border-2 border-black text-black hover:bg-[#F5F5F5]"
+                : "bg-black text-white hover:bg-[#222222]"
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            {enabled ? "Désactiver" : "Activer la 2FA"}
+          </button>
+        )}
+      </div>
+
+      {/* Setup flow */}
+      {mode === "setup" && setup && (
+        <div className="rounded-xl border border-[#E5E5E5] bg-[#FAFAFA] p-4 space-y-4">
+          <p className="text-xs text-[#666666]">
+            1. Scannez ce QR code avec votre application d'authentification.
+          </p>
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
+            <img
+              src={setup.qrCode}
+              alt="QR code 2FA"
+              className="w-40 h-40 rounded-lg border border-[#E5E5E5] bg-white"
+            />
+            <div className="flex-1 space-y-2">
+              <p className="text-xs text-[#666666]">Ou saisissez la clé manuellement :</p>
+              <code className="block break-all rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-xs font-mono text-black">
+                {setup.secret}
+              </code>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">
+              2. Saisissez le code à 6 chiffres généré
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="123456"
+              className="cyber-input w-full rounded-xl px-4 py-3 text-sm text-black focus:outline-none transition-all sm:max-w-xs"
+            />
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button
+              onClick={reset}
+              className="rounded-xl border border-[#E5E5E5] px-4 py-2 text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={confirmEnable}
+              disabled={busy || code.trim().length < 6}
+              className="flex items-center justify-center gap-2 rounded-xl bg-black px-4 py-2 text-sm font-medium text-white hover:bg-[#222222] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Check className="w-4 h-4" />
+              Confirmer l'activation
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Disable flow */}
+      {mode === "disable" && (
+        <div className="rounded-xl border border-[#E5E5E5] bg-[#FAFAFA] p-4 space-y-3">
+          <p className="text-xs text-[#666666]">
+            Saisissez un code de votre application (ou un code de secours) pour confirmer
+            la désactivation.
+          </p>
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Code de vérification"
+            className="cyber-input w-full rounded-xl px-4 py-3 text-sm text-black focus:outline-none transition-all sm:max-w-xs"
+          />
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button
+              onClick={reset}
+              className="rounded-xl border border-[#E5E5E5] px-4 py-2 text-sm font-medium text-black hover:bg-[#F5F5F5] transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={confirmDisable}
+              disabled={busy || !code.trim()}
+              className="rounded-xl bg-[#B91C1C] px-4 py-2 text-sm font-medium text-white hover:bg-[#991B1B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Désactiver la 2FA
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Backup codes (shown once after activation) */}
+      {backupCodes && (
+        <div className="rounded-xl border border-[#E5E5E5] bg-white p-4">
+          <p className="text-sm font-medium text-black mb-1 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Codes de secours
+          </p>
+          <p className="text-xs text-[#666666] mb-3">
+            Conservez ces codes en lieu sûr. Chacun permet une connexion si vous perdez
+            votre téléphone. Ils ne seront plus affichés.
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {backupCodes.map((c) => (
+              <code
+                key={c}
+                className="rounded-lg border border-[#E5E5E5] bg-[#FAFAFA] px-2 py-1.5 text-center text-xs font-mono text-black"
+              >
+                {c}
+              </code>
+            ))}
+          </div>
+          <button
+            onClick={() => setBackupCodes(null)}
+            className="mt-3 text-xs font-medium text-black underline hover:no-underline"
+          >
+            J'ai enregistré mes codes
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function TeacherProfilePage() {
   const navigate = useNavigate();
@@ -86,6 +307,9 @@ export function TeacherProfilePage() {
   // Preferences state
   const [prefs, setPrefs] = useState<TeacherPreferences>(DEFAULT_PREFERENCES);
   const [savingPrefs, setSavingPrefs] = useState(false);
+
+  // Two-factor
+  const [twoFaEnabled, setTwoFaEnabled] = useState(false);
 
   // Active sessions
   const [sessions, setSessions] = useState<ActiveSession[]>([]);
@@ -123,6 +347,7 @@ export function TeacherProfilePage() {
         setLocation(u.location ?? "");
         setBio(u.bio ?? "");
         setProfileImage(u.avatarUrl || null);
+        setTwoFaEnabled(!!u.twoFactorEnabled);
         if (u.preferences) {
           setPrefs({ ...DEFAULT_PREFERENCES, ...u.preferences });
         }
@@ -499,22 +724,11 @@ export function TeacherProfilePage() {
                 </Section>
 
                 <Section title="Authentification à deux facteurs" icon={Shield}>
-                  <div className="space-y-4">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h3 className="text-sm font-medium text-black mb-1">Activer la 2FA</h3>
-                        <p className="text-xs text-[#666666]">Sécurisez votre compte avec une authentification à deux facteurs via votre application mobile (Google Authenticator, Authy...).</p>
-                      </div>
-                      <ToggleSwitch defaultChecked={false} />
-                    </div>
-                    <div className="flex flex-col gap-4 border-t border-[#E5E5E5] pt-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h3 className="text-sm font-medium text-black mb-1">Alertes de connexion suspecte</h3>
-                        <p className="text-xs text-[#666666]">Recevoir une notification en cas de connexion depuis un nouvel appareil ou une localisation inhabituelle.</p>
-                      </div>
-                      <ToggleSwitch defaultChecked={true} />
-                    </div>
-                  </div>
+                  <TwoFactorPanel
+                    enabled={twoFaEnabled}
+                    onEnabledChange={setTwoFaEnabled}
+                    showToast={showToast}
+                  />
                 </Section>
 
                 {/* Danger zone */}

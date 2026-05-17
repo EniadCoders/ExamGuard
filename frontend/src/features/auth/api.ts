@@ -27,15 +27,38 @@ export type AuthUser = {
   bio?: string;
   avatarUrl?: string;
   preferences?: TeacherPreferences;
+  twoFactorEnabled?: boolean;
   status: "active" | "suspended" | "pending";
 };
 
 type AuthResponse = { token: string; user: AuthUser };
 
-export async function login(email: string, password: string): Promise<AuthUser> {
-  const data = await api<AuthResponse>("/auth/login", {
+export type LoginResult =
+  | { twoFactorRequired: false; user: AuthUser }
+  | { twoFactorRequired: true; challengeToken: string };
+
+export async function login(email: string, password: string): Promise<LoginResult> {
+  const data = await api<
+    AuthResponse & { twoFactorRequired?: boolean; challengeToken?: string }
+  >("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+  if (data.twoFactorRequired && data.challengeToken) {
+    return { twoFactorRequired: true, challengeToken: data.challengeToken };
+  }
+  setToken(data.token);
+  return { twoFactorRequired: false, user: data.user };
+}
+
+/** Étape 2 de la connexion : valide le code 2FA et établit la session. */
+export async function verifyLoginTwoFactor(
+  challengeToken: string,
+  code: string,
+): Promise<AuthUser> {
+  const data = await api<AuthResponse>("/auth/login/2fa", {
+    method: "POST",
+    body: JSON.stringify({ challengeToken, code }),
   });
   setToken(data.token);
   return data.user;
@@ -117,6 +140,33 @@ export function revokeSession(id: string): Promise<{ ok: true }> {
 
 export function revokeOtherSessions(): Promise<{ ok: true }> {
   return api("/auth/sessions", { method: "DELETE" });
+}
+
+// ─── 2FA (TOTP) ────────────────────────────────────────────────────────────
+
+export type TwoFactorSetup = {
+  secret: string;
+  otpauthUrl: string;
+  qrCode: string;
+};
+
+export function setupTwoFactor(): Promise<TwoFactorSetup> {
+  return api<TwoFactorSetup>("/auth/2fa/setup", { method: "POST" });
+}
+
+export async function enableTwoFactor(code: string): Promise<string[]> {
+  const data = await api<{ ok: true; backupCodes: string[] }>("/auth/2fa/enable", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+  return data.backupCodes;
+}
+
+export function disableTwoFactor(code: string): Promise<{ ok: true }> {
+  return api("/auth/2fa/disable", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
 }
 
 export function routeForRole(role: AuthUser["role"]): string {

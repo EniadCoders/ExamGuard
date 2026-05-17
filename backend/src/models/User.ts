@@ -37,6 +37,10 @@ const userSchema = new Schema(
     bio: { type: String, default: "" },
     avatarUrl: { type: String, default: "" },
     preferences: { type: preferencesSchema, default: () => ({}) },
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String },
+    twoFactorPendingSecret: { type: String },
+    twoFactorBackupCodes: { type: [String], default: [] },
     status: {
       type: String,
       enum: ["active", "suspended", "pending"],
