@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Building2, Eye, EyeOff, Github, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import imgGoogleIcon from "@/assets/8e4241399baefbe8f8feffab0fe67682e140e1b1.png";
+import { login, routeForRole } from "@/features/auth/api";
+import { ApiError } from "@/shared/lib/api";
 import {
   AuthCard,
   AuthHeading,
@@ -22,13 +24,32 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setIsLoading(false);
-    navigate(role === "student" ? "/student" : "/teacher");
+    try {
+      const user = await login(email, password);
+      navigate(routeForRole(user.role));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setError("Email ou mot de passe incorrect.");
+        } else if (err.status === 403) {
+          setError("Votre compte est suspendu. Contactez le support.");
+        } else if (err.status === 400) {
+          setError("Veuillez renseigner votre email et votre mot de passe.");
+        } else {
+          setError("Connexion impossible. Réessayez.");
+        }
+      } else {
+        setError("Connexion impossible. Vérifiez votre connexion.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -126,10 +147,16 @@ export function LoginPage() {
                   id="login-email"
                   type="text"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError("");
+                  }}
                   placeholder="Nom d'utilisateur ou email"
                   required
-                  className={authFieldClass}
+                  aria-invalid={Boolean(error)}
+                  className={`${authFieldClass} ${
+                    error ? "border-[var(--cyber-danger)] focus:border-[var(--cyber-danger)]" : ""
+                  }`}
                 />
               </div>
 
@@ -152,10 +179,17 @@ export function LoginPage() {
                     id="login-password"
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError("");
+                    }}
                     placeholder="Mot de passe"
                     required
-                    className={`${authFieldClass} pr-11 sm:pr-12`}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? "login-error" : undefined}
+                    className={`${authFieldClass} pr-11 sm:pr-12 ${
+                      error ? "border-[var(--cyber-danger)] focus:border-[var(--cyber-danger)]" : ""
+                    }`}
                   />
                   <button
                     type="button"
@@ -170,6 +204,15 @@ export function LoginPage() {
                     )}
                   </button>
                 </div>
+                {error ? (
+                  <p
+                    id="login-error"
+                    role="alert"
+                    className="mt-[clamp(0.32rem,0.7vh,0.45rem)] text-[clamp(0.68rem,1.05vh,0.8rem)] font-semibold text-[var(--cyber-danger)]"
+                  >
+                    {error}
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex flex-col gap-[clamp(0.32rem,0.7vh,0.45rem)] text-[clamp(0.72rem,1.15vh,0.88rem)] text-[var(--cyber-muted-text)] sm:flex-row sm:items-center sm:justify-between">

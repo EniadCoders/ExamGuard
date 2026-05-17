@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff, GraduationCap, Send, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router";
+import { signupStudent } from "@/features/auth/api";
+import { ApiError } from "@/shared/lib/api";
 import {
   AuthCard,
   AuthHeading,
@@ -80,9 +82,27 @@ export function SignUpPage() {
     }
 
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setIsLoading(false);
-    setStep("success");
+    try {
+      await signupStudent({
+        email: email.trim(),
+        password,
+        fullName: fullName.trim(),
+        school: school.trim(),
+        program: program.trim(),
+        department: department.trim(),
+        studentIdentifierType,
+        studentIdentifier: studentIdentifier.trim(),
+      });
+      setStep("success");
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Création du compte impossible. Réessayez.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTeacherContact = async (e: React.FormEvent) => {

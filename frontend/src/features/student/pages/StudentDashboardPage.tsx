@@ -40,6 +40,8 @@ import {
   Bell,
   Search,
   Camera,
+  Hash,
+  Plus,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
@@ -53,11 +55,8 @@ import {
   DashboardSectionCard,
   DashboardStatusBadge,
 } from "@/shared/components/dashboard/DashboardCard";
-import {
-  studentCalendarEvents as calendarEvents,
-  studentDashboardStats as stats,
-  studentExams as allExams,
-} from "@/features/student/student.data";
+import { fetchDashboard, type DashboardExam, type DashboardStat, type CalendarEvent, type DashboardUser } from "@/features/student/api";
+import { logout } from "@/features/auth/api";
 import {
   ExamTypeChip as TypeChip,
   ScoreRing,
@@ -78,7 +77,40 @@ export function StudentDashboard() {
   const [calendarMonthFilter, setCalendarMonthFilter] = useState<string>("all");
   const [calendarSubjectFilter, setCalendarSubjectFilter] = useState<string>("all");
   const [calendarTypeFilter, setCalendarTypeFilter] = useState<string>("all");
-  const [selectedResult, setSelectedResult] = useState<number | null>(null);
+  const [selectedResult, setSelectedResult] = useState<string | null>(null);
+  const [allExams, setAllExams] = useState<DashboardExam[]>([]);
+  const [stats, setStats] = useState<DashboardStat[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [user, setUser] = useState<DashboardUser | null>(null);
+  const [dashboardError, setDashboardError] = useState("");
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchDashboard()
+      .then((data) => {
+        if (cancelled) return;
+        setUser(data.user);
+        setAllExams(data.exams);
+        setStats(data.stats);
+        setCalendarEvents(data.calendarEvents);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setDashboardError(err?.message ?? "Erreur de chargement");
+        if (err?.status === 401) navigate("/");
+      })
+      .finally(() => {
+        if (!cancelled) setDashboardLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
+  const initials = user
+    ? `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase()
+    : "";
   const [settingsTab, setSettingsTab] = useState<"profile" | "password" | "notifications" | "security">("profile");
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -99,8 +131,8 @@ export function StudentDashboard() {
     return { score: 3, label: "Forte", color: "bg-green-500", textColor: "text-green-500" };
   };
   const pwdStrength = getPasswordStrength(newPassword);
-  const [targetExamId, setTargetExamId] = useState<number | null>(null);
-  const [expandedExam, setExpandedExam] = useState<number | null>(null);
+  const [targetExamId, setTargetExamId] = useState<string | null>(null);
+  const [expandedExam, setExpandedExam] = useState<string | null>(null);
   const [sessionToRevoke, setSessionToRevoke] = useState<string | null>(null);
   const [activeSessionsList, setActiveSessionsList] = useState(["MacBook Pro", "iPhone 14"]);
   const [show2FAPopup, setShow2FAPopup] = useState(false);
@@ -134,7 +166,7 @@ export function StudentDashboard() {
     setExpandedExam(null);
   };
 
-  const handleJoinExam = (examId: number) => {
+  const handleJoinExam = (examId: string) => {
     setTargetExamId(examId);
     setShowExamLock(true);
   };
@@ -155,6 +187,7 @@ export function StudentDashboard() {
   };
 
   const handleLogout = () => {
+    logout();
     navigate("/");
   };
 
@@ -250,10 +283,10 @@ export function StudentDashboard() {
                 className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[#F5F7FB] transition-colors"
               >
                 <div className="w-8 h-8 bg-[#00809D] rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">JD</span>
+                  <span className="text-white text-sm font-bold">{initials || "…"}</span>
                 </div>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-semibold text-black">Jean Dupont</p>
+                  <p className="text-sm font-semibold text-black">{user?.fullName ?? ""}</p>
                   <p className="text-xs text-[#666666]">Étudiant</p>
                 </div>
               </button>
@@ -275,13 +308,21 @@ export function StudentDashboard() {
         {/* Welcome Header */}
         {activeTab === "dashboard" && (
           <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-[var(--cyber-text)] sm:text-4xl">Bonjour, Jean</h1>
+            <h1 className="mb-2 text-3xl font-bold text-[var(--cyber-text)] sm:text-4xl">
+              Bonjour{user?.firstName ? `, ${user.firstName}` : ""}
+            </h1>
             <p className="text-base text-[var(--cyber-muted-text)] sm:text-lg">Bienvenue sur votre tableau de bord</p>
           </div>
         )}
 
         {/* Dashboard View */}
-        {activeTab === "dashboard" && (
+        {activeTab === "dashboard" && dashboardLoading ? (
+          <div className="flex justify-center py-20">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-[#00809D]" />
+          </div>
+        ) : null}
+
+        {activeTab === "dashboard" && !dashboardLoading && (
           allExams.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center animate-in fade-in duration-700 slide-in-from-bottom-4 mt-4 bg-white border border-[#E5E5E5] rounded-3xl shadow-sm">
               <div className="relative mb-8">
@@ -552,7 +593,11 @@ export function StudentDashboard() {
             </div>
 
             {/* Exam List */}
-            {allExams.length === 0 ? (
+            {dashboardLoading ? (
+              <div className="flex justify-center py-20">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-[#00809D]" />
+              </div>
+            ) : allExams.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white border border-[#E5E5E5] rounded-3xl shadow-sm animate-in fade-in">
                 <div className="w-20 h-20 bg-[#F5F7FB] rounded-2xl flex items-center justify-center mb-6 shadow-inner">
                   <Hash className="w-8 h-8 text-[#00809D]" />
@@ -1030,24 +1075,27 @@ export function StudentDashboard() {
                       <div>
                         <label className="block text-sm font-medium text-black mb-2">Prénom</label>
                         <input
+                          key={user?.firstName ?? "prenom"}
                           type="text"
-                          defaultValue="Jean"
+                          defaultValue={user?.firstName ?? ""}
                           className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-black mb-2">Nom</label>
                         <input
+                          key={user?.lastName ?? "nom"}
                           type="text"
-                          defaultValue="Dupont"
+                          defaultValue={user?.lastName ?? ""}
                           className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-black mb-2">Email</label>
                         <input
+                          key={user?.email ?? "email"}
                           type="email"
-                          defaultValue="jean.dupont@universite.fr"
+                          defaultValue={user?.email ?? ""}
                           className="w-full bg-[#F5F7FB] border border-[#E5E5E5] rounded-xl px-4 py-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>

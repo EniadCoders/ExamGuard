@@ -14,7 +14,7 @@ import {
   Info,
   MessageSquareWarning,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
 import { Logo } from "@/shared/components/BrandLogo";
 import { CodeEditorPanel } from "@/shared/components/CodeEditorPanel";
@@ -26,10 +26,7 @@ import type {
   Answer,
 } from "@/shared/types/exam";
 import { TYPE_LABELS } from "@/shared/types/exam";
-import {
-  mockExamQuestions as examQuestions,
-  TOTAL_QUESTIONS as TOTAL,
-} from "@/features/exam/exam.data";
+import { fetchExam } from "@/features/student/api";
 import {
   AutoSaveStatus as AutoSaveIndicator,
   ExamResultsView as ExamResultsScreen,
@@ -41,6 +38,9 @@ import {
 
 export function ExamInterface() {
   const navigate = useNavigate();
+  const { examId } = useParams<{ examId: string }>();
+  const [examQuestions, setExamQuestions] = useState<Question[]>([]);
+  const [loadError, setLoadError] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<number, Answer>>({});
   const [timeLeft, setTimeLeft] = useState(5025);
@@ -120,9 +120,30 @@ export function ExamInterface() {
     };
   }, []);
 
+  const TOTAL = examQuestions.length;
   const question = examQuestions[current];
 
   useEffect(() => {
+    if (!examId) return;
+    let cancelled = false;
+    fetchExam(examId)
+      .then((exam) => {
+        if (cancelled) return;
+        setExamQuestions(exam.questions);
+        setTimeLeft(exam.durationMinutes * 60);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setLoadError(err?.message ?? "Examen introuvable");
+        if (err?.status === 401) navigate("/");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [examId, navigate]);
+
+  useEffect(() => {
+    if (examQuestions.length === 0) return;
     const timer = setInterval(() => setTimeLeft((p) => {
       if (p <= 1 && !submitted) {
         setSubmitted(true);
@@ -184,6 +205,31 @@ export function ExamInterface() {
   };
 
   const totalPoints = examQuestions.reduce((sum, q) => sum + q.points, 0);
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white p-6">
+        <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
+          <p className="font-semibold">Impossible de charger l'examen</p>
+          <p className="mt-2 text-sm">{loadError}</p>
+          <button
+            onClick={() => navigate("/student")}
+            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-white"
+          >
+            Retour au tableau de bord
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (examQuestions.length === 0) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-700" />
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
