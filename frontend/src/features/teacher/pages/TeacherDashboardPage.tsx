@@ -82,10 +82,12 @@ import {
   fetchTeacherRoster,
   fetchTeacherStudentDetail,
   fetchTeacherAnalytics,
+  fetchExamMonitor,
   type TeacherExam,
   type TeacherDashboardData,
   type ExamHistoryItem,
   type TeacherAnalytics,
+  type ExamMonitor,
   type DraftQuestion,
   type ExamRules,
   type StudentLite,
@@ -2421,54 +2423,25 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     return `${h}:${m}:${sec}`;
   };
 
-  const totalQuestions = exam.questions || 10;
-  const liveParticipants = allStudentsData.slice(0, Math.min(exam.students || 5, allStudentsData.length)).map((s, i) => {
-    const baseState: "flagged" | "submitted" | "active" = i % 5 === 0 ? "flagged" : i % 4 === 0 ? "submitted" : "active";
-    const kicked = kickedIds.includes(s.id);
-    const finalState = (kicked ? "kicked" : baseState) as "flagged" | "submitted" | "active" | "kicked";
-    const progressPct =
-      finalState === "kicked" ? 0 :
-      finalState === "submitted" ? 100 :
-      Math.min(99, 12 + i * 17 + (elapsed % 11) * 2);
-    const answered =
-      finalState === "submitted" ? totalQuestions :
-      finalState === "kicked" ? 0 :
-      Math.min(totalQuestions - 1, Math.floor((progressPct / 100) * totalQuestions));
-    return {
-      id: s.id,
-      name: s.name,
-      progress: progressPct,
-      answered,
-      totalQuestions,
-      state: finalState,
-      score: Math.round((10 + (i * 1.7) % 9) * 10) / 10,
+  const [monitor, setMonitor] = useState<ExamMonitor | null>(null);
+  useEffect(() => {
+    let active = true;
+    const load = () => {
+      fetchExamMonitor(exam.id)
+        .then((d) => { if (active) setMonitor(d); })
+        .catch(() => {});
     };
-  });
+    load();
+    const t = setInterval(load, 10000);
+    return () => { active = false; clearInterval(t); };
+  }, [exam.id]);
 
-  const ALERT_TYPES = [
-    { type: "Changement d'onglet (3x)",        severity: "high"   as const },
-    { type: "Détection de visage perdue",      severity: "medium" as const },
-    { type: "Tentative copier-coller",         severity: "low"    as const },
-    { type: "Plusieurs visages détectés",      severity: "high"   as const },
-    { type: "Sortie du mode plein écran",      severity: "medium" as const },
-    { type: "Capture d'écran détectée",        severity: "high"   as const },
-    { type: "Bruit ambiant suspect",           severity: "low"    as const },
-    { type: "Connexion réseau instable",       severity: "low"    as const },
-    { type: "Raccourci clavier interdit",      severity: "medium" as const },
-    { type: "Téléphone détecté à proximité",   severity: "high"   as const },
-  ];
-  const ALERT_TIMES = ["Il y a 12s", "Il y a 45s", "Il y a 1m 20s", "Il y a 2m", "Il y a 3m 10s", "Il y a 4m", "Il y a 5m 35s", "Il y a 7m", "Il y a 9m 12s", "Il y a 11m"];
-  const liveAlerts = liveParticipants.slice(0, Math.min(12, liveParticipants.length)).map((p, i) => {
-    const a = ALERT_TYPES[i % ALERT_TYPES.length];
-    return {
-      id: i + 1,
-      studentId: p.id,
-      name: p.name,
-      type: a.type,
-      severity: a.severity,
-      time: ALERT_TIMES[i % ALERT_TIMES.length],
-    };
-  });
+  const liveParticipants = (monitor?.participants ?? []).map((p) =>
+    kickedIds.includes(p.id)
+      ? { ...p, state: "kicked" as const, progress: 0, answered: 0 }
+      : p,
+  );
+  const liveAlerts = monitor?.alerts ?? [];
 
   const total = liveParticipants.length;
   const active = liveParticipants.filter(p => p.state === "active").length;

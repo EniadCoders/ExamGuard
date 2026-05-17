@@ -230,3 +230,33 @@ export function fetchTeacherAnalytics(examId?: string): Promise<TeacherAnalytics
   const query = examId && examId !== "all" ? `?examId=${encodeURIComponent(examId)}` : "";
   return api<TeacherAnalytics>(`/teacher/analytics${query}`);
 }
+
+// ─── Live exam monitoring ──────────────────────────────────────────────────
+
+export interface MonitorParticipant {
+  id: string;
+  name: string;
+  totalQuestions: number;
+  answered: number;
+  progress: number;
+  state: "active" | "flagged" | "submitted" | "kicked";
+  score: number;
+}
+
+export interface MonitorAlert {
+  id: number;
+  studentId: string;
+  name: string;
+  type: string;
+  severity: "high" | "medium" | "low";
+  time: string;
+}
+
+export interface ExamMonitor {
+  participants: MonitorParticipant[];
+  alerts: MonitorAlert[];
+}
+
+export function fetchExamMonitor(examId: string): Promise<ExamMonitor> {
+  return api<ExamMonitor>(`/teacher/exams/${examId}/monitor`);
+}

@@ -346,6 +346,96 @@ router.delete("/exams/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── Suivi en direct d'un examen ───────────────────────────────────────────
+
+const ALERT_LABELS: Record<string, string> = {
+  "tab-blur": "Changement d'onglet",
+  "tab-switch": "Changement d'onglet",
+  "fullscreen-exit": "Sortie du mode plein écran",
+  "fullscreen-exited": "Sortie du mode plein écran",
+  paste: "Tentative de collage",
+  copy: "Tentative de copie",
+  "face-lost": "Visage non détecté",
+  "multiple-faces": "Plusieurs visages détectés",
+  "window-blur": "Fenêtre quittée",
+};
+
+/** Déduit une sévérité à partir du type d'évènement anti-triche. */
+function alertSeverity(type: string): "high" | "medium" | "low" {
+  const t = type.toLowerCase();
+  if (/face|multiple|phone|screenshot|capture/.test(t)) return "high";
+  if (/tab|blur|fullscreen|focus|shortcut|switch/.test(t)) return "medium";
+  return "low";
+}
+
+router.get("/exams/:id/monitor", async (req, res) => {
+  const teacherId = req.auth!.userId;
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(404).json({ error: "exam not found" });
+  }
+  const exam = await ExamModel.findOne({
+    _id: req.params.id,
+    createdBy: teacherId,
+  }).lean();
+  if (!exam) return res.status(404).json({ error: "exam not found" });
+
+  const totalQuestions = exam.questions?.length ?? 0;
+  const enrolledIds = (exam.enrolledStudents ?? []).map((id) => String(id));
+  const [students, attempts] = await Promise.all([
+    UserModel.find({ _id: { $in: enrolledIds } }).lean(),
+    ExamAttemptModel.find({ examId: exam._id }).lean(),
+  ]);
+  const studentById = new Map(students.map((s) => [String(s._id), s]));
+  const attemptByStudent = new Map(
+    attempts.map((a) => [String(a.studentId), a]),
+  );
+
+  const participants = (exam.enrolledStudents ?? []).map((sid) => {
+    const id = String(sid);
+    const student = studentById.get(id);
+    const attempt = attemptByStudent.get(id);
+    const answered = attempt?.answers?.length ?? 0;
+    const submitted =
+      attempt?.status === "submitted" || attempt?.status === "graded";
+    const flagged =
+      !submitted && (attempt?.antiCheatEvents?.length ?? 0) > 0;
+    const state = submitted ? "submitted" : flagged ? "flagged" : "active";
+    return {
+      id,
+      name: student?.fullName ?? "Étudiant",
+      totalQuestions,
+      answered,
+      progress: submitted
+        ? 100
+        : totalQuestions
+          ? Math.round((answered / totalQuestions) * 100)
+          : 0,
+      state,
+      score: attempt?.score ?? 0,
+    };
+  });
+
+  let alertSeq = 0;
+  const alerts = attempts.flatMap((a) => {
+    const student = studentById.get(String(a.studentId));
+    return (a.antiCheatEvents ?? []).map((ev: any) => ({
+      id: ++alertSeq,
+      studentId: String(a.studentId),
+      name: student?.fullName ?? "Étudiant",
+      type: ALERT_LABELS[ev.type] ?? ev.type,
+      severity: alertSeverity(ev.type ?? ""),
+      time: relativeFr(ev.timestamp),
+      ts: new Date(ev.timestamp ?? Date.now()).getTime(),
+    }));
+  });
+  alerts.sort((x, y) => y.ts - x.ts);
+
+  res.json({
+    participants,
+    alerts: alerts.map(({ ts, ...rest }) => rest),
+  });
+});
+
 // ─── Vue d'ensemble du dashboard ───────────────────────────────────────────
 
 router.get("/dashboard", async (req, res) => {
