@@ -79,8 +79,11 @@ import {
   launchExam as apiLaunchExam,
   fetchTeacherStudents,
   fetchTeacherDashboard,
+  fetchTeacherRoster,
+  fetchTeacherStudentDetail,
   type TeacherExam,
   type TeacherDashboardData,
+  type ExamHistoryItem,
   type DraftQuestion,
   type ExamRules,
   type StudentLite,
@@ -1323,12 +1326,15 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
 
 // ─── Student Details Modal ─────────────────────────────────────────────────────
 function StudentDetailsModal({ student, onClose }: { student: Student; onClose: () => void }) {
-  const examHistory = [
-    { exam: "Architecture Java EE", date: "09 Avr", score: 17.4, status: "passed" },
-    { exam: "Base de données", date: "15 Mar", score: 18.4, status: "passed" },
-    { exam: "Sécurité informatique", date: "20 Fév", score: 15.6, status: "passed" },
-    { exam: "Algorithmique", date: "05 Fév", score: 13.0, status: "passed" },
-  ];
+  const [examHistory, setExamHistory] = useState<ExamHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTeacherStudentDetail(student.id)
+      .then((d) => setExamHistory(d.examHistory))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [student.id]);
 
   return (
     <ModalBase title="Profil étudiant" onClose={onClose} wide>
@@ -1374,6 +1380,14 @@ function StudentDetailsModal({ student, onClose }: { student: Student; onClose: 
         <div>
           <h4 className="text-sm font-bold text-black mb-3">Historique des examens</h4>
           <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] rounded-xl overflow-hidden">
+            {loading && (
+              <p className="px-4 py-6 text-center text-sm text-[#888888]">Chargement…</p>
+            )}
+            {!loading && examHistory.length === 0 && (
+              <p className="px-4 py-6 text-center text-sm text-[#888888]">
+                Aucun examen passé pour le moment.
+              </p>
+            )}
             {examHistory.map((e, i) => (
               <div key={i} className="flex items-center justify-between px-4 py-3 hover:bg-[#FAFAFA] transition-colors">
                 <div>
@@ -1924,29 +1938,18 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [teacherStudents, setTeacherStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Roster = students who took (live or completed) at least one of this teacher's exams.
-  // In the API equivalent: SELECT students.* FROM students
-  //   JOIN submissions ON submissions.student_id = students.id
-  //   JOIN exams ON exams.id = submissions.exam_id
-  //  WHERE exams.teacher_id = :currentTeacherId AND exams.status IN ('completed', 'live')
+  useEffect(() => {
+    fetchTeacherRoster()
+      .then(setTeacherStudents)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Examens en cours / terminés — utilisés pour le filtre par examen.
   const takenExams = exams.filter(e => e.status === "completed" || e.status === "live");
-  const rosterStudentIds = new Set<string>(
-    takenExams.flatMap(e => e.selectedStudentIds ?? [])
-  );
-  const teacherStudents = allStudentsData.filter(s => rosterStudentIds.has(s.id));
-
-  // TODO: remove these debug logs once the linkage is verified end-to-end.
-  if (typeof window !== "undefined") {
-    // eslint-disable-next-line no-console
-    console.debug("[StudentsTab] teacher exams →", exams.map(e => ({ id: e.id, title: e.title, status: e.status, selectedStudentIds: e.selectedStudentIds })));
-    // eslint-disable-next-line no-console
-    console.debug("[StudentsTab] taken exams (completed | live) →", takenExams.map(e => e.id));
-    // eslint-disable-next-line no-console
-    console.debug("[StudentsTab] roster student ids →", Array.from(rosterStudentIds));
-    // eslint-disable-next-line no-console
-    console.debug("[StudentsTab] resolved students →", teacherStudents.map(s => ({ id: s.id, name: s.name })));
-  }
 
   const filieres = Array.from(new Set(teacherStudents.map(s => s.department).filter(Boolean))) as string[];
 
@@ -2067,12 +2070,17 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
 
       {/* Students Table */}
       <div className="dashboard-card overflow-hidden">
-        {teacherStudents.length === 0 ? (
+        {loading ? (
+          <div className="px-6 py-12 text-center">
+            <Clock className="w-10 h-10 text-[#CCCCCC] mx-auto mb-3 animate-pulse" aria-hidden="true" />
+            <p className="text-sm text-[#666666]">Chargement des étudiants…</p>
+          </div>
+        ) : teacherStudents.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <FileText className="w-10 h-10 text-[#CCCCCC] mx-auto mb-3" aria-hidden="true" />
-            <p className="text-sm font-medium text-black mb-1">Aucun étudiant n'a encore passé l'un de vos examens</p>
+            <p className="text-sm font-medium text-black mb-1">Aucun étudiant inscrit à vos examens</p>
             <p className="text-xs text-[#666666]">
-              La liste apparaîtra dès qu'un étudiant aura participé à un examen en cours ou terminé.
+              La liste apparaîtra dès qu'un étudiant sera inscrit à l'un de vos examens.
             </p>
           </div>
         ) : (

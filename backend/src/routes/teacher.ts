@@ -36,6 +36,30 @@ function formatExamDateFr(d: Date): string {
   return `${base} à ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 
+const MONTHS_FR_SHORT = [
+  "Janv", "Févr", "Mars", "Avr", "Mai", "Juin",
+  "Juil", "Août", "Sept", "Oct", "Nov", "Déc",
+];
+
+/** Formate une date courte : "9 Avr 2026". */
+function formatDateShort(d: Date): string {
+  return `${d.getUTCDate()} ${MONTHS_FR_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+/** Formate un délai relatif en français : "Il y a 5 min", "Actif maintenant". */
+function relativeFr(d?: Date | null): string {
+  if (!d) return "Jamais connecté";
+  const diffMs = Date.now() - new Date(d).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "Actif maintenant";
+  if (min < 60) return `Il y a ${min} min`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `Il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `Il y a ${days} j`;
+  return formatDateShort(new Date(d));
+}
+
 /** Génère un code de session unique à 6 caractères. */
 async function generateJoinCode(): Promise<string> {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -139,6 +163,28 @@ function toObjectIds(ids: unknown): mongoose.Types.ObjectId[] {
   return ids
     .filter((id) => mongoose.isValidObjectId(id))
     .map((id) => new mongoose.Types.ObjectId(String(id)));
+}
+
+/** Sérialise un étudiant avec ses statistiques sur les examens du professeur. */
+function mapStudent(user: any, attempts: any[], examCount: number) {
+  const graded = attempts.filter((a) => a.score != null);
+  const avg = graded.length
+    ? Math.round(
+        (graded.reduce((sum, a) => sum + (a.score ?? 0), 0) / graded.length) * 10,
+      ) / 10
+    : 0;
+  return {
+    id: String(user._id),
+    name: user.fullName,
+    email: user.email,
+    exams: examCount,
+    avg,
+    status: user.status === "active" ? "active" : "inactive",
+    lastActive: relativeFr(user.lastLoginAt),
+    department: user.department ?? "",
+    year: "",
+    studentId: user.studentIdentifier ?? "",
+  };
 }
 
 // ─── Examens — liste ───────────────────────────────────────────────────────
@@ -401,6 +447,93 @@ router.get("/students", async (_req, res) => {
       department: s.department ?? "",
       status: s.status,
     })),
+  });
+});
+
+// ─── Étudiants — liste avec statistiques (onglet Étudiants) ────────────────
+
+router.get("/students/roster", async (req, res) => {
+  const teacherId = req.auth!.userId;
+  const exams = await ExamModel.find({ createdBy: teacherId }).lean();
+  const examIds = exams.map((e) => e._id);
+
+  const studentIdSet = new Set<string>();
+  const examCountByStudent = new Map<string, number>();
+  for (const e of exams) {
+    for (const sid of e.enrolledStudents ?? []) {
+      const key = String(sid);
+      studentIdSet.add(key);
+      examCountByStudent.set(key, (examCountByStudent.get(key) ?? 0) + 1);
+    }
+  }
+
+  const [students, attempts] = await Promise.all([
+    UserModel.find({ _id: { $in: [...studentIdSet] }, role: "student" })
+      .sort({ fullName: 1 })
+      .lean(),
+    ExamAttemptModel.find({ examId: { $in: examIds } }).lean(),
+  ]);
+
+  const attemptsByStudent = new Map<string, any[]>();
+  for (const a of attempts) {
+    const key = String(a.studentId);
+    const list = attemptsByStudent.get(key) ?? [];
+    list.push(a);
+    attemptsByStudent.set(key, list);
+  }
+
+  res.json({
+    students: students.map((s) =>
+      mapStudent(
+        s,
+        attemptsByStudent.get(String(s._id)) ?? [],
+        examCountByStudent.get(String(s._id)) ?? 0,
+      ),
+    ),
+  });
+});
+
+// ─── Étudiants — détail (modale profil étudiant) ───────────────────────────
+
+router.get("/students/:id", async (req, res) => {
+  const teacherId = req.auth!.userId;
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(404).json({ error: "student not found" });
+  }
+  const user = await UserModel.findOne({ _id: req.params.id, role: "student" }).lean();
+  if (!user) return res.status(404).json({ error: "student not found" });
+
+  const exams = await ExamModel.find({ createdBy: teacherId }).lean();
+  const examIds = exams.map((e) => e._id);
+  const examById = new Map(exams.map((e) => [String(e._id), e]));
+  const attempts = await ExamAttemptModel.find({
+    examId: { $in: examIds },
+    studentId: user._id,
+  }).lean();
+  const examCount = exams.filter((e) =>
+    (e.enrolledStudents ?? []).some((sid) => String(sid) === String(user._id)),
+  ).length;
+
+  const examHistory = attempts
+    .filter((a) => a.submittedAt)
+    .sort(
+      (x, y) =>
+        new Date(y.submittedAt!).getTime() - new Date(x.submittedAt!).getTime(),
+    )
+    .map((a) => {
+      const exam = examById.get(String(a.examId));
+      return {
+        exam: exam?.title ?? "Examen",
+        date: formatDateShort(new Date(a.submittedAt!)),
+        score: a.score ?? 0,
+        status:
+          (a.score ?? 0) >= (exam?.passingScore ?? 12) ? "passed" : "failed",
+      };
+    });
+
+  res.json({
+    student: mapStudent(user, attempts, examCount),
+    examHistory,
   });
 });
 

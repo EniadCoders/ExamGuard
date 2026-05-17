@@ -153,3 +153,37 @@ export async function fetchTeacherStudents(): Promise<StudentLite[]> {
   const data = await api<{ students: StudentLite[] }>("/teacher/students");
   return data.students;
 }
+
+export interface TeacherStudent {
+  id: string;
+  name: string;
+  email: string;
+  exams: number;
+  avg: number;
+  status: "active" | "inactive";
+  lastActive: string;
+  department?: string;
+  year?: string;
+  studentId?: string;
+}
+
+export interface ExamHistoryItem {
+  exam: string;
+  date: string;
+  score: number;
+  status: string;
+}
+
+export interface StudentDetail {
+  student: TeacherStudent;
+  examHistory: ExamHistoryItem[];
+}
+
+export async function fetchTeacherRoster(): Promise<TeacherStudent[]> {
+  const data = await api<{ students: TeacherStudent[] }>("/teacher/students/roster");
+  return data.students;
+}
+
+export function fetchTeacherStudentDetail(id: string): Promise<StudentDetail> {
+  return api<StudentDetail>(`/teacher/students/${id}`);
+}
