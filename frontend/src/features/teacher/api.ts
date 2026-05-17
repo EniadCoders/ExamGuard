@@ -187,3 +187,46 @@ export async function fetchTeacherRoster(): Promise<TeacherStudent[]> {
 export function fetchTeacherStudentDetail(id: string): Promise<StudentDetail> {
   return api<StudentDetail>(`/teacher/students/${id}`);
 }
+
+// ─── Analytics ─────────────────────────────────────────────────────────────
+
+export interface AnalyticsSummary {
+  successRate: number;
+  totalStudents: number;
+  examsCompleted: number;
+}
+
+export interface ModulePerformance {
+  subject: string;
+  avg: number;
+  passing: number;
+  best: number;
+  worst: number;
+  students: number;
+}
+
+export interface TrendPoint {
+  month: string;
+  exams: number;
+  fraud: number;
+  success: number;
+}
+
+export interface RankingEntry {
+  id: string;
+  name: string;
+  department: string;
+  score: number;
+}
+
+export interface TeacherAnalytics {
+  summary: AnalyticsSummary;
+  byModule: ModulePerformance[];
+  trend: TrendPoint[];
+  ranking: RankingEntry[];
+}
+
+export function fetchTeacherAnalytics(examId?: string): Promise<TeacherAnalytics> {
+  const query = examId && examId !== "all" ? `?examId=${encodeURIComponent(examId)}` : "";
+  return api<TeacherAnalytics>(`/teacher/analytics${query}`);
+}

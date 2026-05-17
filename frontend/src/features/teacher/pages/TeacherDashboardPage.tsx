@@ -81,9 +81,11 @@ import {
   fetchTeacherDashboard,
   fetchTeacherRoster,
   fetchTeacherStudentDetail,
+  fetchTeacherAnalytics,
   type TeacherExam,
   type TeacherDashboardData,
   type ExamHistoryItem,
+  type TeacherAnalytics,
   type DraftQuestion,
   type ExamRules,
   type StudentLite,
@@ -162,13 +164,6 @@ const STAT_TEMPLATES = [
 const defaultModules = ["Génie logiciel", "Systèmes d'information", "Cybersécurité", "Développement", "IA & ML", "Réseaux"];
 const teacherModules = defaultModules;
 
-/** Hash déterministe d'un identifiant (les ids sont des ObjectId, pas des nombres). */
-function hashId(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
 const allStudentsData: Student[] = [
   { id: "1", name: "Marie Dubois", email: "marie.dubois@univ.fr", exams: 12, avg: 17.4, status: "active", lastActive: "Actif maintenant", department: "Informatique", year: "M2", studentId: "ETU-2024-001" },
   { id: "2", name: "Thomas Martin", email: "thomas.martin@univ.fr", exams: 10, avg: 18.4, status: "active", lastActive: "Il y a 5 min", department: "Génie logiciel", year: "M1", studentId: "ETU-2024-002" },
@@ -201,23 +196,6 @@ const fraudAlerts = [
   { id: 2, student: "Thomas Martin", initials: "TM", exam: "Algorithmique Avancée", type: "Détection de mouvement suspect", time: "Il y a 5 min", severity: "medium" },
   { id: 3, student: "Sophie Bernard", initials: "SB", exam: "Réseaux & Sécurité", type: "Comportement suspect détecté", time: "Il y a 8 min", severity: "high" },
   { id: 4, student: "Lucas Petit", initials: "LP", exam: "Architecture Java EE", type: "Tentative de copier-coller", time: "Il y a 12 min", severity: "medium" },
-];
-
-const analyticsData = [
-  { subject: "Java EE", avg: 16.4, passing: 15.6, best: 19.4, worst: 9.8,  students: 45 },
-  { subject: "BDD",     avg: 15.2, passing: 13.6, best: 18.6, worst: 7.2,  students: 38 },
-  { subject: "Sécurité",avg: 17.6, passing: 17.0, best: 19.8, worst: 11.4, students: 52 },
-  { subject: "Web",     avg: 18.2, passing: 17.8, best: 20.0, worst: 12.6, students: 31 },
-  { subject: "IA",      avg: 15.8, passing: 14.2, best: 18.4, worst: 8.4,  students: 28 },
-];
-
-const trendData = [
-  { month: "Nov", exams: 18, fraud: 4, success: 84 },
-  { month: "Déc", exams: 22, fraud: 6, success: 81 },
-  { month: "Jan", exams: 15, fraud: 3, success: 86 },
-  { month: "Fév", exams: 28, fraud: 7, success: 83 },
-  { month: "Mar", exams: 32, fraud: 9, success: 85 },
-  { month: "Avr", exams: 26, fraud: 8, success: 87 },
 ];
 
 // ─── Toggle Switch ─────────────────────────────────────────────────────────────
@@ -2180,34 +2158,26 @@ function StudentsTab({ exams }: { exams: Exam[] }) {
 // ─── Analytics Tab ─────────────────────────────────────────────────────────────
 function AnalyticsTab({ exams }: { exams: Exam[] }) {
   const [rankingExamFilter, setRankingExamFilter] = useState<string>("all");
+  const [analytics, setAnalytics] = useState<TeacherAnalytics | null>(null);
   const rankingExamOptions = exams.filter(e => e.status === "completed" || e.status === "live");
   const selectedRankingExam = rankingExamFilter === "all"
     ? null
     : rankingExamOptions.find(e => e.id.toString() === rankingExamFilter) ?? null;
-  const getExamScore = (student: Student, exam: Exam | null) => {
-    if (!exam) return student.avg;
-    const variation = (((hashId(student.id) * 7 + hashId(exam.id) * 5) % 9) - 4) * 0.35;
-    return Math.min(20, Math.max(0, Math.round((student.avg + variation) * 10) / 10));
-  };
-  const rankedStudents = (selectedRankingExam
-    ? allStudentsData.filter(student => selectedRankingExam.selectedStudentIds?.includes(student.id))
-    : allStudentsData
-  )
-    .map(student => ({
-      ...student,
-      rankingScore: getExamScore(student, selectedRankingExam),
-    }))
-    .sort((a, b) => b.rankingScore - a.rankingScore)
-    .slice(0, 5);
+
+  useEffect(() => {
+    fetchTeacherAnalytics(rankingExamFilter).then(setAnalytics).catch(() => {});
+  }, [rankingExamFilter]);
+
+  const rankedStudents = analytics?.ranking ?? [];
 
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { icon: PieChart, label: "Taux de réussite global", value: "87%", sub: "+5% vs. dernier semestre" },
-          { icon: Users, label: "Total étudiants", value: "1,247", sub: "+124 ce mois" },
-          { icon: FileText, label: "Examens menés", value: "342", sub: "Ce semestre" },
+          { icon: PieChart, label: "Taux de réussite global", value: `${analytics?.summary.successRate ?? 0}%`, sub: "examens corrigés" },
+          { icon: Users, label: "Total étudiants", value: String(analytics?.summary.totalStudents ?? 0), sub: "inscrits à vos examens" },
+          { icon: FileText, label: "Examens menés", value: String(analytics?.summary.examsCompleted ?? 0), sub: "examens terminés" },
         ].map(({ icon: Icon, label, value, sub }) => (
           <DashboardMetricCard
             key={label}
@@ -2227,7 +2197,7 @@ function AnalyticsTab({ exams }: { exams: Exam[] }) {
         icon={BarChart3}
       >
         <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={analyticsData} barGap={4}>
+          <BarChart data={analytics?.byModule ?? []} barGap={4}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(117, 195, 214, 0.12)" vertical={false} />
             <XAxis dataKey="subject" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[0, 20]} />
@@ -2254,7 +2224,7 @@ function AnalyticsTab({ exams }: { exams: Exam[] }) {
           icon={TrendingUp}
         >
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={trendData}>
+            <LineChart data={analytics?.trend ?? []}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(117, 195, 214, 0.12)" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} domain={[75, 95]} />
@@ -2274,7 +2244,7 @@ function AnalyticsTab({ exams }: { exams: Exam[] }) {
           icon={AlertTriangle}
         >
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={trendData} barGap={4}>
+            <BarChart data={analytics?.trend ?? []} barGap={4}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(117, 195, 214, 0.12)" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#888888" }} axisLine={false} tickLine={false} />
@@ -2334,7 +2304,7 @@ function AnalyticsTab({ exams }: { exams: Exam[] }) {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold text-black">{student.rankingScore}/20</p>
+                <p className="text-sm font-bold text-black">{student.score}/20</p>
                 <p className="text-xs text-[#888888]">Note</p>
               </div>
             </div>

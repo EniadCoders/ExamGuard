@@ -537,4 +537,149 @@ router.get("/students/:id", async (req, res) => {
   });
 });
 
+// ─── Analytiques ───────────────────────────────────────────────────────────
+
+router.get("/analytics", async (req, res) => {
+  const teacherId = req.auth!.userId;
+  const examIdFilter = typeof req.query.examId === "string" ? req.query.examId : "";
+
+  const exams = await ExamModel.find({ createdBy: teacherId }).lean();
+  const examIds = exams.map((e) => e._id);
+  const examById = new Map(exams.map((e) => [String(e._id), e]));
+  const attempts = await ExamAttemptModel.find({ examId: { $in: examIds } }).lean();
+  const gradedAll = attempts.filter((a) => a.score != null && a.submittedAt);
+
+  const passed = (a: any) => {
+    const exam = examById.get(String(a.examId));
+    return (a.score ?? 0) >= (exam?.passingScore ?? 12);
+  };
+
+  // Synthèse
+  const enrolledIds = new Set<string>();
+  for (const e of exams) {
+    for (const sid of e.enrolledStudents ?? []) enrolledIds.add(String(sid));
+  }
+  const summary = {
+    successRate: gradedAll.length
+      ? Math.round((gradedAll.filter(passed).length / gradedAll.length) * 100)
+      : 0,
+    totalStudents: enrolledIds.size,
+    examsCompleted: exams.filter((e) => e.status === "completed").length,
+  };
+
+  // Performance par module
+  const moduleMap = new Map<string, { scores: number[]; passing: number[]; students: Set<string> }>();
+  for (const e of exams) {
+    if (!moduleMap.has(e.subject)) {
+      moduleMap.set(e.subject, { scores: [], passing: [], students: new Set() });
+    }
+    moduleMap.get(e.subject)!.passing.push(e.passingScore ?? 12);
+  }
+  for (const a of gradedAll) {
+    const exam = examById.get(String(a.examId));
+    if (!exam) continue;
+    const entry = moduleMap.get(exam.subject);
+    if (!entry) continue;
+    entry.scores.push(a.score ?? 0);
+    entry.students.add(String(a.studentId));
+  }
+  const byModule = [...moduleMap.entries()].map(([subject, e]) => {
+    const avg = e.scores.length
+      ? e.scores.reduce((s, v) => s + v, 0) / e.scores.length
+      : 0;
+    const passing = e.passing.length
+      ? e.passing.reduce((s, v) => s + v, 0) / e.passing.length
+      : 12;
+    return {
+      subject,
+      avg: Math.round(avg * 10) / 10,
+      passing: Math.round(passing * 10) / 10,
+      best: e.scores.length ? Math.max(...e.scores) : 0,
+      worst: e.scores.length ? Math.min(...e.scores) : 0,
+      students: e.students.size,
+    };
+  });
+
+  // Tendance — 6 derniers mois
+  const now = new Date();
+  const buckets = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (5 - i), 1));
+    return {
+      year: d.getUTCFullYear(),
+      month: d.getUTCMonth(),
+      label: MONTHS_FR_SHORT[d.getUTCMonth()],
+      exams: 0,
+      fraud: 0,
+      gradedTotal: 0,
+      gradedPassed: 0,
+    };
+  });
+  const bucketFor = (date: Date) =>
+    buckets.find(
+      (b) => b.year === date.getUTCFullYear() && b.month === date.getUTCMonth(),
+    );
+  for (const e of exams) {
+    if (!e.createdAt) continue;
+    const b = bucketFor(new Date(e.createdAt));
+    if (b) b.exams += 1;
+  }
+  for (const a of attempts) {
+    for (const ev of a.antiCheatEvents ?? []) {
+      const b = bucketFor(new Date(ev.timestamp ?? a.updatedAt ?? Date.now()));
+      if (b) b.fraud += 1;
+    }
+    if (a.score != null && a.submittedAt) {
+      const b = bucketFor(new Date(a.submittedAt));
+      if (b) {
+        b.gradedTotal += 1;
+        if (passed(a)) b.gradedPassed += 1;
+      }
+    }
+  }
+  const trend = buckets.map((b) => ({
+    month: b.label,
+    exams: b.exams,
+    fraud: b.fraud,
+    success: b.gradedTotal
+      ? Math.round((b.gradedPassed / b.gradedTotal) * 100)
+      : 0,
+  }));
+
+  // Classement — top 5
+  let rankingRows: { studentId: string; score: number }[];
+  if (examIdFilter && mongoose.isValidObjectId(examIdFilter)) {
+    rankingRows = gradedAll
+      .filter((a) => String(a.examId) === examIdFilter)
+      .map((a) => ({ studentId: String(a.studentId), score: a.score ?? 0 }));
+  } else {
+    const byStudent = new Map<string, number[]>();
+    for (const a of gradedAll) {
+      const key = String(a.studentId);
+      (byStudent.get(key) ?? byStudent.set(key, []).get(key)!).push(a.score ?? 0);
+    }
+    rankingRows = [...byStudent.entries()].map(([studentId, scores]) => ({
+      studentId,
+      score:
+        Math.round((scores.reduce((s, v) => s + v, 0) / scores.length) * 10) / 10,
+    }));
+  }
+  rankingRows.sort((a, b) => b.score - a.score);
+  const topRows = rankingRows.slice(0, 5);
+  const rankUsers = await UserModel.find({
+    _id: { $in: topRows.map((r) => r.studentId) },
+  }).lean();
+  const userById = new Map(rankUsers.map((u) => [String(u._id), u]));
+  const ranking = topRows.map((r) => {
+    const u = userById.get(r.studentId);
+    return {
+      id: r.studentId,
+      name: u?.fullName ?? "Étudiant",
+      department: u?.department ?? "",
+      score: r.score,
+    };
+  });
+
+  res.json({ summary, byModule, trend, ranking });
+});
+
 export default router;
