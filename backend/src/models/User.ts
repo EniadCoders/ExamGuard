@@ -16,6 +16,10 @@ const userSchema = new Schema(
     studentIdentifierType: { type: String, enum: ["apogee", "cne"] },
     studentIdentifier: { type: String },
     phone: { type: String, default: "" },
+    title: { type: String, default: "" },
+    location: { type: String, default: "" },
+    bio: { type: String, default: "" },
+    avatarUrl: { type: String, default: "" },
     status: {
       type: String,
       enum: ["active", "suspended", "pending"],

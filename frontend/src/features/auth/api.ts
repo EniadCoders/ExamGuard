@@ -8,6 +8,11 @@ export type AuthUser = {
   department?: string;
   school?: string;
   program?: string;
+  phone?: string;
+  title?: string;
+  location?: string;
+  bio?: string;
+  avatarUrl?: string;
   status: "active" | "suspended" | "pending";
 };
 
@@ -55,6 +60,11 @@ export async function updateProfile(updates: {
   school?: string;
   program?: string;
   phone?: string;
+  email?: string;
+  title?: string;
+  location?: string;
+  bio?: string;
+  avatarUrl?: string;
 }): Promise<AuthUser> {
   const data = await api<{ user: AuthUser }>("/auth/me", {
     method: "PATCH",

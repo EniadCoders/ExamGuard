@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   ArrowLeft,
   User,
@@ -42,21 +42,25 @@ import {
   teacherProfileSections as sections,
   type TeacherProfileSectionId,
 } from "@/features/teacher/teacher.data";
+import { fetchMe, updateProfile, changePassword } from "@/features/auth/api";
+import { ApiError } from "@/shared/lib/api";
 
 export function TeacherProfilePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Profile info state
-  const [firstName, setFirstName] = useState("Jean-Pierre");
-  const [lastName, setLastName] = useState("Dupont");
-  const [email, setEmail] = useState("jp.dupont@univ.fr");
-  const [phone, setPhone] = useState("+33 6 12 34 56 78");
-  const [department, setDepartment] = useState("Informatique & Systèmes");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [department, setDepartment] = useState("");
   const [title, setTitle] = useState("Professeur des universités");
-  const [location, setLocation] = useState("Université Paris-Saclay");
-  const [bio, setBio] = useState("Spécialiste en architecture logicielle et systèmes d'information. 12 ans d'expérience en enseignement supérieur et recherche.");
+  const [location, setLocation] = useState("");
+  const [bio, setBio] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
 
   // Password state
   const [currentPwd, setCurrentPwd] = useState("");
@@ -72,15 +76,51 @@ export function TeacherProfilePage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleSaveProfile = () => {
+  useEffect(() => {
+    fetchMe()
+      .then((u) => {
+        const parts = (u.fullName ?? "").trim().split(/\s+/);
+        setFirstName(parts[0] ?? "");
+        setLastName(parts.slice(1).join(" "));
+        setEmail(u.email ?? "");
+        setPhone(u.phone ?? "");
+        setDepartment(u.department ?? "");
+        if (u.title) setTitle(u.title);
+        setLocation(u.location ?? "");
+        setBio(u.bio ?? "");
+        setProfileImage(u.avatarUrl || null);
+      })
+      .catch(() => showToast("Impossible de charger votre profil.", "error"));
+  }, []);
+
+  const handleSaveProfile = async () => {
     if (!firstName.trim() || !lastName.trim() || !email.trim()) {
       showToast("Veuillez remplir tous les champs obligatoires.", "error");
       return;
     }
-    showToast("Profil mis à jour avec succès.");
+    setSavingProfile(true);
+    try {
+      await updateProfile({
+        fullName: `${firstName.trim()} ${lastName.trim()}`,
+        email: email.trim(),
+        phone,
+        department,
+        title,
+        location,
+        bio,
+      });
+      showToast("Profil mis à jour avec succès.");
+    } catch (err) {
+      showToast(
+        err instanceof ApiError ? err.message : "Échec de la mise à jour du profil.",
+        "error",
+      );
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!currentPwd || !newPwd || !confirmPwd) {
       showToast("Veuillez remplir tous les champs de mot de passe.", "error");
       return;
@@ -93,8 +133,33 @@ export function TeacherProfilePage() {
       showToast("Le mot de passe doit contenir au moins 8 caractères.", "error");
       return;
     }
-    setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
-    showToast("Mot de passe modifié avec succès.");
+    setSavingPassword(true);
+    try {
+      await changePassword(currentPwd, newPwd);
+      setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
+      showToast("Mot de passe modifié avec succès.");
+    } catch (err) {
+      showToast(
+        err instanceof ApiError ? err.message : "Échec du changement de mot de passe.",
+        "error",
+      );
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const persistAvatar = async (dataUrl: string) => {
+    try {
+      await updateProfile({ avatarUrl: dataUrl });
+      showToast(dataUrl ? "Photo de profil mise à jour." : "Photo de profil supprimée.");
+    } catch {
+      showToast("Échec de l'enregistrement de la photo.", "error");
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setProfileImage(null);
+    void persistAvatar("");
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,8 +177,9 @@ export function TeacherProfilePage() {
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setProfileImage(ev.target?.result as string);
-      showToast("Photo de profil mise à jour.");
+      const dataUrl = ev.target?.result as string;
+      setProfileImage(dataUrl);
+      void persistAvatar(dataUrl);
     };
     reader.readAsDataURL(file);
   };
@@ -202,7 +268,7 @@ export function TeacherProfilePage() {
                 </button>
                 {profileImage && (
                   <button
-                    onClick={() => setProfileImage(null)}
+                    onClick={handleRemoveImage}
                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-transparent px-3 py-2 text-xs font-medium text-[var(--cyber-subtle-text)] hover:text-[#FFB3B8] hover:border-[rgba(255,123,130,0.4)] hover:bg-[rgba(255,123,130,0.08)] transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -282,10 +348,11 @@ export function TeacherProfilePage() {
                   <div className="mt-6 flex items-center justify-stretch border-t border-[#E5E5E5] pt-5 sm:justify-end">
                     <button
                       onClick={handleSaveProfile}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
+                      disabled={savingProfile}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                     >
                       <Save className="w-4 h-4" />
-                      Enregistrer les modifications
+                      {savingProfile ? "Enregistrement…" : "Enregistrer les modifications"}
                     </button>
                   </div>
                 </Section>
@@ -349,10 +416,11 @@ export function TeacherProfilePage() {
                   <div className="mt-6 flex items-center justify-stretch border-t border-[#E5E5E5] pt-5 sm:justify-end">
                     <button
                       onClick={handleChangePassword}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:w-auto"
+                      disabled={savingPassword}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-2.5 text-sm font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
                     >
                       <Shield className="w-4 h-4" />
-                      Changer le mot de passe
+                      {savingPassword ? "Modification…" : "Changer le mot de passe"}
                     </button>
                   </div>
                 </Section>

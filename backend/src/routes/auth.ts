@@ -83,6 +83,10 @@ const PROFILE_FIELDS = [
   "studentIdentifierType",
   "studentIdentifier",
   "phone",
+  "title",
+  "location",
+  "bio",
+  "avatarUrl",
 ] as const;
 
 router.patch("/me", requireAuth, async (req, res) => {
@@ -90,6 +94,17 @@ router.patch("/me", requireAuth, async (req, res) => {
   if (!user) return res.status(404).json({ error: "user not found" });
 
   const updates = req.body ?? {};
+
+  // L'email est l'identifiant de connexion : changement vérifié pour l'unicité.
+  if (typeof updates.email === "string") {
+    const nextEmail = updates.email.trim().toLowerCase();
+    if (nextEmail && nextEmail !== user.email) {
+      const taken = await UserModel.findOne({ email: nextEmail });
+      if (taken) return res.status(409).json({ error: "email already registered" });
+      user.email = nextEmail;
+    }
+  }
+
   for (const key of PROFILE_FIELDS) {
     if (typeof updates[key] === "string") {
       (user as any)[key] = updates[key];
@@ -129,6 +144,10 @@ function publicUser(user: any) {
     school: user.school,
     program: user.program,
     phone: user.phone,
+    title: user.title,
+    location: user.location,
+    bio: user.bio,
+    avatarUrl: user.avatarUrl,
     status: user.status,
   };
 }
