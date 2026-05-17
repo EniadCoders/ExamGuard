@@ -75,6 +75,49 @@ router.get("/me", requireAuth, async (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+const PROFILE_FIELDS = [
+  "fullName",
+  "department",
+  "school",
+  "program",
+  "studentIdentifierType",
+  "studentIdentifier",
+] as const;
+
+router.patch("/me", requireAuth, async (req, res) => {
+  const user = await UserModel.findById(req.auth!.userId);
+  if (!user) return res.status(404).json({ error: "user not found" });
+
+  const updates = req.body ?? {};
+  for (const key of PROFILE_FIELDS) {
+    if (typeof updates[key] === "string") {
+      (user as any)[key] = updates[key];
+    }
+  }
+  await user.save();
+  res.json({ user: publicUser(user) });
+});
+
+router.post("/change-password", requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body ?? {};
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: "currentPassword and newPassword required" });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: "newPassword must be at least 8 characters" });
+  }
+
+  const user = await UserModel.findById(req.auth!.userId);
+  if (!user) return res.status(404).json({ error: "user not found" });
+
+  const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!ok) return res.status(401).json({ error: "current password is incorrect" });
+
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  await user.save();
+  res.json({ ok: true });
+});
+
 function publicUser(user: any) {
   return {
     id: user.id,

@@ -49,6 +49,29 @@ export function logout() {
   setToken(null);
 }
 
+export async function updateProfile(updates: {
+  fullName?: string;
+  department?: string;
+  school?: string;
+  program?: string;
+}): Promise<AuthUser> {
+  const data = await api<{ user: AuthUser }>("/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+  return data.user;
+}
+
+export function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<{ ok: true }> {
+  return api("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
 export function routeForRole(role: AuthUser["role"]): string {
   if (role === "student") return "/student";
   if (role === "teacher") return "/teacher";

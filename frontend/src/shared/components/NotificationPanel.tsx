@@ -10,6 +10,11 @@ import {
   Shield,
   X,
 } from "lucide-react";
+import {
+  fetchNotifications,
+  markNotificationRead,
+  type StudentNotification,
+} from "@/features/student/api";
 
 export type NotifType =
   | "exam_start"
@@ -20,7 +25,7 @@ export type NotifType =
   | "result";
 
 export interface AppNotification {
-  id: number;
+  id: string | number;
   type: NotifType;
   title: string;
   body: string;
@@ -28,48 +33,55 @@ export interface AppNotification {
   read: boolean;
 }
 
-const studentNotifs: AppNotification[] = [
-  {
-    id: 1,
-    type: "exam_start",
-    title: "Examen demarre",
-    body: "Systemes d'Exploitation est maintenant accessible. Rejoignez maintenant.",
-    time: "14:00",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "warning",
-    title: "Avertissement recu",
-    body: "Changement de fenetre detecte. Cet incident a ete signale.",
-    time: "14:07",
-    read: false,
-  },
-  {
-    id: 3,
-    type: "exam_submit",
-    title: "Examen soumis",
-    body: "Votre copie pour Java EE a bien ete enregistree.",
-    time: "Hier 11:42",
-    read: true,
-  },
-  {
-    id: 4,
-    type: "result",
-    title: "Note disponible",
-    body: "Votre note pour Base de Donnees est disponible : 18.2/20.",
-    time: "28 Mar",
-    read: true,
-  },
-  {
-    id: 5,
-    type: "info",
-    title: "Rappel d'examen",
-    body: "Algorithmique Avancee commence dans 24h. Preparez votre environnement.",
-    time: "28 Mar",
-    read: true,
-  },
-];
+function mapBackendType(type: string): NotifType {
+  switch (type) {
+    case "exam-graded":
+      return "result";
+    case "exam-submitted":
+      return "exam_submit";
+    case "exam-started":
+    case "exam-scheduled":
+      return "exam_start";
+    case "fraud":
+      return "fraud";
+    case "warning":
+      return "warning";
+    default:
+      return "info";
+  }
+}
+
+function formatRelativeTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const isToday =
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    d.getDate() === yesterday.getDate() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getFullYear() === yesterday.getFullYear();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  if (isToday) return `${hh}:${mm}`;
+  if (isYesterday) return `Hier ${hh}:${mm}`;
+  const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+  return `${d.getDate()} ${months[d.getMonth()]}`;
+}
+
+function adaptBackend(n: StudentNotification): AppNotification {
+  return {
+    id: n.id,
+    type: mapBackendType(n.type),
+    title: n.title,
+    body: n.message,
+    time: formatRelativeTime(n.createdAt),
+    read: n.read,
+  };
+}
 
 const adminNotifs: AppNotification[] = [
   {
@@ -162,12 +174,33 @@ interface NotificationPanelProps {
 }
 
 export function NotificationPanel({ role }: NotificationPanelProps) {
-  const source = role === "student" ? studentNotifs : adminNotifs;
-  const [notifs, setNotifs] = useState<AppNotification[]>(source);
+  const [notifs, setNotifs] = useState<AppNotification[]>(
+    role === "admin" ? adminNotifs : [],
+  );
+  const [loading, setLoading] = useState(role === "student");
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const unread = notifs.filter((n) => !n.read).length;
+
+  // Fetch on mount + refresh whenever the panel is opened (student only)
+  useEffect(() => {
+    if (role !== "student") return;
+    let cancelled = false;
+    setLoading(true);
+    fetchNotifications()
+      .then((data) => {
+        if (cancelled) return;
+        setNotifs(data.notifications.map(adaptBackend));
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [role, open]);
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -180,16 +213,27 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const markAllRead = () =>
+  const markAllRead = () => {
+    const unreadIds = notifs.filter((n) => !n.read).map((n) => n.id);
     setNotifs((prev) => prev.map((notif) => ({ ...notif, read: true })));
-  const dismiss = (id: number) =>
+    if (role === "student") {
+      unreadIds.forEach((id) => {
+        markNotificationRead(String(id)).catch(() => undefined);
+      });
+    }
+  };
+  const dismiss = (id: string | number) =>
     setNotifs((prev) => prev.filter((notif) => notif.id !== id));
-  const markRead = (id: number) =>
+  const markRead = (id: string | number) => {
     setNotifs((prev) =>
       prev.map((notif) =>
         notif.id === id ? { ...notif, read: true } : notif,
       ),
     );
+    if (role === "student") {
+      markNotificationRead(String(id)).catch(() => undefined);
+    }
+  };
 
   return (
     <div className="relative flex-shrink-0" ref={panelRef}>
@@ -242,7 +286,11 @@ export function NotificationPanel({ role }: NotificationPanelProps) {
             </div>
 
             <div className="max-h-[min(60vh,400px)] overflow-y-auto divide-y divide-[rgba(117,195,214,0.08)]">
-              {notifs.length === 0 ? (
+              {loading ? (
+                <div className="flex justify-center py-10">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-700 border-t-cyan-300" />
+                </div>
+              ) : notifs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center px-4 py-10 sm:px-5 sm:py-12">
                   <Bell className="mb-3 h-10 w-10 text-slate-700" />
                   <p className="text-sm text-slate-500">Aucune notification</p>

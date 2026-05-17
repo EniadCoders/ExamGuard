@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   LogOut,
   Clock,
@@ -55,7 +55,17 @@ import {
   DashboardSectionCard,
   DashboardStatusBadge,
 } from "@/shared/components/dashboard/DashboardCard";
-import { fetchDashboard, type DashboardExam, type DashboardStat, type CalendarEvent, type DashboardUser } from "@/features/student/api";
+import {
+  fetchDashboard,
+  joinExamByCode,
+  fetchAttempt,
+  type DashboardExam,
+  type DashboardStat,
+  type CalendarEvent,
+  type DashboardUser,
+  type AttemptResult,
+} from "@/features/student/api";
+import { ApiError } from "@/shared/lib/api";
 import { logout } from "@/features/auth/api";
 import {
   ExamTypeChip as TypeChip,
@@ -85,6 +95,76 @@ export function StudentDashboard() {
   const [dashboardError, setDashboardError] = useState("");
   const [dashboardLoading, setDashboardLoading] = useState(true);
 
+  // Join-by-code modal state
+  const [showJoinCode, setShowJoinCode] = useState(false);
+  const [joinStep, setJoinStep] = useState<"input" | "success">("input");
+  const [examCode, setExamCode] = useState("");
+  const [joinError, setJoinError] = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [joinedExamTitle, setJoinedExamTitle] = useState("");
+
+  // Selected attempt detail (for the Results modal)
+  const [attemptDetail, setAttemptDetail] = useState<AttemptResult | null>(null);
+  const [attemptDetailLoading, setAttemptDetailLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedResult) {
+      setAttemptDetail(null);
+      return;
+    }
+    const exam = allExams.find((e) => e.id === selectedResult);
+    if (!exam?.attemptId) {
+      setAttemptDetail(null);
+      return;
+    }
+    let cancelled = false;
+    setAttemptDetailLoading(true);
+    fetchAttempt(exam.attemptId)
+      .then((d) => {
+        if (!cancelled) setAttemptDetail(d);
+      })
+      .catch(() => {
+        if (!cancelled) setAttemptDetail(null);
+      })
+      .finally(() => {
+        if (!cancelled) setAttemptDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedResult, allExams]);
+
+  const refreshDashboard = useCallback(() => {
+    return fetchDashboard().then((data) => {
+      setUser(data.user);
+      setAllExams(data.exams);
+      setStats(data.stats);
+      setCalendarEvents(data.calendarEvents);
+    });
+  }, []);
+
+  const handleSubmitJoinCode = useCallback(async () => {
+    setJoinError("");
+    setJoinLoading(true);
+    try {
+      const { exam, alreadyEnrolled } = await joinExamByCode(examCode);
+      setJoinedExamTitle(exam.title);
+      setJoinStep("success");
+      if (!alreadyEnrolled) await refreshDashboard();
+      else await refreshDashboard();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 404) setJoinError("Code invalide.");
+        else if (err.status === 400) setJoinError("Veuillez saisir un code.");
+        else setJoinError("Impossible de rejoindre l'examen. Réessayez.");
+      } else {
+        setJoinError("Erreur de connexion.");
+      }
+    } finally {
+      setJoinLoading(false);
+    }
+  }, [examCode, refreshDashboard]);
+
   useEffect(() => {
     let cancelled = false;
     fetchDashboard()
@@ -111,6 +191,21 @@ export function StudentDashboard() {
   const initials = user
     ? `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase()
     : "";
+
+  const hasExams = !dashboardLoading && allExams.length > 0;
+
+  // If the student lands on a data-driven tab while having no exams, send them
+  // back to the dashboard so the join-exam empty state is what they see.
+  useEffect(() => {
+    if (dashboardLoading) return;
+    if (
+      !hasExams &&
+      activeTab !== "dashboard" &&
+      activeTab !== "settings"
+    ) {
+      setActiveTab("dashboard");
+    }
+  }, [dashboardLoading, hasExams, activeTab]);
   const [settingsTab, setSettingsTab] = useState<"profile" | "password" | "notifications" | "security">("profile");
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -249,12 +344,17 @@ export function StudentDashboard() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
             <Logo size="sm" onClick={handleLogoClick} />
             <nav className="flex items-center gap-2 overflow-x-auto pt-2 pb-2 px-1 -ml-1 lg:gap-6">
-              {[
-                { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-                { id: "exams", label: "Mes Examens", icon: FileText },
-                { id: "results", label: "Résultats", icon: BarChart3 },
-                { id: "calendar", label: "Calendrier", icon: Calendar },
-              ].map((tab) => {
+              {(hasExams
+                ? [
+                    { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+                    { id: "exams", label: "Mes Examens", icon: FileText },
+                    { id: "results", label: "Résultats", icon: BarChart3 },
+                    { id: "calendar", label: "Calendrier", icon: Calendar },
+                  ]
+                : [
+                    { id: "dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+                  ]
+              ).map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
@@ -804,11 +904,13 @@ export function StudentDashboard() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
                           <span>Votre note</span>
-                          <span className="font-semibold text-[var(--cyber-text)]">{exam.score!.toFixed(1)}/20</span>
+                          <span className="font-semibold text-[var(--cyber-text)]">
+                            {exam.score != null ? `${exam.score}/${exam.maxScore ?? "?"}` : "—"}
+                          </span>
                         </div>
                         <div className="flex justify-between text-sm text-[var(--cyber-muted-text)]">
-                          <span>Classement</span>
-                          <span className="font-semibold text-[var(--cyber-text)]">#{exam.rank}</span>
+                          <span>Matière</span>
+                          <span className="font-semibold text-[var(--cyber-text)]">{exam.subject}</span>
                         </div>
                       </div>
                     </button>
@@ -850,8 +952,16 @@ export function StudentDashboard() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                           {[
-                            { label: "Note finale", value: `${exam.score!.toFixed(1)}/20` },
-                            { label: "Classement", value: `#${exam.rank}` },
+                            {
+                              label: "Note finale",
+                              value: attemptDetail?.attempt.score != null
+                                ? `${attemptDetail.attempt.score}/${attemptDetail.attempt.maxScore ?? exam.maxScore ?? 0}`
+                                : "—",
+                            },
+                            {
+                              label: "Évènements anti-triche",
+                              value: String(attemptDetail?.attempt.antiCheatEventsCount ?? 0),
+                            },
                           ].map((item) => (
                             <div
                               key={item.label}
@@ -864,20 +974,34 @@ export function StudentDashboard() {
                         </div>
 
                         <div className="space-y-3">
-                          <h3 className="text-lg font-bold text-black">Détails par type</h3>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {exam.types.map((type) => (
-                              <div key={type} className="rounded-2xl border border-[rgba(117,195,214,0.12)] bg-[rgba(11,27,38,0.58)] p-4">
-                                <div className="flex items-center justify-between mb-2">
-                                  <TypeChip type={type} />
-                                  <span className="text-sm font-semibold text-[var(--cyber-text)]">17/20</span>
+                          <h3 className="text-lg font-bold text-black">Détail par question</h3>
+                          {attemptDetailLoading ? (
+                            <p className="text-sm text-[#666]">Chargement…</p>
+                          ) : attemptDetail ? (
+                            <div className="space-y-2">
+                              {attemptDetail.questions.map((q, idx) => (
+                                <div
+                                  key={q.id}
+                                  className="rounded-xl border border-[#E5E5E5] bg-white p-3 flex items-center justify-between gap-3"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <span className="text-sm font-mono text-[#666] shrink-0">Q{idx + 1}</span>
+                                    <TypeChip type={q.type} />
+                                    <span className="truncate text-sm text-black">{q.text}</span>
+                                  </div>
+                                  <span className="text-sm font-semibold shrink-0">
+                                    {q.isCorrect === true
+                                      ? `✓ ${q.points} pts`
+                                      : q.isCorrect === false
+                                        ? `✗ 0/${q.points}`
+                                        : `${q.points} pts`}
+                                  </span>
                                 </div>
-                                <div className="h-1.5 w-full rounded-full bg-[rgba(117,195,214,0.12)]">
-                                  <div className="h-1.5 rounded-full bg-[var(--cyber-accent)]" style={{ width: "85%" }}></div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-[#666]">Aucun détail disponible.</p>
+                          )}
                         </div>
                       </DashboardCard>
                   </div>
@@ -1434,6 +1558,74 @@ export function StudentDashboard() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showJoinCode && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[#E5E5E5] bg-white p-6 shadow-2xl">
+            {joinStep === "input" ? (
+              <>
+                <h3 className="text-xl font-bold text-black mb-2">Rejoindre un examen</h3>
+                <p className="text-sm text-[#666] mb-4">
+                  Saisissez le code fourni par votre professeur.
+                </p>
+                <input
+                  autoFocus
+                  type="text"
+                  value={examCode}
+                  onChange={(e) => {
+                    setExamCode(e.target.value.toUpperCase());
+                    if (joinError) setJoinError("");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSubmitJoinCode();
+                  }}
+                  placeholder="ex: JAVAEE"
+                  className={`w-full rounded-xl border px-4 py-3 text-center text-lg font-mono tracking-widest text-black focus:outline-none focus:ring-2 ${
+                    joinError
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-[#E5E5E5] focus:ring-[#00809D]"
+                  }`}
+                />
+                {joinError ? (
+                  <p className="mt-2 text-sm font-semibold text-red-600">{joinError}</p>
+                ) : null}
+                <div className="mt-5 flex gap-3">
+                  <button
+                    onClick={() => setShowJoinCode(false)}
+                    className="flex-1 rounded-xl border border-[#E5E5E5] px-4 py-3 font-semibold text-black hover:bg-[#F5F7FB]"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleSubmitJoinCode}
+                    disabled={joinLoading || !examCode.trim()}
+                    className="flex-1 rounded-xl bg-[#00809D] px-4 py-3 font-semibold text-white hover:bg-[#006B82] disabled:opacity-50"
+                  >
+                    {joinLoading ? "..." : "Rejoindre"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold text-black mb-2">Inscription confirmée</h3>
+                <p className="text-sm text-[#666] mb-5">
+                  Vous êtes maintenant inscrit à <strong>{joinedExamTitle}</strong>.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowJoinCode(false);
+                    setJoinStep("input");
+                    setExamCode("");
+                  }}
+                  className="w-full rounded-xl bg-[#00809D] px-4 py-3 font-semibold text-white hover:bg-[#006B82]"
+                >
+                  OK
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

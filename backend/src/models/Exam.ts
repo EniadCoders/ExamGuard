@@ -28,6 +28,7 @@ const examSchema = new Schema(
   {
     title: { type: String, required: true },
     subject: { type: String, required: true },
+    joinCode: { type: String, required: true, unique: true, uppercase: true, trim: true },
     description: { type: String, default: "" },
     durationMinutes: { type: Number, required: true },
     scheduledAt: { type: Date },
@@ -37,6 +38,7 @@ const examSchema = new Schema(
       default: "draft",
     },
     createdBy: { type: Types.ObjectId, ref: "User", required: true },
+    enrolledStudents: { type: [{ type: Types.ObjectId, ref: "User" }], default: [] },
     totalPoints: { type: Number, default: 0 },
     questions: { type: [questionSchema], default: [] },
   },

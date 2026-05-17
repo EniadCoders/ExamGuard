@@ -26,7 +26,13 @@ import type {
   Answer,
 } from "@/shared/types/exam";
 import { TYPE_LABELS } from "@/shared/types/exam";
-import { fetchExam } from "@/features/student/api";
+import {
+  startExam,
+  saveAttemptAnswers,
+  submitAttempt,
+  logAntiCheatEvent,
+  type AttemptAnswer,
+} from "@/features/student/api";
 import {
   AutoSaveStatus as AutoSaveIndicator,
   ExamResultsView as ExamResultsScreen,
@@ -40,6 +46,7 @@ export function ExamInterface() {
   const navigate = useNavigate();
   const { examId } = useParams<{ examId: string }>();
   const [examQuestions, setExamQuestions] = useState<Question[]>([]);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState("");
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<number, Answer>>({});
@@ -126,34 +133,98 @@ export function ExamInterface() {
   useEffect(() => {
     if (!examId) return;
     let cancelled = false;
-    fetchExam(examId)
-      .then((exam) => {
+    startExam(examId)
+      .then(({ attempt, exam }) => {
         if (cancelled) return;
         setExamQuestions(exam.questions);
-        setTimeLeft(exam.durationMinutes * 60);
+        setAttemptId(attempt.id);
+        setTimeLeft(attempt.remainingSeconds || exam.durationMinutes * 60);
+        // Hydrate previously-saved answers
+        if (attempt.answers && attempt.answers.length > 0) {
+          const restored: Record<number, Answer> = {};
+          for (const a of attempt.answers) {
+            restored[a.questionId] = a.value as Answer;
+          }
+          setAnswers(restored);
+        }
       })
       .catch((err) => {
         if (cancelled) return;
-        setLoadError(err?.message ?? "Examen introuvable");
-        if (err?.status === 401) navigate("/");
+        if (err?.status === 409) {
+          setLoadError("Examen déjà soumis.");
+        } else if (err?.status === 401) {
+          navigate("/");
+        } else {
+          setLoadError(err?.message ?? "Examen introuvable");
+        }
       });
     return () => {
       cancelled = true;
     };
   }, [examId, navigate]);
 
+  // Autosave (debounced) — saves the current answers map to the server
+  useEffect(() => {
+    if (!attemptId || submitted) return;
+    if (Object.keys(answers).length === 0) return;
+    const handle = setTimeout(() => {
+      const payload: AttemptAnswer[] = Object.entries(answers).map(
+        ([qid, value]) => ({ questionId: Number(qid), value }),
+      );
+      saveAttemptAnswers(attemptId, payload)
+        .then(() => {
+          setShowSaved(true);
+          if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+          saveTimerRef.current = setTimeout(() => setShowSaved(false), 1500);
+        })
+        .catch((err) => console.warn("[autosave] failed", err));
+    }, 1200);
+    return () => clearTimeout(handle);
+  }, [answers, attemptId, submitted]);
+
+  // Anti-cheat: report fullscreen exits to the server
+  useEffect(() => {
+    if (!attemptId || fullscreenExits === 0) return;
+    logAntiCheatEvent(attemptId, "fullscreen-exit", { count: fullscreenExits }).catch(
+      () => undefined,
+    );
+  }, [fullscreenExits, attemptId]);
+
+  // Anti-cheat: report tab blur
+  useEffect(() => {
+    if (!attemptId) return;
+    const onBlur = () => {
+      logAntiCheatEvent(attemptId, "tab-blur").catch(() => undefined);
+    };
+    window.addEventListener("blur", onBlur);
+    return () => window.removeEventListener("blur", onBlur);
+  }, [attemptId]);
+
+  const doSubmit = useCallback(async () => {
+    if (!attemptId || submitted) return;
+    const payload: AttemptAnswer[] = Object.entries(answers).map(
+      ([qid, value]) => ({ questionId: Number(qid), value }),
+    );
+    try {
+      await submitAttempt(attemptId, payload);
+    } catch (err) {
+      console.warn("[submit] failed", err);
+    }
+    setSubmitted(true);
+    exitFullscreen();
+  }, [answers, attemptId, submitted]);
+
   useEffect(() => {
     if (examQuestions.length === 0) return;
     const timer = setInterval(() => setTimeLeft((p) => {
       if (p <= 1 && !submitted) {
-        setSubmitted(true);
-        exitFullscreen();
+        doSubmit();
         return 0;
       }
       return p > 0 ? p - 1 : 0;
     }), 1000);
     return () => clearInterval(timer);
-  }, [submitted]);
+  }, [submitted, examQuestions.length, doSubmit]);
 
   const formatTime = (s: number) => ({
     h: String(Math.floor(s / 3600)).padStart(2, "0"),
@@ -273,8 +344,7 @@ export function ExamInterface() {
           total={TOTAL}
           onConfirm={() => {
             setShowSubmit(false);
-            setSubmitted(true);
-            exitFullscreen();
+            doSubmit();
           }}
           onCancel={() => setShowSubmit(false)}
         />

@@ -11,6 +11,7 @@ import { connectToDatabase } from "./db.js";
 import { UserModel } from "./models/User.js";
 import { ExamModel } from "./models/Exam.js";
 import { ExamAttemptModel } from "./models/ExamAttempt.js";
+import { NotificationModel } from "./models/Notification.js";
 
 const STUDENT_EMAIL = "zakariatest@gmail.com";
 const STUDENT_PASSWORD = "zakariaTest123";
@@ -110,6 +111,7 @@ const examTemplates = [
   {
     title: "Architecture Java EE",
     subject: "Genie Logiciel",
+    joinCode: "JAVAEE",
     durationMinutes: 90,
     scheduledAt: new Date("2026-03-28T10:00:00Z"),
     studentAttempt: { status: "graded" as const, score: 17.4, maxScore: 20 },
@@ -117,6 +119,7 @@ const examTemplates = [
   {
     title: "Introduction au Cloud",
     subject: "Infrastructure",
+    joinCode: "CLOUD1",
     durationMinutes: 120,
     scheduledAt: new Date("2026-04-04T14:30:00Z"),
     studentAttempt: { status: "in-progress" as const, progress: 0.65 },
@@ -124,6 +127,7 @@ const examTemplates = [
   {
     title: "Bases de donnees NoSQL",
     subject: "Data Engineering",
+    joinCode: "NOSQL1",
     durationMinutes: 75,
     scheduledAt: new Date("2026-04-10T09:00:00Z"),
     studentAttempt: null,
@@ -131,6 +135,7 @@ const examTemplates = [
   {
     title: "Securite des Applications Web",
     subject: "Cybersecurite",
+    joinCode: "WEBSEC",
     durationMinutes: 90,
     scheduledAt: new Date("2026-04-15T11:00:00Z"),
     studentAttempt: null,
@@ -138,6 +143,7 @@ const examTemplates = [
   {
     title: "Machine Learning Avance",
     subject: "IA & Data Science",
+    joinCode: "MLADV1",
     durationMinutes: 150,
     scheduledAt: new Date("2026-03-20T13:00:00Z"),
     studentAttempt: { status: "graded" as const, score: 18.4, maxScore: 20 },
@@ -149,12 +155,17 @@ async function seed() {
   if (!uri) throw new Error("MONGODB_URI missing");
   await connectToDatabase(uri);
 
-  const existingStudent = await UserModel.findOne({ email: STUDENT_EMAIL });
-  if (existingStudent) {
-    console.log(`[seed] ${STUDENT_EMAIL} already exists — nothing to do.`);
-    await mongoose.disconnect();
-    return;
+  console.log("[seed] wiping any previous seed data…");
+  const prevStudent = await UserModel.findOne({ email: STUDENT_EMAIL });
+  const prevTeacher = await UserModel.findOne({ email: TEACHER_EMAIL });
+  if (prevStudent) {
+    await ExamAttemptModel.deleteMany({ studentId: prevStudent._id });
+    await NotificationModel.deleteMany({ userId: prevStudent._id });
   }
+  if (prevTeacher) {
+    await ExamModel.deleteMany({ createdBy: prevTeacher._id });
+  }
+  await UserModel.deleteMany({ email: { $in: [STUDENT_EMAIL, TEACHER_EMAIL] } });
 
   console.log("[seed] creating teacher…");
   const teacher = await UserModel.create({
@@ -190,6 +201,8 @@ async function seed() {
       scheduledAt: tpl.scheduledAt,
       status: "scheduled",
       createdBy: teacher._id,
+      enrolledStudents: [student._id],
+      joinCode: tpl.joinCode,
       totalPoints,
       questions: mockQuestions,
     });
@@ -209,6 +222,31 @@ async function seed() {
       });
     }
   }
+
+  console.log("[seed] creating notifications…");
+  await NotificationModel.insertMany([
+    {
+      userId: student._id,
+      type: "exam-graded",
+      title: "Note publiée",
+      message: "Machine Learning Avancé : 18.4/20",
+      read: false,
+    },
+    {
+      userId: student._id,
+      type: "exam-scheduled",
+      title: "Nouvel examen programmé",
+      message: "Bases de données NoSQL — 10 Avril 09:00",
+      read: false,
+    },
+    {
+      userId: student._id,
+      type: "system",
+      title: "Bienvenue sur ExamGuard",
+      message: "Votre compte est prêt à l'emploi.",
+      read: true,
+    },
+  ]);
 
   console.log("[seed] done.");
   await mongoose.disconnect();
