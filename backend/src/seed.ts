@@ -1,6 +1,8 @@
 /**
- * One-off seed: creates Zakaria Test (student), a teacher, the 5 mock exams,
- * and matching attempts so the student dashboard renders against real data.
+ * Seed de démonstration : crée le professeur Prof. Dupont, une classe
+ * d'étudiants, plusieurs examens de statuts variés et des tentatives
+ * (notes, évènements anti-triche) afin que le dashboard professeur ET
+ * le dashboard étudiant s'affichent sur des données réelles.
  *
  * Run:  npx tsx backend/src/seed.ts
  */
@@ -13,10 +15,23 @@ import { ExamModel } from "./models/Exam.js";
 import { ExamAttemptModel } from "./models/ExamAttempt.js";
 import { NotificationModel } from "./models/Notification.js";
 
-const STUDENT_EMAIL = "zakariatest@gmail.com";
-const STUDENT_PASSWORD = "zakariaTest123";
-const TEACHER_EMAIL = "prof.dupont@univ.fr";
-const TEACHER_PASSWORD = "teacher123";
+const TEACHER = {
+  email: "prof.dupont@univ.fr",
+  password: "teacher123",
+  fullName: "Prof. Dupont",
+  department: "Informatique",
+};
+
+const STUDENTS = [
+  { email: "zakariatest@gmail.com", password: "zakariaTest123", fullName: "Zakaria Test", program: "Informatique", department: "Informatique", identifier: "ZT2026" },
+  { email: "marie.dubois@univ.fr", password: "student123", fullName: "Marie Dubois", program: "Génie Logiciel", department: "Génie Logiciel", identifier: "MD2026" },
+  { email: "thomas.martin@univ.fr", password: "student123", fullName: "Thomas Martin", program: "Cybersécurité", department: "Cybersécurité", identifier: "TM2026" },
+  { email: "sophie.bernard@univ.fr", password: "student123", fullName: "Sophie Bernard", program: "Data Engineering", department: "Data Engineering", identifier: "SB2026" },
+  { email: "lucas.petit@univ.fr", password: "student123", fullName: "Lucas Petit", program: "Informatique", department: "Informatique", identifier: "LP2026" },
+  { email: "emma.rousseau@univ.fr", password: "student123", fullName: "Emma Rousseau", program: "Génie Logiciel", department: "Génie Logiciel", identifier: "ER2026" },
+  { email: "hugo.lefebvre@univ.fr", password: "student123", fullName: "Hugo Lefebvre", program: "Cybersécurité", department: "Cybersécurité", identifier: "HL2026" },
+  { email: "lea.moreau@univ.fr", password: "student123", fullName: "Léa Moreau", program: "Data Engineering", department: "Data Engineering", identifier: "LM2026" },
+];
 
 const mockQuestions = [
   {
@@ -107,140 +122,171 @@ const mockQuestions = [
 ];
 const totalPoints = mockQuestions.reduce((sum, q) => sum + q.points, 0);
 
-const examTemplates = [
-  {
-    title: "Architecture Java EE",
-    subject: "Genie Logiciel",
-    joinCode: "JAVAEE",
-    durationMinutes: 90,
-    scheduledAt: new Date("2026-03-28T10:00:00Z"),
-    studentAttempt: { status: "graded" as const, score: 17.4, maxScore: 20 },
-  },
-  {
-    title: "Introduction au Cloud",
-    subject: "Infrastructure",
-    joinCode: "CLOUD1",
-    durationMinutes: 120,
-    scheduledAt: new Date("2026-04-04T14:30:00Z"),
-    studentAttempt: { status: "in-progress" as const, progress: 0.65 },
-  },
-  {
-    title: "Bases de donnees NoSQL",
-    subject: "Data Engineering",
-    joinCode: "NOSQL1",
-    durationMinutes: 75,
-    scheduledAt: new Date("2026-04-10T09:00:00Z"),
-    studentAttempt: null,
-  },
-  {
-    title: "Securite des Applications Web",
-    subject: "Cybersecurite",
-    joinCode: "WEBSEC",
-    durationMinutes: 90,
-    scheduledAt: new Date("2026-04-15T11:00:00Z"),
-    studentAttempt: null,
-  },
-  {
-    title: "Machine Learning Avance",
-    subject: "IA & Data Science",
-    joinCode: "MLADV1",
-    durationMinutes: 150,
-    scheduledAt: new Date("2026-03-20T13:00:00Z"),
-    studentAttempt: { status: "graded" as const, score: 18.4, maxScore: 20 },
-  },
+type ExamTemplate = {
+  title: string;
+  subject: string;
+  joinCode: string;
+  durationMinutes: number;
+  scheduledAt: Date;
+  status: "draft" | "scheduled" | "live" | "completed" | "archived";
+  /** Nombre d'étudiants ayant une tentative ; les autres sont seulement inscrits. */
+  attemptCount: number;
+};
+
+const examTemplates: ExamTemplate[] = [
+  { title: "Architecture Java EE", subject: "Génie Logiciel", joinCode: "JAVAEE", durationMinutes: 90, scheduledAt: new Date("2026-04-08T10:00:00Z"), status: "completed", attemptCount: 7 },
+  { title: "Introduction au Cloud", subject: "Infrastructure", joinCode: "CLOUD1", durationMinutes: 120, scheduledAt: new Date("2026-04-22T14:30:00Z"), status: "completed", attemptCount: 6 },
+  { title: "Bases de données NoSQL", subject: "Data Engineering", joinCode: "NOSQL1", durationMinutes: 75, scheduledAt: new Date("2026-05-17T09:00:00Z"), status: "live", attemptCount: 5 },
+  { title: "Sécurité des Applications Web", subject: "Cybersécurité", joinCode: "WEBSEC", durationMinutes: 90, scheduledAt: new Date("2026-06-05T11:00:00Z"), status: "scheduled", attemptCount: 0 },
+  { title: "Machine Learning Avancé", subject: "IA & Data Science", joinCode: "MLADV1", durationMinutes: 150, scheduledAt: new Date("2026-04-30T13:00:00Z"), status: "completed", attemptCount: 8 },
+  { title: "Programmation Web", subject: "Développement", joinCode: "WEBDEV", durationMinutes: 60, scheduledAt: new Date("2026-06-12T09:00:00Z"), status: "draft", attemptCount: 0 },
+  { title: "Algorithmique Avancée", subject: "Informatique", joinCode: "ALGOAV", durationMinutes: 120, scheduledAt: new Date("2026-03-18T09:00:00Z"), status: "archived", attemptCount: 6 },
 ];
+
+/** Note déterministe (sur 20) pour une paire étudiant / examen. */
+function scoreFor(studentIndex: number, examIndex: number): number {
+  const base = 8 + ((studentIndex * 7 + examIndex * 5) % 12);
+  return Math.min(20, base + (studentIndex % 2 === 0 ? 0.5 : 0));
+}
 
 async function seed() {
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error("MONGODB_URI missing");
   await connectToDatabase(uri);
 
-  console.log("[seed] wiping any previous seed data…");
-  const prevStudent = await UserModel.findOne({ email: STUDENT_EMAIL });
-  const prevTeacher = await UserModel.findOne({ email: TEACHER_EMAIL });
-  if (prevStudent) {
-    await ExamAttemptModel.deleteMany({ studentId: prevStudent._id });
-    await NotificationModel.deleteMany({ userId: prevStudent._id });
-  }
-  if (prevTeacher) {
-    await ExamModel.deleteMany({ createdBy: prevTeacher._id });
-  }
-  await UserModel.deleteMany({ email: { $in: [STUDENT_EMAIL, TEACHER_EMAIL] } });
+  const allEmails = [TEACHER.email, ...STUDENTS.map((s) => s.email)];
+
+  console.log("[seed] wiping previous seed data…");
+  const prevUsers = await UserModel.find({ email: { $in: allEmails } });
+  const prevIds = prevUsers.map((u) => u._id);
+  const prevExams = await ExamModel.find({ createdBy: { $in: prevIds } });
+  await ExamAttemptModel.deleteMany({
+    $or: [
+      { studentId: { $in: prevIds } },
+      { examId: { $in: prevExams.map((e) => e._id) } },
+    ],
+  });
+  await NotificationModel.deleteMany({ userId: { $in: prevIds } });
+  await ExamModel.deleteMany({ createdBy: { $in: prevIds } });
+  await UserModel.deleteMany({ email: { $in: allEmails } });
 
   console.log("[seed] creating teacher…");
   const teacher = await UserModel.create({
-    email: TEACHER_EMAIL,
-    passwordHash: await bcrypt.hash(TEACHER_PASSWORD, 10),
+    email: TEACHER.email,
+    passwordHash: await bcrypt.hash(TEACHER.password, 10),
     role: "teacher",
-    fullName: "Prof. Dupont",
-    department: "Informatique",
+    fullName: TEACHER.fullName,
+    department: TEACHER.department,
     status: "active",
+    lastLoginAt: new Date(),
   });
 
-  console.log("[seed] creating Zakaria Test…");
-  const student = await UserModel.create({
-    email: STUDENT_EMAIL,
-    passwordHash: await bcrypt.hash(STUDENT_PASSWORD, 10),
-    role: "student",
-    fullName: "Zakaria Test",
-    school: "Faculté des Sciences d'Oujda (FSO)",
-    program: "Informatique",
-    department: "Informatique",
-    studentIdentifierType: "apogee",
-    studentIdentifier: "ZT2026",
-    status: "active",
-  });
+  console.log(`[seed] creating ${STUDENTS.length} students…`);
+  const students = await Promise.all(
+    STUDENTS.map(async (s, i) =>
+      UserModel.create({
+        email: s.email,
+        passwordHash: await bcrypt.hash(s.password, 10),
+        role: "student",
+        fullName: s.fullName,
+        school: "Faculté des Sciences d'Oujda (FSO)",
+        program: s.program,
+        department: s.department,
+        studentIdentifierType: "apogee",
+        studentIdentifier: s.identifier,
+        status: "active",
+        // Connexions échelonnées pour varier "Dernière activité".
+        lastLoginAt: new Date(Date.now() - i * 37 * 60 * 1000),
+      }),
+    ),
+  );
 
-  console.log("[seed] creating exams…");
-  for (const tpl of examTemplates) {
+  console.log("[seed] creating exams and attempts…");
+  for (let ei = 0; ei < examTemplates.length; ei++) {
+    const tpl = examTemplates[ei];
+    const enrolled = tpl.status === "draft" ? [] : students.map((s) => s._id);
     const exam = await ExamModel.create({
       title: tpl.title,
       subject: tpl.subject,
-      description: "",
+      description: `Examen de ${tpl.subject}.`,
       durationMinutes: tpl.durationMinutes,
       scheduledAt: tpl.scheduledAt,
-      status: "scheduled",
+      status: tpl.status,
+      passingScore: 12,
+      launchMode: "auto",
       createdBy: teacher._id,
-      enrolledStudents: [student._id],
+      enrolledStudents: enrolled,
       joinCode: tpl.joinCode,
       totalPoints,
       questions: mockQuestions,
     });
 
-    if (tpl.studentAttempt) {
-      const a = tpl.studentAttempt;
-      await ExamAttemptModel.create({
-        examId: exam._id,
-        studentId: student._id,
-        status: a.status,
-        startedAt: tpl.scheduledAt,
-        submittedAt: a.status === "graded" ? tpl.scheduledAt : undefined,
-        score: a.status === "graded" ? a.score : undefined,
-        maxScore: a.status === "graded" ? a.maxScore : undefined,
-        answers: [],
-        antiCheatEvents: [],
-      });
+    const live = tpl.status === "live";
+    for (let si = 0; si < tpl.attemptCount && si < students.length; si++) {
+      const student = students[si];
+      if (live) {
+        // Tentative en cours : réponses partielles, parfois une alerte.
+        const answered = 2 + (si % 4);
+        await ExamAttemptModel.create({
+          examId: exam._id,
+          studentId: student._id,
+          status: "in-progress",
+          startedAt: new Date(Date.now() - 25 * 60 * 1000),
+          maxScore: 20,
+          answers: mockQuestions.slice(0, answered).map((q) => ({
+            questionId: q.id,
+            value: q.type === "mcq" ? "A" : "Réponse en cours…",
+          })),
+          antiCheatEvents:
+            si % 2 === 0
+              ? [
+                  { type: "tab-blur", timestamp: new Date(Date.now() - 12 * 60 * 1000) },
+                  { type: "fullscreen-exit", timestamp: new Date(Date.now() - 4 * 60 * 1000) },
+                ]
+              : [],
+        });
+      } else {
+        // Tentative corrigée.
+        const score = scoreFor(si, ei);
+        await ExamAttemptModel.create({
+          examId: exam._id,
+          studentId: student._id,
+          status: "graded",
+          startedAt: tpl.scheduledAt,
+          submittedAt: new Date(tpl.scheduledAt.getTime() + tpl.durationMinutes * 60 * 1000),
+          score,
+          maxScore: 20,
+          answers: mockQuestions.map((q) => ({
+            questionId: q.id,
+            value: q.type === "mcq" ? q.correctOptionId : "Réponse rédigée.",
+          })),
+          antiCheatEvents:
+            si === 1
+              ? [{ type: "fullscreen-exit", timestamp: tpl.scheduledAt }]
+              : [],
+        });
+      }
     }
   }
 
   console.log("[seed] creating notifications…");
   await NotificationModel.insertMany([
     {
-      userId: student._id,
+      userId: students[0]._id,
       type: "exam-graded",
       title: "Note publiée",
-      message: "Machine Learning Avancé : 18.4/20",
+      message: "Machine Learning Avancé : votre copie a été corrigée.",
       read: false,
     },
     {
-      userId: student._id,
+      userId: students[0]._id,
       type: "exam-scheduled",
       title: "Nouvel examen programmé",
-      message: "Bases de données NoSQL — 10 Avril 09:00",
+      message: "Sécurité des Applications Web — 5 Juin 11:00",
       read: false,
     },
     {
-      userId: student._id,
+      userId: students[0]._id,
       type: "system",
       title: "Bienvenue sur ExamGuard",
       message: "Votre compte est prêt à l'emploi.",
@@ -249,6 +295,8 @@ async function seed() {
   ]);
 
   console.log("[seed] done.");
+  console.log(`[seed] teacher: ${TEACHER.email} / ${TEACHER.password}`);
+  console.log(`[seed] students: ${STUDENTS.length} (mot de passe "student123", sauf Zakaria)`);
   await mongoose.disconnect();
 }
 
