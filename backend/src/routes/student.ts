@@ -4,7 +4,7 @@ import { ExamAttemptModel } from "../models/ExamAttempt.js";
 import { UserModel } from "../models/User.js";
 import { NotificationModel } from "../models/Notification.js";
 import { requireAuth } from "../middleware/auth.js";
-import { finalizeAttempt } from "../services/examGrading.js";
+import { finalizeAttempt, sameOptionSet } from "../services/examGrading.js";
 
 const router = Router();
 router.use(requireAuth);
