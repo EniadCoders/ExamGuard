@@ -3146,8 +3146,13 @@ export function TeacherDashboard() {
           let completedExam: Exam = { ...liveExam, status: "completed" };
           try {
             completedExam = await completeExam(liveExam.id);
-          } catch {
-            /* l'examen reste affiché comme terminé localement */
+          } catch (err) {
+            window.alert(
+              err instanceof ApiError
+                ? err.message
+                : "Impossible de terminer l'examen. Verifiez que le backend est demarre.",
+            );
+            return;
           }
           setExams(prev => prev.map(e => e.id === liveExam.id ? completedExam : e));
           setLiveExamId(null);

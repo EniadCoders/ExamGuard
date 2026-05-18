@@ -1,3 +1,19 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ROUTES DU PROFESSEUR - ExamGuard
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * Ce fichier contient TOUTES les routes que le professeur peut utiliser:
+ * - Créer, modifier, lancer des examens
+ * - Surveiller les examens en direct
+ * - Gérer les étudiants
+ * - Consulter les statistiques
+ * 
+ * PROTECTION: Tous les endpoints exigent:
+ * 1. Un JWT valide (requireAuth)
+ * 2. Le rôle "teacher" (requireRole("teacher"))
+ */
+
 import { Router, type Request, type Response } from "express";
 import mongoose from "mongoose";
 import { ExamModel } from "../models/Exam.js";
@@ -12,19 +28,35 @@ import { sendCompletedExamReport } from "../services/examReportAutomation.js";
 
 const router = Router();
 
-// Toutes les routes professeur exigent un compte authentifié avec le rôle "teacher".
+// ✅ PROTECTION: Toutes les routes dessous exigent authentification + rôle "teacher"
+// Si l'utilisateur n'a pas le rôle "teacher", il reçoit une erreur 403 Forbidden
 router.use(requireAuth, requireRole("teacher"));
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
+// 📝 Utilitaires pour formater, valider et convertir les données
 
+// 🌍 Mois en français pour afficher les dates au professeur
 const MONTHS_FR = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
 ];
+
+// 🔤 Lettres A-Z pour identifier les options MCQ (A, B, C, D, ...)
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+// ⏰ Fonction pour ajouter des zéros: 9 → "09"
 const pad = (n: number) => n.toString().padStart(2, "0");
 
-/** Parse une chaîne `datetime-local` (yyyy-MM-ddTHH:mm) comme une date UTC. */
+/**
+ * 📅 PARSER DE DATES
+ * 
+ * Convertit "2026-05-18T14:00" (format du HTML5 datetime-local)
+ * en objet Date JavaScript UTC
+ * 
+ * Exemple:
+ *   parseExamDate("2026-05-18T14:00") → Date(2026-05-18 14:00 UTC)
+ *   parseExamDate("") → undefined
+ */
 function parseExamDate(input?: string): Date | undefined {
   if (!input) return undefined;
   const m = String(input).match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/);
@@ -35,23 +67,45 @@ function parseExamDate(input?: string): Date | undefined {
   return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] ?? 0), +(m[5] ?? 0)));
 }
 
-/** Formate une date en chaîne française avec heure : "9 Avril 2026 à 09:00". */
+/**
+ * 📅 FORMATER DATES - Format long
+ * 
+ * Retourne: "9 Avril 2026 à 09:00"
+ * Utilisé: Afficher l'horaire de l'examen au professeur
+ */
 function formatExamDateFr(d: Date): string {
   const base = `${d.getUTCDate()} ${MONTHS_FR[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   return `${base} à ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 
+// 🗓️ Noms de mois abrégés
 const MONTHS_FR_SHORT = [
   "Janv", "Févr", "Mars", "Avr", "Mai", "Juin",
   "Juil", "Août", "Sept", "Oct", "Nov", "Déc",
 ];
 
-/** Formate une date courte : "9 Avr 2026". */
+/**
+ * 📅 FORMATER DATES - Format court
+ * 
+ * Retourne: "9 Avr 2026"
+ * Utilisé: Lister les examens compactement
+ */
 function formatDateShort(d: Date): string {
   return `${d.getUTCDate()} ${MONTHS_FR_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-/** Formate un délai relatif en français : "Il y a 5 min", "Actif maintenant". */
+/**
+ * ⏱️ FORMAT TEMPS RELATIF
+ * 
+ * Convertit un timestamp en phrase lisible:
+ *   "Actif maintenant" (< 1 min)
+ *   "Il y a 5 min" (< 1 heure)
+ *   "Il y a 2 h" (< 1 jour)
+ *   "Il y a 3 j" (< 1 semaine)
+ *   "9 Avr 2026" (> 1 semaine)
+ * 
+ * Utilisé: Afficher "Dernière connexion: Il y a 5 min"
+ */
 function relativeFr(d?: Date | null): string {
   if (!d) return "Jamais connecté";
   const diffMs = Date.now() - new Date(d).getTime();
@@ -65,51 +119,112 @@ function relativeFr(d?: Date | null): string {
   return formatDateShort(new Date(d));
 }
 
-/** Génère un code de session unique à 6 caractères. */
+/**
+ * 🔢 GÉNÉRER CODE UNIQUE DE REJOINTE
+ * 
+ * Crée un code aléatoire unique de 6 caractères (A-Z + 2-9)
+ * Exemple: "A3K9R2"
+ * 
+ * Processus:
+ * 1. Génère un code aléatoire
+ * 2. Vérifie que ce code n'existe pas déjà en DB
+ * 3. Si existe déjà, recommence (jusqu'à 20 fois)
+ * 4. Retourne le code unique
+ * 
+ * Utilisé: Quand le professeur crée un examen
+ *   Les étudiants utilisent ce code pour rejoindre l'examen
+ */
 async function generateJoinCode(): Promise<string> {
+  // Alphabet sans 0, 1, I, O pour éviter les confusions (0 vs O, 1 vs I)
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  
+  // Essayer jusqu'à 20 fois (normalement trouvé à la 1ère tentative)
   for (let attempt = 0; attempt < 20; attempt++) {
     let code = "";
+    
+    // Générer 6 caractères aléatoires
     for (let i = 0; i < 6; i++) {
       code += alphabet[Math.floor(Math.random() * alphabet.length)];
     }
+    
+    // Vérifier que ce code n'existe pas déjà dans la base de données
     const exists = await ExamModel.exists({ joinCode: code });
-    if (!exists) return code;
+    if (!exists) return code;  // ✅ Code unique trouvé!
   }
+  
   throw new Error("could not generate a unique join code");
 }
 
 /**
- * Vérifie que chaque question a un énoncé non vide. Renvoie la liste des
- * positions (1-indexées) invalides — vide si tout est OK.
+ * ✅ VALIDER QUESTIONS
+ * 
+ * Vérifie que toutes les questions ont un énoncé non-vide
+ * Retourne: Liste des numéros de questions vides (1-indexées)
+ * 
+ * Exemple:
+ *   Entrée: [{ text: "Q1" }, { text: "" }, { text: "Q3" }]
+ *   Sortie: [2]  ← La question 2 est vide
  */
 function findEmptyQuestionTexts(draft: any[]): number[] {
   return (Array.isArray(draft) ? draft : [])
-    .map((q, i) => (String(q?.text ?? "").trim() ? -1 : i + 1))
-    .filter((i) => i > 0);
+    .map((q, i) => (String(q?.text ?? "").trim() ? -1 : i + 1))  // -1 si ok, i+1 si vide
+    .filter((i) => i > 0);  // Garder seulement les numéros
 }
 
-/** Convertit les questions du format éditeur (frontend) vers le format stocké. */
+/**
+ * 🔄 CONVERTIR QUESTIONS: Format EDITEUR → Format STOCKÉ
+ * 
+ * Le frontend envoie les questions dans un format facile à éditer:
+ *   - Options: tableau de strings ["Option A", "Option B"]
+ *   - Correctes: indices [0, 2]
+ * 
+ * Le backend les convertit au format stocké en DB:
+ *   - Options: objets {id: "A", text: "Option A"}
+ *   - Correctes: IDs ["A", "C"]
+ * 
+ * Exemple:
+ *   AVANT (frontend):
+ *   {
+ *     type: "mcq",
+ *     options: ["Java", "Python", "C++"],
+ *     correct: [0, 2]
+ *   }
+ *   
+ *   APRÈS (DB):
+ *   {
+ *     type: "mcq",
+ *     options: [{id: "A", text: "Java"}, {id: "B", text: "Python"}, {id: "C", text: "C++"}],
+ *     correctOptionIds: ["A", "C"]
+ *   }
+ */
 function draftToStored(draft: any[]): any[] {
   return (Array.isArray(draft) ? draft : []).map((q, index) => {
     const id = typeof q.id === "number" ? q.id : index + 1;
     const points = Number(q.points) || 0;
+    
+    // ═════ MCQ ═════
     if (q.type === "mcq") {
+      // Convertir options simples → objets {id, text}
       const options = (q.options ?? []).map((text: string, i: number) => ({
-        id: LETTERS[i] ?? `O${i}`,
+        id: LETTERS[i] ?? `O${i}`,  // A, B, C, ... ou O0, O1, ...
         text: String(text ?? ""),
       }));
+      
+      // Convertir indices → IDs
       const correctIds = (q.correct ?? [])
         .map((i: number) => options[i]?.id)
         .filter(Boolean);
+      
       return {
         id, type: "mcq", text: String(q.text ?? ""), points,
         options,
-        correctOptionIds: correctIds,
-        correctOptionId: correctIds[0],
+        correctOptionIds: correctIds,        // Pour multi-réponses
+        correctOptionId: correctIds[0],      // Pour simple réponse
         multiple: !!q.multiple,
       };
     }
+    
+    // ═════ CODE ═════
     if (q.type === "code") {
       return {
         id, type: "code", text: String(q.text ?? ""), points,
@@ -117,23 +232,35 @@ function draftToStored(draft: any[]): any[] {
         starterCode: q.starterCode ?? "",
       };
     }
+    
+    // ═════ TEXTE ═════
     return { id, type: "text", text: String(q.text ?? ""), points };
   });
 }
 
-/** Convertit les questions stockées vers le format éditeur attendu par le frontend. */
+/**
+ * 🔄 CONVERTIR QUESTIONS: Format STOCKÉ → Format EDITEUR
+ * 
+ * Inverse la conversion précédente pour renvoyer les questions
+ * dans le format que le frontend attend
+ */
 function storedToDraft(questions: any[]): any[] {
   return (questions ?? []).map((q) => {
     if (q.type === "mcq") {
       const options = (q.options ?? []).map((o: any) => o.text);
+      
+      // Récupérer les IDs des bonnes réponses
       const ids = q.correctOptionIds?.length
         ? q.correctOptionIds
         : q.correctOptionId
           ? [q.correctOptionId]
           : [];
+      
+      // Convertir IDs → indices
       const correct = ids
         .map((id: string) => (q.options ?? []).findIndex((o: any) => o.id === id))
         .filter((i: number) => i >= 0);
+      
       return {
         id: q.id, type: "mcq", text: q.text, points: q.points,
         options, multiple: !!q.multiple, correct,
@@ -149,69 +276,106 @@ function storedToDraft(questions: any[]): any[] {
   });
 }
 
-/** Sérialise un examen au format attendu par le dashboard professeur. */
+/**
+ * 📊 SÉRIALISER EXAMEN
+ * 
+ * Convertit le document MongoDB en format JSON pour le frontend
+ * Applique les transformations et calculs nécessaires
+ */
 function mapExam(exam: any) {
   return {
-    id: String(exam._id),
+    id: String(exam._id),                                           // Convertir ObjectId en string
     title: exam.title,
     subject: exam.subject,
     duration: exam.durationMinutes,
     date: exam.scheduledAt ? formatExamDateFr(new Date(exam.scheduledAt)) : "",
-    students: exam.enrolledStudents?.length ?? 0,
+    students: exam.enrolledStudents?.length ?? 0,                   // Nombre d'étudiants inscrits
     status: exam.status,
-    questions: exam.questions?.length ?? 0,
+    questions: exam.questions?.length ?? 0,                         // Nombre de questions
     description: exam.description ?? "",
     passingScore: exam.passingScore ?? 12,
-    selectedStudentIds: (exam.enrolledStudents ?? []).map((id: any) => String(id)),
+    selectedStudentIds: (exam.enrolledStudents ?? []).map((id: any) => String(id)),  // IDs des étudiants
     importedFileName: exam.importedFileName ?? "",
-    draftQuestions: storedToDraft(exam.questions ?? []),
+    draftQuestions: storedToDraft(exam.questions ?? []),             // Convertir au format éditeur
     launchMode: exam.launchMode ?? "auto",
     previousStatus: exam.previousStatus ?? undefined,
     rules: exam.rules ?? undefined,
-    joinCode: exam.joinCode,
+    joinCode: exam.joinCode,                                        // Code de rejointe (ex: A3K9R2)
   };
 }
 
-/** Crée une notification in-app pour chaque étudiant inscrit. */
+/**
+ * 📬 CRÉER NOTIFICATIONS POUR LES ÉTUDIANTS
+ * 
+ * Crée une notification in-app pour chaque étudiant inscrit
+ * 
+ * Exemple:
+ *   notifyStudents(
+ *     ["id1", "id2"],
+ *     "exam-launched",
+ *     "Examen démarré!",
+ *     "Vous pouvez le rejoindre maintenant"
+ *   )
+ * 
+ * Résultat: Deux notifications créées en DB
+ */
 async function notifyStudents(
   studentIds: readonly (string | mongoose.Types.ObjectId)[],
   type: string,
   title: string,
   message: string,
 ) {
-  if (!studentIds.length) return;
+  if (!studentIds.length) return;  // Rien à faire si pas d'étudiants
+  
+  // Créer une notification pour chaque étudiant
   await NotificationModel.insertMany(
     studentIds.map((userId) => ({ userId, type, title, message })),
   );
 }
 
-/** Garde uniquement les ObjectId valides parmi une liste d'identifiants. */
+/**
+ * 🔐 CONVERTIR EN OBJECTIDS MONGODB
+ * 
+ * Reçoit une liste d'IDs (strings ou ObjectIds)
+ * Retourne seulement les IDs valides convertis en ObjectId MongoDB
+ * 
+ * Utilisé: Pour les listes d'étudiants inscrits à un examen
+ */
 function toObjectIds(ids: unknown): mongoose.Types.ObjectId[] {
   if (!Array.isArray(ids)) return [];
   return ids
-    .filter((id) => mongoose.isValidObjectId(id))
-    .map((id) => new mongoose.Types.ObjectId(String(id)));
+    .filter((id) => mongoose.isValidObjectId(id))  // Garder seulement les IDs valides
+    .map((id) => new mongoose.Types.ObjectId(String(id)));  // Convertir en ObjectId
 }
 
-/** Sérialise un étudiant avec ses statistiques sur les examens du professeur. */
+/**
+ * 👤 SÉRIALISER ÉTUDIANT
+ * 
+ * Convertit un utilisateur en objet d'affichage pour le dashboard du professeur
+ * Calcule les statistiques de l'étudiant (moyenne, nombre exams, etc.)
+ */
 function mapStudent(user: any, attempts: any[], examCount: number) {
+  // Filtrer les tentatives qui ont un score (les corrigées)
   const graded = attempts.filter((a) => a.score != null);
+  
+  // Calculer la moyenne (arrondir à 1 décimale)
   const avg = graded.length
     ? Math.round(
         (graded.reduce((sum, a) => sum + (a.score ?? 0), 0) / graded.length) * 10,
       ) / 10
     : 0;
+  
   return {
     id: String(user._id),
     name: user.fullName,
     email: user.email,
-    exams: examCount,
-    avg,
+    exams: examCount,                              // Nombre d'exams du prof auxquels inscrit
+    avg,                                           // Moyenne des scores
     status: user.status === "active" ? "active" : "inactive",
-    lastActive: relativeFr(user.lastLoginAt),
+    lastActive: relativeFr(user.lastLoginAt),     // "Il y a 5 min", "Jamais"
     department: user.department ?? "",
     year: "",
-    studentId: user.studentIdentifier ?? "",
+    studentId: user.studentIdentifier ?? "",      // APO ou CNE
   };
 }
 
@@ -449,13 +613,20 @@ router.post("/exams/:id/complete", async (req, res) => {
   const exam = await ExamModel.findOne({ _id: req.params.id, createdBy: teacherId });
   if (!exam) return res.status(404).json({ error: "exam not found" });
   if (exam.status === "completed") {
-    return res.json({ exam: mapExam(exam.toObject()) }); // déjà clôturé : idempotent
+    let reportSent = false;
+    try {
+      await sendCompletedExamReport(exam._id);
+      reportSent = true;
+    } catch (err) {
+      console.error("[n8n] failed to send completed exam report:", err);
+    }
+    return res.json({ exam: mapExam(exam.toObject()), reportSent });
   }
   if (exam.status !== "live") {
     return res.status(409).json({ error: "only a live exam can be completed" });
   }
 
-  // Soumettre les tentatives encore en cours avec leurs réponses actuelles.
+  // Soumettre les tentatives encore en cours avec leurs reponses actuelles.
   const openAttempts = await ExamAttemptModel.find({
     examId: exam._id,
     status: "in-progress",
@@ -464,22 +635,25 @@ router.post("/exams/:id/complete", async (req, res) => {
   for (const attempt of openAttempts) {
     await finalizeAttempt(attempt, examData, {
       autoSubmitted: true,
-      autoSubmitTitle: "Examen clôturé par l'enseignant",
+      autoSubmitTitle: "Examen cloture par l'enseignant",
     });
   }
 
   exam.status = "completed";
   await exam.save();
 
-  void sendCompletedExamReport(exam._id).catch((err) => {
+  let reportSent = false;
+  try {
+    await sendCompletedExamReport(exam._id);
+    reportSent = true;
+  } catch (err) {
     console.error("[n8n] failed to send completed exam report:", err);
-  });
+  }
 
-  res.json({ exam: mapExam(exam.toObject()) });
+  res.json({ exam: mapExam(exam.toObject()), reportSent });
 });
 
-// ─── Examens — suppression ─────────────────────────────────────────────────
-
+// Examens - suppression
 router.delete("/exams/:id", async (req, res) => {
   const teacherId = req.auth!.userId;
   const exam = await ExamModel.findOneAndDelete({
