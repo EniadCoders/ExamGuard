@@ -42,13 +42,21 @@ export type DashboardUser = {
   phone?: string;
 };
 
+export type DashboardPerformance = {
+  averageScore: number | null;
+  completedCount: number;
+  validatedCount: number;
+};
+
 export type DashboardPayload = {
   user: DashboardUser;
   stats: DashboardStat[];
+  performance: DashboardPerformance;
   exams: DashboardExam[];
   calendarEvents: CalendarEvent[];
 };
 
+/** Charge la totalité du dashboard étudiant en un seul appel. */
 export function fetchDashboard(): Promise<DashboardPayload> {
   return api<DashboardPayload>("/student/dashboard");
 }
@@ -78,6 +86,7 @@ export type ExamDetail = {
   questions: Question[];
 };
 
+/** Récupère le détail (lecture seule) d'un examen. */
 export async function fetchExam(id: string): Promise<ExamDetail> {
   const data = await api<{ exam: ExamDetail }>(`/student/exams/${id}`);
   return data.exam;
@@ -90,6 +99,7 @@ export type JoinResult = {
   alreadyEnrolled: boolean;
 };
 
+/** Rejoint un examen via le code 6 lettres fourni par le professeur. */
 export function joinExamByCode(code: string): Promise<JoinResult> {
   return api<JoinResult>("/student/exams/join", {
     method: "POST",
@@ -113,10 +123,12 @@ export type StartResponse = {
   exam: ExamDetail;
 };
 
+/** Démarre (ou reprend) une tentative ; renvoie attempt + questions sans bonnes réponses. */
 export function startExam(examId: string): Promise<StartResponse> {
   return api<StartResponse>(`/student/exams/${examId}/start`, { method: "POST" });
 }
 
+/** Autosave : envoie l'état actuel des réponses au serveur. */
 export function saveAttemptAnswers(
   attemptId: string,
   answers: AttemptAnswer[],
@@ -127,6 +139,7 @@ export function saveAttemptAnswers(
   });
 }
 
+/** Signale un évènement anti-triche (sortie plein écran, blur, copier-coller…). */
 export function logAntiCheatEvent(
   attemptId: string,
   type: string,
@@ -150,6 +163,7 @@ export type SubmitResponse = {
   };
 };
 
+/** Soumet définitivement la tentative ; le serveur auto-corrige les MCQ. */
 export function submitAttempt(
   attemptId: string,
   answers: AttemptAnswer[],
@@ -193,6 +207,7 @@ export type AttemptResult = {
   >;
 };
 
+/** Charge le détail d'un résultat d'examen pour l'affichage Résultats. */
 export function fetchAttempt(attemptId: string): Promise<AttemptResult> {
   return api<AttemptResult>(`/student/attempts/${attemptId}`);
 }
@@ -208,6 +223,7 @@ export type StudentNotification = {
   createdAt: string;
 };
 
+/** Liste les notifications + compteur non lues pour la cloche. */
 export function fetchNotifications(): Promise<{
   notifications: StudentNotification[];
   unreadCount: number;
@@ -215,6 +231,7 @@ export function fetchNotifications(): Promise<{
   return api("/student/notifications");
 }
 
+/** Marque une notification comme lue côté serveur. */
 export function markNotificationRead(id: string): Promise<{ ok: true }> {
   return api(`/student/notifications/${id}/read`, { method: "PATCH" });
 }

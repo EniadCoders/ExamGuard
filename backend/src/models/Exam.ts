@@ -1,10 +1,12 @@
 import { Schema, model, Types, type InferSchemaType } from "mongoose";
 
+/** Une option de réponse pour une question QCM. */
 const mcqOptionSchema = new Schema(
   { id: { type: String, required: true }, text: { type: String, required: true } },
   { _id: false },
 );
 
+/** Une question d'examen (QCM, texte libre ou code). */
 const questionSchema = new Schema(
   {
     id: { type: Number, required: true },
@@ -26,6 +28,7 @@ const questionSchema = new Schema(
   { _id: false },
 );
 
+/** Règles appliquées pendant le passage de l'examen (anti-triche, navigation, etc.). */
 const examRulesSchema = new Schema(
   {
     shuffleQuestions: { type: Boolean, default: true },
@@ -42,6 +45,7 @@ const examRulesSchema = new Schema(
   { _id: false },
 );
 
+/** Schéma Exam : un examen créé par un professeur, suivi par ses étudiants inscrits. */
 const examSchema = new Schema(
   {
     title: { type: String, required: true },

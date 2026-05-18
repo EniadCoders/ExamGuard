@@ -1,5 +1,6 @@
 import { Schema, model, Types, type InferSchemaType } from "mongoose";
 
+/** Schéma Notification : message in-app destiné à un utilisateur. */
 const notificationSchema = new Schema(
   {
     userId: { type: Types.ObjectId, ref: "User", required: true, index: true },

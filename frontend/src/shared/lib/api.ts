@@ -1,9 +1,11 @@
 const TOKEN_KEY = "examguard_token";
 
+/** Lit le JWT depuis le localStorage. */
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+/** Stocke ou supprime le JWT dans le localStorage. */
 export function setToken(token: string | null) {
   if (token) localStorage.setItem(TOKEN_KEY, token);
   else localStorage.removeItem(TOKEN_KEY);
@@ -15,6 +17,7 @@ export class ApiError extends Error {
   }
 }
 
+/** Helper fetch : ajoute le header JSON + Authorization, parse la réponse, lève ApiError si !ok. */
 export async function api<T = unknown>(
   path: string,
   init: RequestInit = {},

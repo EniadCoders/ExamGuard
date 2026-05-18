@@ -18,6 +18,7 @@ declare global {
   }
 }
 
+/** Vérifie le JWT et bloque la requête si le token est absent, invalide ou révoqué. */
 export async function requireAuth(
   req: Request,
   res: Response,
@@ -48,6 +49,7 @@ export async function requireAuth(
   }
 }
 
+/** Signe un JWT de session (valable 7 jours). */
 export function signToken(payload: AuthPayload): string {
   return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "7d" });
 }
@@ -59,6 +61,7 @@ export function signChallengeToken(userId: string): string {
   });
 }
 
+/** Restreint une route à un ou plusieurs rôles (student / teacher / superadmin). */
 export function requireRole(...roles: AuthPayload["role"][]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.auth) return res.status(401).json({ error: "missing token" });

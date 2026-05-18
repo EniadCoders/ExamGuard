@@ -1,5 +1,6 @@
 import { Schema, model, Types, type InferSchemaType } from "mongoose";
 
+/** Réponse fournie par l'étudiant pour une question donnée. */
 const answerSchema = new Schema(
   {
     questionId: { type: Number, required: true },
@@ -8,6 +9,7 @@ const answerSchema = new Schema(
   { _id: false },
 );
 
+/** Évènement anti-triche horodaté (sortie plein écran, perte de focus, etc.). */
 const antiCheatEventSchema = new Schema(
   {
     type: { type: String, required: true }, // e.g. "tab-blur", "fullscreen-exit", "paste"
@@ -17,6 +19,7 @@ const antiCheatEventSchema = new Schema(
   { _id: false },
 );
 
+/** Schéma ExamAttempt : une tentative d'examen unique par couple (examen, étudiant). */
 const examAttemptSchema = new Schema(
   {
     examId: { type: Types.ObjectId, ref: "Exam", required: true },
@@ -38,6 +41,7 @@ const examAttemptSchema = new Schema(
   { timestamps: true },
 );
 
+/** Index unique : empêche deux tentatives pour le même couple examen / étudiant. */
 examAttemptSchema.index({ examId: 1, studentId: 1 }, { unique: true });
 
 export type ExamAttempt = InferSchemaType<typeof examAttemptSchema>;

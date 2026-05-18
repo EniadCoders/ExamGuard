@@ -92,6 +92,7 @@ async function createSession(req: Request, userId: string) {
   });
 }
 
+// POST /signup : inscription d'un nouvel étudiant (hash bcrypt, JWT).
 router.post("/signup", async (req, res) => {
   const {
     email,
@@ -135,6 +136,7 @@ router.post("/signup", async (req, res) => {
   res.status(201).json({ token, user: publicUser(user) });
 });
 
+// POST /login : connexion email + mot de passe ; émet un défi 2FA si activé.
 router.post("/login", async (req, res) => {
   const { email, password } = req.body ?? {};
   if (!email || !password) {
@@ -167,6 +169,7 @@ router.post("/login", async (req, res) => {
 });
 
 // Étape 2 de la connexion : vérification du code 2FA.
+// POST /login/2fa : étape 2 du login, valide le code TOTP / code de secours.
 router.post("/login/2fa", async (req, res) => {
   const { challengeToken, code } = req.body ?? {};
   if (!challengeToken || !code) {
@@ -196,6 +199,7 @@ router.post("/login/2fa", async (req, res) => {
   res.json({ token, user: publicUser(user) });
 });
 
+// GET /me : retourne l'utilisateur courant à partir du JWT.
 router.get("/me", requireAuth, async (req, res) => {
   const user = await UserModel.findById(req.auth!.userId);
   if (!user) return res.status(404).json({ error: "user not found" });
@@ -216,6 +220,7 @@ const PROFILE_FIELDS = [
   "avatarUrl",
 ] as const;
 
+// PATCH /me : met à jour les champs de profil autorisés.
 router.patch("/me", requireAuth, async (req, res) => {
   const user = await UserModel.findById(req.auth!.userId);
   if (!user) return res.status(404).json({ error: "user not found" });
@@ -249,6 +254,7 @@ router.patch("/me", requireAuth, async (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
+// POST /change-password : remplace le mot de passe après vérification de l'ancien.
 router.post("/change-password", requireAuth, async (req, res) => {
   const { currentPassword, newPassword } = req.body ?? {};
   if (!currentPassword || !newPassword) {
@@ -271,6 +277,7 @@ router.post("/change-password", requireAuth, async (req, res) => {
 
 // ─── 2FA — activation / désactivation ──────────────────────────────────────
 
+// POST /2fa/setup : génère un secret TOTP + QR code en attente d'activation.
 router.post("/2fa/setup", requireAuth, async (req, res) => {
   const user = await UserModel.findById(req.auth!.userId);
   if (!user) return res.status(404).json({ error: "user not found" });
@@ -284,6 +291,7 @@ router.post("/2fa/setup", requireAuth, async (req, res) => {
   res.json({ secret, otpauthUrl, qrCode });
 });
 
+// POST /2fa/enable : confirme l'activation 2FA et renvoie les codes de secours.
 router.post("/2fa/enable", requireAuth, async (req, res) => {
   const { code } = req.body ?? {};
   const user = await UserModel.findById(req.auth!.userId);
@@ -310,6 +318,7 @@ router.post("/2fa/enable", requireAuth, async (req, res) => {
   res.json({ ok: true, backupCodes });
 });
 
+// POST /2fa/disable : désactive la 2FA après validation d'un code.
 router.post("/2fa/disable", requireAuth, async (req, res) => {
   const { code } = req.body ?? {};
   const user = await UserModel.findById(req.auth!.userId);
@@ -330,6 +339,7 @@ router.post("/2fa/disable", requireAuth, async (req, res) => {
 
 // ─── Sessions actives ──────────────────────────────────────────────────────
 
+// GET /sessions : liste les sessions actives de l'utilisateur courant.
 router.get("/sessions", requireAuth, async (req, res) => {
   const sessions = await ActiveSessionModel.find({ userId: req.auth!.userId })
     .sort({ createdAt: -1 })
@@ -345,6 +355,7 @@ router.get("/sessions", requireAuth, async (req, res) => {
   });
 });
 
+// DELETE /sessions/:id : révoque une session particulière (déconnexion ciblée).
 router.delete("/sessions/:id", requireAuth, async (req, res) => {
   if (req.params.id === req.auth!.sessionId) {
     return res.status(400).json({ error: "cannot revoke the current session" });
@@ -356,6 +367,7 @@ router.delete("/sessions/:id", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// DELETE /sessions : révoque toutes les autres sessions (sauf la courante).
 router.delete("/sessions", requireAuth, async (req, res) => {
   const filter: Record<string, unknown> = { userId: req.auth!.userId };
   if (req.auth!.sessionId) filter._id = { $ne: req.auth!.sessionId };
@@ -363,6 +375,7 @@ router.delete("/sessions", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+/** Projection publique de l'utilisateur (sans hash de mot de passe ni secret 2FA). */
 function publicUser(user: any) {
   return {
     id: user.id,

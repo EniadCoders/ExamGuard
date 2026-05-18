@@ -1,5 +1,6 @@
 import { Schema, model, type InferSchemaType } from "mongoose";
 
+/** Préférences personnalisables stockées sous forme de sous-document. */
 const preferencesSchema = new Schema(
   {
     emailFraudCritical: { type: Boolean, default: true },
@@ -16,6 +17,7 @@ const preferencesSchema = new Schema(
   { _id: false },
 );
 
+/** Schéma User : étudiants, professeurs et super-admin partagent ce modèle. */
 const userSchema = new Schema(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },

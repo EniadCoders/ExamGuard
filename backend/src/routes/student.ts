@@ -15,13 +15,16 @@ const MONTHS_FR = [
 
 const pad = (n: number) => n.toString().padStart(2, "0");
 
+/** Formate une date au format "28 Mars 2026". */
 function formatDateFr(d: Date) {
   return `${d.getUTCDate()} ${MONTHS_FR[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
+/** Formate une heure au format "10:00". */
 function formatTimeFr(d: Date) {
   return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
 }
 
+/** Dérive le statut affiché à l'étudiant (à venir / en cours / terminé) depuis la tentative. */
 function statusFromAttempt(
   attempt: { status?: string } | undefined,
 ): "completed" | "ongoing" | "upcoming" {
@@ -31,6 +34,7 @@ function statusFromAttempt(
   return "upcoming";
 }
 
+/** Supprime les bonnes réponses MCQ avant envoi à l'étudiant. */
 function stripCorrectAnswers(questions: any[]) {
   return questions.map((q) => {
     const { correctOptionId, correctOptionIds, ...rest } = q;
@@ -38,6 +42,7 @@ function stripCorrectAnswers(questions: any[]) {
   });
 }
 
+/** Mélange un tableau en place (algorithme de Fisher-Yates). */
 function shuffleInPlace<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -55,7 +60,7 @@ function sameOptionSet(a: unknown, b: unknown): boolean {
   return sa.every((v, i) => v === sb[i]);
 }
 
-/** Score automatique pour les MCQ (simples + multi). Retourne { score, hasOpen }. */
+/** Auto-correction MCQ : retourne le score gagné et indique s'il reste des questions ouvertes. */
 function autoGrade(
   questions: any[],
   answersById: Map<number, any>,
@@ -77,7 +82,7 @@ function autoGrade(
   return { score, hasOpen };
 }
 
-/** Finalise un attempt (auto-corrige MCQ, met à jour status, crée la notif). */
+/** Finalise une tentative : auto-corrige les MCQ, écrit le score, crée la notification. */
 async function finalizeAttempt(
   attempt: any,
   exam: any,
@@ -111,7 +116,7 @@ async function finalizeAttempt(
   return { score, hasOpen };
 }
 
-/** Si le temps est écoulé pour un attempt in-progress, finalise-le. */
+/** Soumet automatiquement une tentative dont la durée est dépassée. */
 async function autoSubmitIfExpired(attempt: any, exam: any): Promise<boolean> {
   if (attempt.status !== "in-progress") return false;
   const elapsed = Date.now() - new Date(attempt.startedAt).getTime();
@@ -123,6 +128,7 @@ async function autoSubmitIfExpired(attempt: any, exam: any): Promise<boolean> {
   return false;
 }
 
+/** Indique si un examen peut être démarré (statut + heure planifiée). */
 function isExamLaunchable(exam: any): { ok: boolean; reason?: string } {
   const status = exam.status;
   if (status === "draft") return { ok: false, reason: "exam not published" };
@@ -137,6 +143,7 @@ function isExamLaunchable(exam: any): { ok: boolean; reason?: string } {
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────
 
+// GET /dashboard : renvoie en un seul appel utilisateur, stats, examens et calendrier.
 router.get("/dashboard", async (req, res) => {
   const studentId = req.auth!.userId;
 
@@ -180,24 +187,38 @@ router.get("/dashboard", async (req, res) => {
     (a) => a.status === "graded" || a.status === "submitted",
   );
   const scoredAttempts = completedAttempts.filter((a) => a.score != null);
-  const avgScore =
-    scoredAttempts.length > 0
-      ? scoredAttempts.reduce((sum, a) => sum + (a.score ?? 0), 0) /
-        scoredAttempts.length
+
+  // Moyenne normalisée sur 20 : chaque examen pèse pareil quel que soit son barème.
+  const normalizedScores = scoredAttempts.map((a) => {
+    const max = a.maxScore ?? 0;
+    if (max <= 0) return a.score ?? 0;
+    return ((a.score ?? 0) / max) * 20;
+  });
+  const avgOutOf20 =
+    normalizedScores.length > 0
+      ? normalizedScores.reduce((s, n) => s + n, 0) / normalizedScores.length
       : 0;
+
   const upcomingCount = enriched.filter((e) => e.status === "upcoming").length;
-  const validatedCount = scoredAttempts.filter((a) => (a.score ?? 0) >= 10).length;
+  const validatedCount = normalizedScores.filter((n) => n >= 10).length;
 
   const stats = [
     { label: "Examens à venir", value: String(upcomingCount), change: "" },
     { label: "Examens complétés", value: String(completedAttempts.length), change: "" },
     {
       label: "Note moyenne",
-      value: scoredAttempts.length ? `${avgScore.toFixed(1)}/20` : "—",
+      value: normalizedScores.length ? `${avgOutOf20.toFixed(1)}/20` : "—",
       change: "",
     },
     { label: "Validations", value: String(validatedCount), change: "" },
   ];
+
+  // Données dédiées au ScoreRing côté front.
+  const performance = {
+    averageScore: normalizedScores.length ? Number(avgOutOf20.toFixed(1)) : null,
+    completedCount: completedAttempts.length,
+    validatedCount,
+  };
 
   const calendarEvents = enriched
     .filter((e) => e.date)
@@ -227,6 +248,7 @@ router.get("/dashboard", async (req, res) => {
       phone: user.phone,
     },
     stats,
+    performance,
     exams: enriched,
     calendarEvents,
   });
@@ -234,6 +256,7 @@ router.get("/dashboard", async (req, res) => {
 
 // ─── Détail d'un examen (lecture seule, hors session) ──────────────────────
 
+// GET /exams/:id : détail lecture seule d'un examen (hors session de passage).
 router.get("/exams/:id", async (req, res) => {
   const studentId = req.auth!.userId;
   const exam = await ExamModel.findOne({
@@ -260,6 +283,7 @@ router.get("/exams/:id", async (req, res) => {
 
 // ─── Rejoindre un examen par code ──────────────────────────────────────────
 
+// POST /exams/join : inscrit l'étudiant à un examen via son code de partage.
 router.post("/exams/join", async (req, res) => {
   const studentId = req.auth!.userId;
   const code = String(req.body?.code ?? "").trim().toUpperCase();
@@ -286,6 +310,7 @@ router.post("/exams/join", async (req, res) => {
 
 // ─── Démarrer / reprendre un attempt ───────────────────────────────────────
 
+// POST /exams/:id/start : crée ou reprend la tentative de l'étudiant.
 router.post("/exams/:id/start", async (req, res) => {
   const studentId = req.auth!.userId;
   const exam = await ExamModel.findOne({
@@ -378,6 +403,7 @@ router.post("/exams/:id/start", async (req, res) => {
 
 // ─── Autosave des réponses ─────────────────────────────────────────────────
 
+// PATCH /attempts/:id : sauvegarde automatique des réponses en cours.
 router.patch("/attempts/:id", async (req, res) => {
   const studentId = req.auth!.userId;
   const attempt = await ExamAttemptModel.findOne({ _id: req.params.id, studentId });
@@ -403,6 +429,7 @@ router.patch("/attempts/:id", async (req, res) => {
 
 // ─── Évènement anti-triche ─────────────────────────────────────────────────
 
+// POST /attempts/:id/anti-cheat : journalise un évènement suspect (plein écran, blur…).
 router.post("/attempts/:id/anti-cheat", async (req, res) => {
   const studentId = req.auth!.userId;
   const attempt = await ExamAttemptModel.findOne({ _id: req.params.id, studentId });
@@ -423,6 +450,7 @@ router.post("/attempts/:id/anti-cheat", async (req, res) => {
 
 // ─── Soumission ────────────────────────────────────────────────────────────
 
+// POST /attempts/:id/submit : soumission finale + auto-correction MCQ.
 router.post("/attempts/:id/submit", async (req, res) => {
   const studentId = req.auth!.userId;
   const attempt = await ExamAttemptModel.findOne({ _id: req.params.id, studentId });
@@ -455,6 +483,7 @@ router.post("/attempts/:id/submit", async (req, res) => {
 
 // ─── Détail d'un résultat ──────────────────────────────────────────────────
 
+// GET /attempts/:id : détail d'un résultat (score, validation, breakdown par question).
 router.get("/attempts/:id", async (req, res) => {
   const studentId = req.auth!.userId;
   const attempt = await ExamAttemptModel.findOne({
@@ -526,6 +555,7 @@ router.get("/attempts/:id", async (req, res) => {
 
 // ─── Notifications ─────────────────────────────────────────────────────────
 
+// GET /notifications : 50 dernières notifications de l'utilisateur + nombre non lues.
 router.get("/notifications", async (req, res) => {
   const userId = req.auth!.userId;
   const items = await NotificationModel.find({ userId })
@@ -545,6 +575,7 @@ router.get("/notifications", async (req, res) => {
   });
 });
 
+// PATCH /notifications/:id/read : marque une notification comme lue.
 router.patch("/notifications/:id/read", async (req, res) => {
   const userId = req.auth!.userId;
   const n = await NotificationModel.findOneAndUpdate(

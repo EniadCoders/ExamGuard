@@ -37,6 +37,7 @@ export type LoginResult =
   | { twoFactorRequired: false; user: AuthUser }
   | { twoFactorRequired: true; challengeToken: string };
 
+/** Étape 1 du login : email + mot de passe. Renvoie soit l'utilisateur, soit un défi 2FA. */
 export async function login(email: string, password: string): Promise<LoginResult> {
   const data = await api<
     AuthResponse & { twoFactorRequired?: boolean; challengeToken?: string }
@@ -64,6 +65,7 @@ export async function verifyLoginTwoFactor(
   return data.user;
 }
 
+/** Inscription d'un étudiant ; persiste immédiatement le JWT retourné. */
 export async function signupStudent(payload: {
   email: string;
   password: string;
@@ -82,15 +84,18 @@ export async function signupStudent(payload: {
   return data.user;
 }
 
+/** Récupère l'utilisateur courant depuis le JWT stocké. */
 export async function fetchMe(): Promise<AuthUser> {
   const data = await api<{ user: AuthUser }>("/auth/me");
   return data.user;
 }
 
+/** Déconnecte localement (efface le JWT du localStorage). */
 export function logout() {
   setToken(null);
 }
 
+/** Met à jour les champs de profil de l'utilisateur courant. */
 export async function updateProfile(updates: {
   fullName?: string;
   department?: string;
@@ -111,6 +116,7 @@ export async function updateProfile(updates: {
   return data.user;
 }
 
+/** Change le mot de passe ; le backend vérifie d'abord l'ancien. */
 export function changePassword(
   currentPassword: string,
   newPassword: string,
@@ -169,6 +175,7 @@ export function disableTwoFactor(code: string): Promise<{ ok: true }> {
   });
 }
 
+/** Donne la route post-login en fonction du rôle utilisateur. */
 export function routeForRole(role: AuthUser["role"]): string {
   if (role === "student") return "/student";
   if (role === "teacher") return "/teacher";
