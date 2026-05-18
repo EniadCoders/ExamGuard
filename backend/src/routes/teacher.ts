@@ -7,6 +7,7 @@ import { NotificationModel } from "../models/Notification.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { finalizeAttempt } from "../services/examGrading.js";
 import { remainingSecondsFrom } from "../services/examTiming.js";
+import { rewriteTextWithLlmApi, type RewriteKind } from "../services/llmRewrite.js";
 
 const router = Router();
 
@@ -214,6 +215,32 @@ function mapStudent(user: any, attempts: any[], examCount: number) {
 }
 
 // ─── Examens — liste ───────────────────────────────────────────────────────
+
+function isRewriteKind(value: unknown): value is RewriteKind {
+  return value === "title" || value === "description" || value === "question" || value === "answer";
+}
+
+router.post("/ai/rewrite", async (req, res) => {
+  const body = req.body ?? {};
+  if (!isRewriteKind(body.kind)) {
+    return res.status(400).json({ error: "invalid rewrite kind" });
+  }
+
+  try {
+    const text = await rewriteTextWithLlmApi({
+      kind: body.kind,
+      text: String(body.text ?? ""),
+      subject: typeof body.subject === "string" ? body.subject : undefined,
+      title: typeof body.title === "string" ? body.title : undefined,
+    });
+    res.json({ text });
+  } catch (err) {
+    const status = (err as Error & { status?: number }).status;
+    res.status(status && status >= 400 && status < 600 ? status : 502).json({
+      error: err instanceof Error ? err.message : "rewrite failed",
+    });
+  }
+});
 
 router.get("/exams", async (req, res) => {
   const teacherId = req.auth!.userId;

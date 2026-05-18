@@ -90,6 +90,7 @@ import {
   messageExamStudents,
   kickExamStudent,
   fetchFraudAlerts,
+  rewriteExamText,
   type TeacherExam,
   type TeacherDashboardData,
   type ExamHistoryItem,
@@ -100,6 +101,7 @@ import {
   type ExamRules,
   type StudentLite,
   type ExamPayload,
+  type RewriteKind,
 } from "../api";
 import { fetchMe, type AuthUser } from "@/features/auth/api";
 
@@ -567,6 +569,54 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
   const [students, setStudents] = useState<StudentLite[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rewritingKey, setRewritingKey] = useState<string | null>(null);
+
+  const rewriteField = async (
+    key: string,
+    kind: RewriteKind,
+    text: string,
+    apply: (value: string) => void,
+  ) => {
+    if (rewritingKey || !text.trim()) return;
+    setRewritingKey(key);
+    setError(null);
+    try {
+      const rewritten = await rewriteExamText({
+        kind,
+        text,
+        subject: examSubject,
+        title: examTitle,
+      });
+      apply(rewritten);
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "La reformulation IA a echoue.",
+      );
+    } finally {
+      setRewritingKey(null);
+    }
+  };
+
+  const rewriteButton = (
+    key: string,
+    kind: RewriteKind,
+    text: string,
+    apply: (value: string) => void,
+    label = "Reformuler",
+  ) => (
+    <button
+      type="button"
+      onClick={() => { void rewriteField(key, kind, text, apply); }}
+      disabled={!!rewritingKey || !text.trim()}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E5E5] bg-white px-2.5 py-1.5 text-xs font-medium text-black transition-colors hover:border-black disabled:cursor-not-allowed disabled:opacity-50"
+      title="Reformuler avec l'IA"
+    >
+      <Zap className="h-3.5 w-3.5" />
+      {rewritingKey === key ? "..." : label}
+    </button>
+  );
 
   useEffect(() => {
     fetchTeacherStudents()
@@ -668,7 +718,10 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
       {step === 1 && (
         <div className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Titre de l'examen *</label>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label className="block text-sm font-medium text-black">Titre de l'examen *</label>
+              {rewriteButton("exam-title", "title", examTitle, setExamTitle)}
+            </div>
             <input
               type="text"
               value={examTitle}
@@ -713,7 +766,10 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-2">Description</label>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label className="block text-sm font-medium text-black">Description</label>
+              {rewriteButton("exam-description", "description", examDesc, setExamDesc)}
+            </div>
             <textarea value={examDesc} onChange={e => setExamDesc(e.target.value)} rows={3}
               placeholder="Description de l'examen, objectifs pédagogiques..."
               className="w-full px-4 py-3 bg-white border border-[#E5E5E5] rounded-xl text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black transition-all resize-none" />
@@ -904,6 +960,10 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
                     </button>
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-end">
+                    {rewriteButton(`question-${q.id}`, "question", q.text, (value) => updateQuestion(q.id, { text: value }))}
+                  </div>
                 <textarea
                   value={q.text}
                   onChange={e => updateQuestion(q.id, { text: e.target.value })}
@@ -911,6 +971,7 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
                   placeholder="Énoncé de la question..."
                   className="w-full px-3 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black resize-none"
                 />
+                </div>
                 {q.type === "mcq" && (
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-2">
@@ -954,6 +1015,11 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
                             placeholder={`Option ${i + 1}`}
                             className="flex-1 px-3 py-2 bg-white border border-[#E5E5E5] rounded-lg text-sm text-black placeholder:text-[#888888] focus:outline-none focus:ring-2 focus:ring-black"
                           />
+                          {rewriteButton(`option-${q.id}-${i}`, "answer", opt, (value) => {
+                            const next = [...q.options];
+                            next[i] = value;
+                            updateQuestion(q.id, { options: next });
+                          }, "IA")}
                           {q.options.length > 2 && (
                             <button
                               onClick={() => {

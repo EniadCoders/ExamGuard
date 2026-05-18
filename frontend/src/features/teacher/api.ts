@@ -68,6 +68,21 @@ export interface ExamPayload {
 
 // ─── Exams ─────────────────────────────────────────────────────────────────
 
+export type RewriteKind = "title" | "description" | "question" | "answer";
+
+export async function rewriteExamText(payload: {
+  kind: RewriteKind;
+  text: string;
+  subject?: string;
+  title?: string;
+}): Promise<string> {
+  const data = await api<{ text: string }>("/teacher/ai/rewrite", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return data.text;
+}
+
 export async function fetchExams(): Promise<TeacherExam[]> {
   const data = await api<{ exams: TeacherExam[] }>("/teacher/exams");
   return data.exams;
