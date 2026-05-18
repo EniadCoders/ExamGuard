@@ -13,6 +13,9 @@ import {
   CheckCircle2,
   Info,
   MessageSquareWarning,
+  MessageSquare,
+  Pause,
+  Ban,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
@@ -31,8 +34,10 @@ import {
   saveAttemptAnswers,
   submitAttempt,
   logAntiCheatEvent,
+  fetchExamLiveState,
   type AttemptAnswer,
   type ExamRules,
+  type ExamMessage,
 } from "@/features/student/api";
 import {
   AutoSaveStatus as AutoSaveIndicator,
@@ -64,6 +69,13 @@ export function ExamInterface() {
   const [showReclamation, setShowReclamation] = useState(false);
   const [codeExpanded, setCodeExpanded] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ─── Pilotage en direct par le professeur (pause / verrouillage / messages / exclusion) ──
+  const [paused, setPaused] = useState(false);
+  const [submissionsLocked, setSubmissionsLocked] = useState(false);
+  const [kicked, setKicked] = useState<string | null>(null);
+  const [teacherMessages, setTeacherMessages] = useState<ExamMessage[]>([]);
+  const seenMessageIds = useRef<Set<string>>(new Set());
 
   const [isFullscreen, setIsFullscreen] = useState(true);
   const [fullscreenExits, setFullscreenExits] = useState(0);
@@ -186,6 +198,49 @@ export function ExamInterface() {
     return () => clearTimeout(handle);
   }, [answers, attemptId, submitted]);
 
+  // Pilotage en direct : interroge l'état contrôlé par le professeur toutes les 5 s.
+  useEffect(() => {
+    if (!examId || submitted || kicked) return;
+    let active = true;
+    const poll = () => {
+      fetchExamLiveState(examId)
+        .then((s) => {
+          if (!active) return;
+          if (s.kicked) {
+            setKicked(s.kickReason || "Vous avez été exclu de l'examen.");
+            return;
+          }
+          // Examen clôturé par le professeur, ou tentative déjà finalisée.
+          if (
+            s.examStatus === "completed" ||
+            s.examStatus === "archived" ||
+            (s.attemptStatus && s.attemptStatus !== "in-progress")
+          ) {
+            setSubmitted(true);
+            exitFullscreen();
+            return;
+          }
+          setPaused(s.paused);
+          setSubmissionsLocked(s.submissionsLocked);
+          // Temps restant faisant autorité (prolongations et pauses incluses).
+          if (s.remainingSeconds != null) setTimeLeft(s.remainingSeconds);
+          // Affiche les nouveaux messages du professeur.
+          const fresh = s.messages.filter((m) => !seenMessageIds.current.has(m.id));
+          if (fresh.length) {
+            fresh.forEach((m) => seenMessageIds.current.add(m.id));
+            setTeacherMessages((prev) => [...prev, ...fresh]);
+          }
+        })
+        .catch(() => {});
+    };
+    poll();
+    const t = setInterval(poll, 5000);
+    return () => {
+      active = false;
+      clearInterval(t);
+    };
+  }, [examId, submitted, kicked]);
+
   // Anti-cheat: report fullscreen exits to the server
   useEffect(() => {
     if (!attemptId || fullscreenExits === 0) return;
@@ -206,6 +261,8 @@ export function ExamInterface() {
 
   const doSubmit = useCallback(async () => {
     if (!attemptId || submitted) return;
+    // Soumissions verrouillées par le professeur : envoi manuel bloqué.
+    if (submissionsLocked) return;
     const payload: AttemptAnswer[] = Object.entries(answers).map(
       ([qid, value]) => ({ questionId: Number(qid), value }),
     );
@@ -216,10 +273,11 @@ export function ExamInterface() {
     }
     setSubmitted(true);
     exitFullscreen();
-  }, [answers, attemptId, submitted]);
+  }, [answers, attemptId, submitted, submissionsLocked]);
 
   useEffect(() => {
-    if (examQuestions.length === 0) return;
+    // Le minuteur est figé tant que l'examen est suspendu par le professeur.
+    if (examQuestions.length === 0 || paused) return;
     const timer = setInterval(() => setTimeLeft((p) => {
       if (p <= 1 && !submitted) {
         doSubmit();
@@ -236,7 +294,7 @@ export function ExamInterface() {
       return p > 0 ? p - 1 : 0;
     }), 1000);
     return () => clearInterval(timer);
-  }, [submitted, examQuestions.length, doSubmit, examRules?.warnBeforeEnd, warnedEndShown]);
+  }, [submitted, examQuestions.length, doSubmit, examRules?.warnBeforeEnd, warnedEndShown, paused]);
 
   // preventCopyPaste : bloque copier/coller sur tout le document pendant l'examen
   useEffect(() => {
@@ -333,6 +391,26 @@ export function ExamInterface() {
     );
   }
 
+  if (kicked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white p-6">
+        <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
+            <Ban className="h-7 w-7 text-red-600" />
+          </div>
+          <p className="text-lg font-bold">Vous avez été exclu de l'examen</p>
+          <p className="mt-2 text-sm">{kicked}</p>
+          <button
+            onClick={() => navigate("/student")}
+            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-white"
+          >
+            Retour au tableau de bord
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <ExamResultsScreen
@@ -365,6 +443,22 @@ export function ExamInterface() {
             >
               Reprendre en plein écran
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Examen suspendu par le professeur */}
+      {paused && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-[rgba(0,0,0,0.88)] backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-amber-300/30 bg-[#0A141A] p-6 text-center shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/15">
+              <Pause className="h-7 w-7 text-amber-300" />
+            </div>
+            <h2 className="mb-2 text-xl font-bold text-white">Examen suspendu</h2>
+            <p className="text-sm text-[var(--cyber-muted-text)]">
+              L'enseignant a suspendu l'examen. Le minuteur est figé — l'examen
+              reprendra automatiquement.
+            </p>
           </div>
         </div>
       )}
@@ -409,6 +503,42 @@ export function ExamInterface() {
             >
               ✕
             </button>
+          </div>
+        )}
+
+        {/* Messages de l'enseignant */}
+        {teacherMessages.map((m) => (
+          <div
+            key={m.id}
+            className="flex items-center justify-between gap-3 border-b-2 border-sky-400 bg-sky-100 px-6 py-3"
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <MessageSquare className="w-5 h-5 flex-shrink-0 text-sky-700" />
+              <p className="text-sm text-sky-900">
+                <span className="font-bold">Message de l'enseignant : </span>
+                {m.text}
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                setTeacherMessages((prev) => prev.filter((x) => x.id !== m.id))
+              }
+              className="flex-shrink-0 text-sky-900 hover:text-sky-700"
+              aria-label="Fermer le message"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+
+        {/* Soumissions verrouillées par l'enseignant */}
+        {submissionsLocked && (
+          <div className="flex items-center gap-2 border-b-2 border-orange-400 bg-orange-100 px-6 py-3">
+            <Lock className="w-5 h-5 text-orange-700" />
+            <p className="text-sm font-semibold text-orange-900">
+              Les soumissions sont verrouillées par l'enseignant. Vous ne pouvez
+              pas rendre votre copie pour l'instant.
+            </p>
           </div>
         )}
 
@@ -814,7 +944,9 @@ export function ExamInterface() {
               ) : (
                 <button
                   onClick={() => setShowSubmit(true)}
-                  className="flex items-center gap-2 rounded-xl bg-black px-3 py-2.5 text-xs font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] sm:px-5 sm:text-sm"
+                  disabled={submissionsLocked}
+                  title={submissionsLocked ? "Soumissions verrouillées par l'enseignant" : undefined}
+                  className="flex items-center gap-2 rounded-xl bg-black px-3 py-2.5 text-xs font-medium text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:bg-[#222222] disabled:cursor-not-allowed disabled:opacity-40 sm:px-5 sm:text-sm"
                 >
                   Soumettre
                   <Shield className="w-4 h-4" />
@@ -895,7 +1027,9 @@ export function ExamInterface() {
 
               <button
                 onClick={() => setShowSubmit(true)}
-                className="w-full mt-6 py-3 bg-black hover:bg-[#222222] rounded-xl text-sm font-semibold text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                disabled={submissionsLocked}
+                title={submissionsLocked ? "Soumissions verrouillées par l'enseignant" : undefined}
+                className="w-full mt-6 py-3 bg-black hover:bg-[#222222] rounded-xl text-sm font-semibold text-white transition-all shadow-[0_2px_8px_rgba(0,0,0,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Soumettre
               </button>

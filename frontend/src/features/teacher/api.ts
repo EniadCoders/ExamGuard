@@ -260,13 +260,78 @@ export interface MonitorAlert {
   time: string;
 }
 
+/** État de pilotage en direct contrôlé par le professeur. */
+export interface ExamLiveControl {
+  paused: boolean;
+  extraMinutes: number;
+  submissionsLocked: boolean;
+}
+
 export interface ExamMonitor {
   participants: MonitorParticipant[];
   alerts: MonitorAlert[];
+  liveControl: ExamLiveControl;
 }
 
 export function fetchExamMonitor(examId: string): Promise<ExamMonitor> {
   return api<ExamMonitor>(`/teacher/exams/${examId}/monitor`);
+}
+
+/** Ajoute du temps à la durée d'un examen en cours. */
+export function extendExam(
+  examId: string,
+  minutes: number,
+): Promise<{ liveControl: ExamLiveControl }> {
+  return api(`/teacher/exams/${examId}/extend`, {
+    method: "POST",
+    body: JSON.stringify({ minutes }),
+  });
+}
+
+/** Suspend ou reprend un examen en cours pour tous les étudiants. */
+export function pauseExam(
+  examId: string,
+  paused: boolean,
+): Promise<{ liveControl: ExamLiveControl }> {
+  return api(`/teacher/exams/${examId}/pause`, {
+    method: "POST",
+    body: JSON.stringify({ paused }),
+  });
+}
+
+/** Verrouille ou déverrouille les soumissions d'un examen en cours. */
+export function lockExamSubmissions(
+  examId: string,
+  locked: boolean,
+): Promise<{ liveControl: ExamLiveControl }> {
+  return api(`/teacher/exams/${examId}/lock`, {
+    method: "POST",
+    body: JSON.stringify({ locked }),
+  });
+}
+
+/** Envoie un message à un étudiant (studentId fourni) ou à tous les participants. */
+export function messageExamStudents(
+  examId: string,
+  text: string,
+  studentId?: string,
+): Promise<{ ok: true; delivered: number }> {
+  return api(`/teacher/exams/${examId}/message`, {
+    method: "POST",
+    body: JSON.stringify({ text, studentId }),
+  });
+}
+
+/** Exclut un étudiant d'un examen en cours. */
+export function kickExamStudent(
+  examId: string,
+  studentId: string,
+  reason?: string,
+): Promise<{ ok: true }> {
+  return api(`/teacher/exams/${examId}/kick`, {
+    method: "POST",
+    body: JSON.stringify({ studentId, reason }),
+  });
 }
 
 // ─── Fraud alerts ──────────────────────────────────────────────────────────

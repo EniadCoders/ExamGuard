@@ -52,12 +52,34 @@ function shuffleInPlace<T>(arr: T[]): T[] {
   return arr;
 }
 
+/** Millisecondes de pause à déduire des échéances (pauses passées + pause en cours). */
+function pausedMsOf(exam: any): number {
+  const lc = exam?.liveControl ?? {};
+  let ms = lc.totalPausedMs ?? 0;
+  if (lc.paused && lc.pausedAt) {
+    ms += Math.max(0, Date.now() - new Date(lc.pausedAt).getTime());
+  }
+  return ms;
+}
+
+/**
+ * Secondes restantes pour une tentative, en tenant compte du temps additionnel
+ * accordé par le professeur et des éventuelles pauses de l'examen.
+ */
+function remainingSecondsOf(exam: any, attempt: any): number {
+  const totalMs =
+    (exam.durationMinutes + (exam.liveControl?.extraMinutes ?? 0)) * 60_000;
+  const elapsedMs =
+    Date.now() - new Date(attempt.startedAt).getTime() - pausedMsOf(exam);
+  return Math.max(0, Math.round((totalMs - elapsedMs) / 1000));
+}
+
 /** Soumet automatiquement une tentative dont la durée est dépassée. */
 async function autoSubmitIfExpired(attempt: any, exam: any): Promise<boolean> {
   if (attempt.status !== "in-progress") return false;
-  const elapsed = Date.now() - new Date(attempt.startedAt).getTime();
-  const durationMs = exam.durationMinutes * 60 * 1000;
-  if (elapsed >= durationMs) {
+  // Un examen suspendu par le professeur ne peut pas expirer.
+  if (exam?.liveControl?.paused) return false;
+  if (remainingSecondsOf(exam, attempt) <= 0) {
     await finalizeAttempt(attempt, exam, { autoSubmitted: true });
     return true;
   }
@@ -267,6 +289,11 @@ router.post("/exams/:id/start", async (req, res) => {
 
   let attempt = await ExamAttemptModel.findOne({ examId: exam._id, studentId });
 
+  // Étudiant exclu par le professeur : accès refusé.
+  if (attempt?.kicked) {
+    return res.status(403).json({ error: "kicked" });
+  }
+
   if (!attempt) {
     // Création initiale — refuse si l'examen n'est pas lançable
     if (!launchable.ok) return res.status(409).json({ error: launchable.reason });
@@ -322,11 +349,7 @@ router.post("/exams/:id/start", async (req, res) => {
     return rest;
   });
 
-  const elapsedMs = Date.now() - new Date(attempt.startedAt).getTime();
-  const remainingSeconds = Math.max(
-    0,
-    exam.durationMinutes * 60 - Math.floor(elapsedMs / 1000),
-  );
+  const remainingSeconds = remainingSecondsOf(exam, attempt);
 
   res.json({
     attempt: {
@@ -347,6 +370,43 @@ router.post("/exams/:id/start", async (req, res) => {
       rules: exam.rules,
       questions: renderQuestions,
     },
+  });
+});
+
+// ─── État de pilotage en direct ────────────────────────────────────────────
+
+// GET /exams/:id/live-state : état temps réel piloté par le professeur
+// (pause, verrouillage, temps restant, exclusion, messages). Interrogé en
+// boucle par l'interface d'examen de l'étudiant.
+router.get("/exams/:id/live-state", async (req, res) => {
+  const studentId = req.auth!.userId;
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(404).json({ error: "exam not found" });
+  }
+  const exam = await ExamModel.findOne({
+    _id: req.params.id,
+    enrolledStudents: studentId,
+  }).lean();
+  if (!exam) return res.status(404).json({ error: "exam not found" });
+
+  const attempt = await ExamAttemptModel.findOne({ examId: exam._id, studentId });
+  // Prend en compte une éventuelle expiration avant de répondre.
+  if (attempt) await autoSubmitIfExpired(attempt, exam);
+
+  const lc = (exam.liveControl ?? {}) as any;
+  res.json({
+    examStatus: exam.status,
+    paused: !!lc.paused,
+    submissionsLocked: !!lc.submissionsLocked,
+    kicked: attempt?.kicked ?? false,
+    kickReason: attempt?.kickReason ?? "",
+    attemptStatus: attempt?.status ?? null,
+    remainingSeconds: attempt ? remainingSecondsOf(exam, attempt) : null,
+    messages: (attempt?.messages ?? []).map((m: any) => ({
+      id: String(m._id),
+      text: m.text,
+      sentAt: m.sentAt,
+    })),
   });
 });
 
@@ -410,6 +470,11 @@ router.post("/attempts/:id/submit", async (req, res) => {
 
   const exam = await ExamModel.findById(attempt.examId).lean();
   if (!exam) return res.status(404).json({ error: "exam not found" });
+
+  // Soumissions verrouillées par le professeur.
+  if (exam.liveControl?.submissionsLocked) {
+    return res.status(423).json({ error: "submissions locked" });
+  }
 
   if (Array.isArray(req.body?.answers)) {
     attempt.answers = req.body.answers;

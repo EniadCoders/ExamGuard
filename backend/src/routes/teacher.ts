@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import mongoose from "mongoose";
 import { ExamModel } from "../models/Exam.js";
 import { ExamAttemptModel } from "../models/ExamAttempt.js";
@@ -523,11 +523,13 @@ router.get("/exams/:id/monitor", async (req, res) => {
     // Pas de tentative = l'étudiant n'a pas encore rejoint l'examen.
     const state = !attempt
       ? "not-joined"
-      : submitted
-        ? "submitted"
-        : flagged
-          ? "flagged"
-          : "active";
+      : attempt.kicked
+        ? "kicked"
+        : submitted
+          ? "submitted"
+          : flagged
+            ? "flagged"
+            : "active";
     return {
       id,
       name: student?.fullName ?? "Étudiant",
@@ -558,10 +560,142 @@ router.get("/exams/:id/monitor", async (req, res) => {
   });
   alerts.sort((x, y) => y.ts - x.ts);
 
+  const lc = (exam.liveControl ?? {}) as any;
   res.json({
     participants,
     alerts: alerts.map(({ ts, ...rest }) => rest),
+    liveControl: {
+      paused: !!lc.paused,
+      extraMinutes: lc.extraMinutes ?? 0,
+      submissionsLocked: !!lc.submissionsLocked,
+    },
   });
+});
+
+// ─── Pilotage en direct (pause / durée / verrouillage / message / exclusion) ──
+
+/** Charge un examen "live" appartenant au professeur, ou renvoie une erreur HTTP. */
+async function loadLiveExam(req: Request, res: Response) {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    res.status(404).json({ error: "exam not found" });
+    return null;
+  }
+  const exam = await ExamModel.findOne({
+    _id: req.params.id,
+    createdBy: req.auth!.userId,
+  });
+  if (!exam) {
+    res.status(404).json({ error: "exam not found" });
+    return null;
+  }
+  if (exam.status !== "live") {
+    res.status(409).json({ error: "exam is not live" });
+    return null;
+  }
+  // Examens créés avant l'ajout du pilotage en direct : initialise le sous-document.
+  if (!exam.liveControl) exam.set("liveControl", {});
+  return exam;
+}
+
+/** Projection de l'état de pilotage renvoyée après chaque action. */
+function liveControlView(exam: any) {
+  const lc = exam.liveControl ?? {};
+  return {
+    paused: !!lc.paused,
+    extraMinutes: lc.extraMinutes ?? 0,
+    submissionsLocked: !!lc.submissionsLocked,
+  };
+}
+
+// POST /exams/:id/extend : ajoute du temps à la durée de l'examen.
+router.post("/exams/:id/extend", async (req, res) => {
+  const exam = await loadLiveExam(req, res);
+  if (!exam) return;
+  const minutes = Number(req.body?.minutes);
+  if (!Number.isFinite(minutes) || minutes <= 0) {
+    return res.status(400).json({ error: "minutes must be a positive number" });
+  }
+  exam.liveControl.extraMinutes = (exam.liveControl.extraMinutes ?? 0) + Math.round(minutes);
+  await exam.save();
+  res.json({ liveControl: liveControlView(exam) });
+});
+
+// POST /exams/:id/pause : suspend ou reprend l'examen pour tous les étudiants.
+router.post("/exams/:id/pause", async (req, res) => {
+  const exam = await loadLiveExam(req, res);
+  if (!exam) return;
+  const paused = !!req.body?.paused;
+  const lc = exam.liveControl;
+  if (paused && !lc.paused) {
+    lc.paused = true;
+    lc.pausedAt = new Date();
+  } else if (!paused && lc.paused) {
+    // Fin de pause : on cumule la durée écoulée pour décaler les échéances.
+    const since = lc.pausedAt ? Date.now() - new Date(lc.pausedAt).getTime() : 0;
+    lc.totalPausedMs = (lc.totalPausedMs ?? 0) + Math.max(0, since);
+    lc.paused = false;
+    lc.pausedAt = null;
+  }
+  await exam.save();
+  res.json({ liveControl: liveControlView(exam) });
+});
+
+// POST /exams/:id/lock : verrouille ou déverrouille les soumissions.
+router.post("/exams/:id/lock", async (req, res) => {
+  const exam = await loadLiveExam(req, res);
+  if (!exam) return;
+  exam.liveControl.submissionsLocked = !!req.body?.locked;
+  await exam.save();
+  res.json({ liveControl: liveControlView(exam) });
+});
+
+// POST /exams/:id/message : envoie un message à un étudiant ou à tous les participants.
+router.post("/exams/:id/message", async (req, res) => {
+  const exam = await loadLiveExam(req, res);
+  if (!exam) return;
+  const text = String(req.body?.text ?? "").trim();
+  if (!text) return res.status(400).json({ error: "text required" });
+  const studentId = req.body?.studentId;
+
+  const filter: Record<string, unknown> = { examId: exam._id, status: "in-progress" };
+  if (studentId) {
+    if (!mongoose.isValidObjectId(studentId)) {
+      return res.status(400).json({ error: "invalid studentId" });
+    }
+    filter.studentId = studentId;
+  }
+  const attempts = await ExamAttemptModel.find(filter);
+  for (const attempt of attempts) {
+    if (!attempt.messages) attempt.messages = [] as any;
+    attempt.messages.push({ text, sentAt: new Date() } as any);
+    await attempt.save();
+  }
+  res.json({ ok: true, delivered: attempts.length });
+});
+
+// POST /exams/:id/kick : exclut un étudiant de l'examen.
+router.post("/exams/:id/kick", async (req, res) => {
+  const exam = await loadLiveExam(req, res);
+  if (!exam) return;
+  const studentId = req.body?.studentId;
+  if (!mongoose.isValidObjectId(studentId)) {
+    return res.status(400).json({ error: "invalid studentId" });
+  }
+  const attempt = await ExamAttemptModel.findOne({ examId: exam._id, studentId });
+  if (!attempt) return res.status(404).json({ error: "student has not joined" });
+
+  attempt.kicked = true;
+  attempt.kickReason = String(req.body?.reason ?? "").trim();
+  // Clôture la tentative avec les réponses actuelles si elle est encore ouverte.
+  if (attempt.status === "in-progress") {
+    await finalizeAttempt(attempt, exam.toObject(), {
+      autoSubmitted: true,
+      autoSubmitTitle: "Exclu de l'examen par l'enseignant",
+    });
+  } else {
+    await attempt.save();
+  }
+  res.json({ ok: true });
 });
 
 // ─── Alertes de fraude (tous examens du professeur) ───────────────────────

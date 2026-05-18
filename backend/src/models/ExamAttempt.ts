@@ -9,6 +9,15 @@ const answerSchema = new Schema(
   { _id: false },
 );
 
+/** Message envoyé par le professeur à un étudiant pendant l'examen. */
+const examMessageSchema = new Schema(
+  {
+    text: { type: String, required: true },
+    sentAt: { type: Date, default: Date.now },
+  },
+  { _id: true },
+);
+
 /** Évènement anti-triche horodaté (sortie plein écran, perte de focus, etc.). */
 const antiCheatEventSchema = new Schema(
   {
@@ -37,6 +46,12 @@ const examAttemptSchema = new Schema(
     antiCheatEvents: { type: [antiCheatEventSchema], default: [] },
     questionOrder: { type: [Number], default: [] },
     autoSubmitted: { type: Boolean, default: false },
+    /** Étudiant exclu de l'examen par le professeur. */
+    kicked: { type: Boolean, default: false },
+    /** Motif d'exclusion communiqué à l'étudiant. */
+    kickReason: { type: String, default: "" },
+    /** Messages reçus du professeur pendant l'examen. */
+    messages: { type: [examMessageSchema], default: [] },
   },
   { timestamps: true },
 );

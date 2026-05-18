@@ -101,6 +101,35 @@ export async function fetchExam(id: string): Promise<ExamDetail> {
   return data.exam;
 }
 
+// ─── Live exam state (teacher-controlled) ──────────────────────────────────
+
+export type ExamMessage = {
+  id: string;
+  text: string;
+  sentAt: string;
+};
+
+export type ExamLiveState = {
+  /** Statut de l'examen côté professeur (live, completed, archived…). */
+  examStatus: string;
+  /** Examen suspendu par le professeur. */
+  paused: boolean;
+  /** Soumissions verrouillées par le professeur. */
+  submissionsLocked: boolean;
+  /** Étudiant exclu de l'examen. */
+  kicked: boolean;
+  kickReason: string;
+  attemptStatus: "in-progress" | "submitted" | "graded" | null;
+  /** Temps restant faisant autorité (temps additionnel + pauses pris en compte). */
+  remainingSeconds: number | null;
+  messages: ExamMessage[];
+};
+
+/** Interroge l'état temps réel de l'examen (pause, verrouillage, messages, exclusion). */
+export function fetchExamLiveState(examId: string): Promise<ExamLiveState> {
+  return api<ExamLiveState>(`/student/exams/${examId}/live-state`);
+}
+
 // ─── Join by code ──────────────────────────────────────────────────────────
 
 export type JoinResult = {

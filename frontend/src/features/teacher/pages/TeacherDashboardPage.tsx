@@ -84,6 +84,11 @@ import {
   fetchTeacherStudentDetail,
   fetchTeacherAnalytics,
   fetchExamMonitor,
+  extendExam,
+  pauseExam,
+  lockExamSubmissions,
+  messageExamStudents,
+  kickExamStudent,
   fetchFraudAlerts,
   type TeacherExam,
   type TeacherDashboardData,
@@ -2388,30 +2393,64 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     return () => document.removeEventListener("keydown", onKey);
   }, [quickConfirm]);
 
-  const handleExtend = () => {
-    setExtraMinutes(m => m + 5);
-    setToast("Durée prolongée de 5 minutes.");
+  const handleExtend = async () => {
+    try {
+      const { liveControl } = await extendExam(exam.id, 5);
+      setExtraMinutes(liveControl.extraMinutes);
+      setToast("Durée prolongée de 5 minutes.");
+    } catch {
+      setToast("Échec de la prolongation.");
+    }
   };
-  const handleLock = () => {
-    setLocked(l => !l);
-    setToast(locked ? "Soumissions déverrouillées." : "Soumissions verrouillées.");
+  const handlePause = async () => {
+    const next = !paused;
+    try {
+      const { liveControl } = await pauseExam(exam.id, next);
+      setPaused(liveControl.paused);
+      setToast(liveControl.paused ? "Examen suspendu." : "Examen repris.");
+    } catch {
+      setToast("Échec de la suspension.");
+    }
   };
-  const handleSendMessage = () => {
+  const handleLock = async () => {
+    const next = !locked;
+    try {
+      const { liveControl } = await lockExamSubmissions(exam.id, next);
+      setLocked(liveControl.submissionsLocked);
+      setToast(liveControl.submissionsLocked ? "Soumissions verrouillées." : "Soumissions déverrouillées.");
+    } catch {
+      setToast("Échec du verrouillage.");
+    }
+  };
+  const handleSendMessage = async () => {
     if (!messageDraft.trim()) return;
-    if (messageTarget) {
-      setToast(`Message envoyé à ${messageTarget.name}.`);
-    } else {
-      setToast(`Message envoyé à ${connected} étudiant(s).`);
+    const text = messageDraft.trim();
+    const target = messageTarget;
+    try {
+      const { delivered } = await messageExamStudents(exam.id, text, target?.id);
+      setToast(
+        target
+          ? `Message envoyé à ${target.name}.`
+          : `Message envoyé à ${delivered} étudiant(s).`,
+      );
+    } catch {
+      setToast("Échec de l'envoi du message.");
     }
     setMessageOpen(false);
     setMessageTarget(null);
     setMessageDraft("");
     setMessageConfirmOpen(false);
   };
-  const handleKick = () => {
+  const handleKick = async () => {
     if (!kickTarget) return;
-    setKickedIds(prev => prev.includes(kickTarget.id) ? prev : [...prev, kickTarget.id]);
-    setToast(`${kickTarget.name} exclu de l'examen.`);
+    const target = kickTarget;
+    try {
+      await kickExamStudent(exam.id, target.id, kickReason.trim() || undefined);
+      setKickedIds(prev => prev.includes(target.id) ? prev : [...prev, target.id]);
+      setToast(`${target.name} exclu de l'examen.`);
+    } catch {
+      setToast("Échec de l'exclusion.");
+    }
     setKickTarget(null);
     setKickReason("");
   };
@@ -2428,7 +2467,14 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     let active = true;
     const load = () => {
       fetchExamMonitor(exam.id)
-        .then((d) => { if (active) setMonitor(d); })
+        .then((d) => {
+          if (!active) return;
+          setMonitor(d);
+          // Synchronise les contrôles avec l'état serveur faisant autorité.
+          setPaused(d.liveControl.paused);
+          setLocked(d.liveControl.submissionsLocked);
+          setExtraMinutes(d.liveControl.extraMinutes);
+        })
         .catch(() => {});
     };
     load();
@@ -2493,7 +2539,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
               })()}
               <button
                 type="button"
-                onClick={() => setPaused(p => !p)}
+                onClick={handlePause}
                 aria-pressed={paused}
                 aria-label={paused ? "Reprendre l'examen" : "Suspendre l'examen"}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${

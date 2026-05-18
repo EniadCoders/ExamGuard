@@ -45,6 +45,26 @@ const examRulesSchema = new Schema(
   { _id: false },
 );
 
+/**
+ * État de pilotage en direct d'un examen, contrôlé par le professeur depuis le
+ * panneau de suivi : pause globale, temps additionnel, verrouillage des soumissions.
+ */
+const liveControlSchema = new Schema(
+  {
+    /** Examen suspendu : les étudiants ne peuvent plus répondre, le temps est figé. */
+    paused: { type: Boolean, default: false },
+    /** Horodatage du début de la pause en cours (null si l'examen n'est pas en pause). */
+    pausedAt: { type: Date, default: null },
+    /** Total cumulé des durées de pause déjà écoulées, en millisecondes. */
+    totalPausedMs: { type: Number, default: 0 },
+    /** Minutes ajoutées à la durée de l'examen par le professeur. */
+    extraMinutes: { type: Number, default: 0 },
+    /** Soumissions verrouillées : les étudiants ne peuvent pas rendre leur copie. */
+    submissionsLocked: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
 /** Schéma Exam : un examen créé par un professeur, suivi par ses étudiants inscrits. */
 const examSchema = new Schema(
   {
@@ -71,6 +91,7 @@ const examSchema = new Schema(
     enrolledStudents: { type: [{ type: Types.ObjectId, ref: "User" }], default: [] },
     totalPoints: { type: Number, default: 0 },
     questions: { type: [questionSchema], default: [] },
+    liveControl: { type: liveControlSchema, default: () => ({}) },
   },
   { timestamps: true },
 );
