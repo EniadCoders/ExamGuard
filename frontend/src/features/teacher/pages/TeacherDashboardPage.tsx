@@ -636,7 +636,11 @@ function CreateExamModal({ onClose, onCreated, initialExam, mode = "edit" }: { o
       onCreated?.(exam);
       onClose();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Échec de l'enregistrement de l'examen.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Serveur injoignable — vérifiez que le backend est démarré.",
+      );
       setSubmitting(false);
     }
   };
