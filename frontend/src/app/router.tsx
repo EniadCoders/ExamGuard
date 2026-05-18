@@ -3,6 +3,7 @@ import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { SignUpPage } from "@/features/auth/pages/SignUpPage";
 import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
+import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { StudentDashboard } from "@/features/student/pages/StudentDashboardPage";
 import { ExamInterface } from "@/features/exam/pages/ExamInterfacePage";
 import { TeacherDashboard } from "@/features/teacher/pages/TeacherDashboardPage";
@@ -28,22 +29,42 @@ export const router = createBrowserRouter([
   },
   {
     path: "/student",
-    Component: StudentDashboard,
+    element: (
+      <ProtectedRoute role="student">
+        <StudentDashboard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/exam/:examId",
-    Component: ExamInterface,
+    element: (
+      <ProtectedRoute>
+        <ExamInterface />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/teacher",
-    Component: TeacherDashboard,
+    element: (
+      <ProtectedRoute role="teacher">
+        <TeacherDashboard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/teacher/profile",
-    Component: TeacherProfilePage,
+    element: (
+      <ProtectedRoute role="teacher">
+        <TeacherProfilePage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/superadmin",
-    Component: SuperAdminPage,
+    element: (
+      <ProtectedRoute role="superadmin">
+        <SuperAdminPage />
+      </ProtectedRoute>
+    ),
   },
 ]);

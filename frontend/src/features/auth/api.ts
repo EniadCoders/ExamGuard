@@ -37,31 +37,47 @@ export type LoginResult =
   | { twoFactorRequired: false; user: AuthUser }
   | { twoFactorRequired: true; challengeToken: string };
 
-/** Connexion email + mot de passe. Renvoie un défi 2FA si la 2FA est activée. */
-export async function login(email: string, password: string): Promise<LoginResult> {
+/**
+ * Connexion email + mot de passe. Renvoie un défi 2FA si la 2FA est activée.
+ *
+ * @param role - Portail choisi ; le backend rejette le compte s'il ne correspond pas.
+ * @param remember - `true` mémorise l'appareil (token persistant), `false` limite
+ *   la session à la durée de vie de l'onglet.
+ */
+export async function login(
+  email: string,
+  password: string,
+  role: "student" | "teacher",
+  remember = false,
+): Promise<LoginResult> {
   const data = await api<
     AuthResponse & { twoFactorRequired?: boolean; challengeToken?: string }
   >("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, role }),
   });
   if (data.twoFactorRequired && data.challengeToken) {
     return { twoFactorRequired: true, challengeToken: data.challengeToken };
   }
-  setToken(data.token);
+  setToken(data.token, remember);
   return { twoFactorRequired: false, user: data.user };
 }
 
-/** Étape 2 de la connexion : valide le code 2FA et établit la session. */
+/**
+ * Étape 2 de la connexion : valide le code 2FA et établit la session.
+ *
+ * @param remember - Reporté du formulaire d'identifiants (cf. {@link login}).
+ */
 export async function verifyLoginTwoFactor(
   challengeToken: string,
   code: string,
+  remember = false,
 ): Promise<AuthUser> {
   const data = await api<AuthResponse>("/auth/login/2fa", {
     method: "POST",
     body: JSON.stringify({ challengeToken, code }),
   });
-  setToken(data.token);
+  setToken(data.token, remember);
   return data.user;
 }
 

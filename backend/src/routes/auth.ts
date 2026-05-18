@@ -138,7 +138,7 @@ router.post("/signup", async (req, res) => {
 
 // POST /login : connexion email + mot de passe.
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body ?? {};
+  const { email, password, role } = req.body ?? {};
   if (!email || !password) {
     return res.status(400).json({ error: "email and password are required" });
   }
@@ -151,6 +151,12 @@ router.post("/login", async (req, res) => {
 
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ error: "invalid credentials" });
+
+  // Le portail choisi (étudiant / professeur) doit correspondre au compte.
+  // Le superadmin est autorisé via n'importe quel portail.
+  if (role && user.role !== role && user.role !== "superadmin") {
+    return res.status(403).json({ error: "wrong-portal" });
+  }
 
   // 2FA activée : on n'émet pas le token, on demande le code.
   if (user.twoFactorEnabled) {

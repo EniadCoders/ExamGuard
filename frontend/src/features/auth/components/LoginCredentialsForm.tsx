@@ -39,6 +39,7 @@ export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
   const [role, setRole] = useState<Role>("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -52,7 +53,7 @@ export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
     setError("");
     setIsLoading(true);
     try {
-      const result = await login(email, password);
+      const result = await login(email, password, role, remember);
       if (result.twoFactorRequired) {
         setChallengeToken(result.challengeToken);
         setTwoFaCode("");
@@ -62,7 +63,14 @@ export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 401) setError("Email ou mot de passe incorrect.");
-        else if (err.status === 403) setError("Votre compte est suspendu. Contactez le support.");
+        else if (err.status === 403)
+          setError(
+            err.message === "wrong-portal"
+              ? `Ce compte n'est pas un compte ${
+                  role === "student" ? "étudiant" : "professeur"
+                }. Sélectionnez le bon portail.`
+              : "Votre compte est suspendu. Contactez le support.",
+          );
         else if (err.status === 400) setError("Veuillez renseigner votre email et votre mot de passe.");
         else setError("Connexion impossible. Réessayez.");
       } else {
@@ -80,7 +88,7 @@ export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
     setError("");
     setIsLoading(true);
     try {
-      const user = await verifyLoginTwoFactor(challengeToken, twoFaCode.trim());
+      const user = await verifyLoginTwoFactor(challengeToken, twoFaCode.trim(), remember);
       onSuccess(user);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -235,6 +243,8 @@ export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
             <input
               id="remember-session"
               type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
               className="h-[clamp(0.8rem,1.45vh,1rem)] w-[clamp(0.8rem,1.45vh,1rem)] rounded border-[rgba(123,241,255,0.3)] bg-transparent accent-[var(--cyber-accent)]"
             />
             <span>Se souvenir de cet appareil</span>
