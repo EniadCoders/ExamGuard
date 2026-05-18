@@ -27,16 +27,39 @@ export type AuthUser = {
   bio?: string;
   avatarUrl?: string;
   preferences?: TeacherPreferences;
+  twoFactorEnabled?: boolean;
   status: "active" | "suspended" | "pending";
 };
 
 type AuthResponse = { token: string; user: AuthUser };
 
-/** Connexion email + mot de passe. */
-export async function login(email: string, password: string): Promise<AuthUser> {
-  const data = await api<AuthResponse>("/auth/login", {
+export type LoginResult =
+  | { twoFactorRequired: false; user: AuthUser }
+  | { twoFactorRequired: true; challengeToken: string };
+
+/** Connexion email + mot de passe. Renvoie un défi 2FA si la 2FA est activée. */
+export async function login(email: string, password: string): Promise<LoginResult> {
+  const data = await api<
+    AuthResponse & { twoFactorRequired?: boolean; challengeToken?: string }
+  >("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+  if (data.twoFactorRequired && data.challengeToken) {
+    return { twoFactorRequired: true, challengeToken: data.challengeToken };
+  }
+  setToken(data.token);
+  return { twoFactorRequired: false, user: data.user };
+}
+
+/** Étape 2 de la connexion : valide le code 2FA et établit la session. */
+export async function verifyLoginTwoFactor(
+  challengeToken: string,
+  code: string,
+): Promise<AuthUser> {
+  const data = await api<AuthResponse>("/auth/login/2fa", {
+    method: "POST",
+    body: JSON.stringify({ challengeToken, code }),
   });
   setToken(data.token);
   return data.user;
@@ -123,6 +146,36 @@ export function revokeSession(id: string): Promise<{ ok: true }> {
 
 export function revokeOtherSessions(): Promise<{ ok: true }> {
   return api("/auth/sessions", { method: "DELETE" });
+}
+
+// ─── 2FA (TOTP) ────────────────────────────────────────────────────────────
+
+export type TwoFactorSetup = {
+  secret: string;
+  otpauthUrl: string;
+  qrCode: string;
+};
+
+/** Démarre la configuration 2FA : renvoie un secret et un QR code. */
+export function setupTwoFactor(): Promise<TwoFactorSetup> {
+  return api<TwoFactorSetup>("/auth/2fa/setup", { method: "POST" });
+}
+
+/** Active la 2FA après vérification du code ; renvoie les codes de secours. */
+export async function enableTwoFactor(code: string): Promise<string[]> {
+  const data = await api<{ ok: true; backupCodes: string[] }>("/auth/2fa/enable", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+  return data.backupCodes;
+}
+
+/** Désactive la 2FA après vérification d'un code. */
+export function disableTwoFactor(code: string): Promise<{ ok: true }> {
+  return api("/auth/2fa/disable", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
 }
 
 /** Donne la route post-login en fonction du rôle utilisateur. */

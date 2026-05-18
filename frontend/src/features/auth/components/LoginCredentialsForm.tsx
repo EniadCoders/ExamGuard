@@ -6,7 +6,12 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { login, routeForRole, type AuthUser } from "@/features/auth/api";
+import {
+  login,
+  verifyLoginTwoFactor,
+  routeForRole,
+  type AuthUser,
+} from "@/features/auth/api";
 import { ApiError } from "@/shared/lib/api";
 import {
   authFieldClass,
@@ -37,14 +42,23 @@ export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Étape 2FA : jeton de défi renvoyé par le login + code saisi par l'utilisateur.
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [twoFaCode, setTwoFaCode] = useState("");
+
   // Envoie les identifiants à l'API ; mappe les statuts HTTP vers un message d'erreur français.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
     try {
-      const user = await login(email, password);
-      onSuccess(user);
+      const result = await login(email, password);
+      if (result.twoFactorRequired) {
+        setChallengeToken(result.challengeToken);
+        setTwoFaCode("");
+      } else {
+        onSuccess(result.user);
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 401) setError("Email ou mot de passe incorrect.");
@@ -59,11 +73,102 @@ export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
     }
   };
 
+  // Étape 2 : vérifie le code 2FA contre le jeton de défi.
+  const handleVerifyTwoFactor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!challengeToken) return;
+    setError("");
+    setIsLoading(true);
+    try {
+      const user = await verifyLoginTwoFactor(challengeToken, twoFaCode.trim());
+      onSuccess(user);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setError("Code invalide ou expiré. Réessayez.");
+      } else {
+        setError("Vérification impossible. Réessayez.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const cancelTwoFactor = () => {
+    setChallengeToken(null);
+    setTwoFaCode("");
+    setError("");
+  };
+
   // Décorateur de setter : applique la nouvelle valeur et efface l'erreur affichée si besoin.
   const clearErrorOn = <T,>(setter: (value: T) => void) => (value: T) => {
     setter(value);
     if (error) setError("");
   };
+
+  // Écran de vérification 2FA : affiché une fois le mot de passe validé.
+  if (challengeToken) {
+    return (
+      <form
+        onSubmit={handleVerifyTwoFactor}
+        className="flex flex-col gap-[clamp(0.62rem,1.2vh,0.9rem)]"
+      >
+        <div>
+          <label className={authLabelClass} htmlFor="login-2fa-code">
+            Code de vérification
+          </label>
+          <p className="mb-[clamp(0.32rem,0.7vh,0.45rem)] text-[clamp(0.68rem,1.05vh,0.8rem)] text-[var(--cyber-muted-text)]">
+            Saisissez le code à 6 chiffres de votre application d'authentification
+            (ou un code de secours).
+          </p>
+          <input
+            id="login-2fa-code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            value={twoFaCode}
+            onChange={(e) => {
+              setTwoFaCode(e.target.value);
+              if (error) setError("");
+            }}
+            placeholder="123456"
+            required
+            aria-invalid={Boolean(error)}
+            className={`${authFieldClass} ${
+              error ? "border-[var(--cyber-danger)] focus:border-[var(--cyber-danger)]" : ""
+            }`}
+          />
+          {error ? (
+            <p
+              role="alert"
+              className="mt-[clamp(0.32rem,0.7vh,0.45rem)] text-[clamp(0.68rem,1.05vh,0.8rem)] font-semibold text-[var(--cyber-danger)]"
+            >
+              {error}
+            </p>
+          ) : null}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading || twoFaCode.trim().length < 6}
+          className={authPrimaryButtonClass}
+        >
+          {isLoading ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgba(4,17,23,0.18)] border-t-[rgba(4,17,23,0.95)]" />
+          ) : (
+            "Vérifier"
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={cancelTwoFactor}
+          className="text-[clamp(0.72rem,1.15vh,0.88rem)] font-semibold text-[var(--cyber-accent)] transition hover:text-white"
+        >
+          Retour à la connexion
+        </button>
+      </form>
+    );
+  }
 
   return (
     <>
