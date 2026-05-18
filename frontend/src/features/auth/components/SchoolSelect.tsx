@@ -1,3 +1,8 @@
+/**
+ * Select des établissements UMP utilisé dans les formulaires d'inscription
+ * (étudiant et demande professeur). S'appuie sur la liste partagée
+ * `umpSchools` pour garantir une seule source de vérité.
+ */
 import { umpSchools } from "@/shared/lib/ump-schools";
 import { authFieldClass, authLabelClass } from "@/features/auth/components/AuthPageLayout";
 
@@ -10,6 +15,7 @@ interface SchoolSelectProps {
   placeholder?: string;
 }
 
+/** `<select>` listant les écoles UMP avec un placeholder vide en première option. */
 export function SchoolSelect({
   id,
   label = "École",

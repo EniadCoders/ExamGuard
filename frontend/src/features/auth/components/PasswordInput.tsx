@@ -1,3 +1,9 @@
+/**
+ * Champ mot de passe avec bouton œil pour afficher/masquer la saisie.
+ * Encapsule le toggle de visibilité, l'état `invalid` et les attributs
+ * d'accessibilité (`aria-invalid`, `aria-describedby`). Réutilisé dans
+ * le login et les deux champs de l'inscription.
+ */
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { authFieldClass } from "@/features/auth/components/AuthPageLayout";
@@ -16,6 +22,7 @@ interface PasswordInputProps {
 const toggleButtonClass =
   "absolute right-[clamp(0.55rem,0.9vw,0.75rem)] top-1/2 -translate-y-1/2 rounded-full p-[clamp(0.3rem,0.7vh,0.45rem)] text-[var(--cyber-muted-text)] transition hover:bg-[rgba(123,241,255,0.08)] hover:text-white";
 
+/** Input mot de passe contrôlé : bouton œil pour basculer visible/masqué + style d'erreur. */
 export function PasswordInput({
   id,
   value,

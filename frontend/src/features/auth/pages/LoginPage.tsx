@@ -1,3 +1,16 @@
+/**
+ * LoginPage
+ * ---------
+ * Page de connexion principale d'ExamGuard.
+ * Combine plusieurs méthodes d'authentification :
+ *  - Fournisseurs SSO (Secure Access, Google, GitHub, Organisation).
+ *  - Connexion classique email / mot de passe via LoginCredentialsForm.
+ *
+ * Après authentification, l'utilisateur est redirigé vers la route correspondant
+ * à son rôle (étudiant, professeur, admin) grâce à routeForRole().
+ *
+ * Routes liées : "/sign-up" (création de compte).
+ */
 import { useNavigate } from "react-router";
 import { routeForRole } from "@/features/auth/api";
 import {

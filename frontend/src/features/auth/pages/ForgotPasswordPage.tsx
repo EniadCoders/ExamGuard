@@ -1,3 +1,16 @@
+/**
+ * ForgotPasswordPage
+ * ------------------
+ * Page de récupération de mot de passe.
+ * L'utilisateur saisit son email pour recevoir un lien de réinitialisation sécurisé.
+ *
+ * Étapes :
+ *  - "form" : formulaire de saisie de l'email.
+ *  - "sent" : confirmation visuelle indiquant que le lien a été envoyé,
+ *             avec options pour continuer le flux ou changer d'email.
+ *
+ * Routes liées : "/" (connexion), "/sign-up" (inscription), "/reset-password".
+ */
 import { useState } from "react";
 import { ArrowLeft, CheckCircle2, Mail, Send } from "lucide-react";
 import { useNavigate } from "react-router";

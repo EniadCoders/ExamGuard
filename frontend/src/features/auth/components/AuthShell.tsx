@@ -1,3 +1,9 @@
+/**
+ * Coque marketing à deux colonnes pour les pages d'authentification :
+ * panneau latéral (hero, features, métriques) + zone formulaire à droite.
+ * Exporte aussi les listes par défaut `authPlatformFeatures` /
+ * `authPlatformMetrics` utilisées comme contenu d'illustration.
+ */
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Activity, BarChart3, Lock, Shield } from "lucide-react";
@@ -57,6 +63,7 @@ interface AuthShellProps {
   panelClassName?: string;
 }
 
+/** Coque deux colonnes : aside marketing (hero, features, métriques) + panneau formulaire à droite. */
 export function AuthShell({
   heroBadge,
   heroTitle,

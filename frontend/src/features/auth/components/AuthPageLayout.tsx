@@ -1,3 +1,11 @@
+/**
+ * Layout + tokens de style partagés par toutes les pages d'authentification.
+ * Fournit `AuthPageLayout` (fond + logo), `AuthCard` (carte centrale),
+ * `AuthHeading` (titre + description) et les classes Tailwind réutilisées
+ * (champs, boutons, labels, liens) pour garantir un rendu cohérent.
+ */
+
+
 import type { ReactNode } from "react";
 import { GridBackground } from "@/shared/components/GridBackground";
 import { Logo } from "@/shared/components/BrandLogo";
@@ -41,6 +49,7 @@ export const authFooterTextClass = "text-[clamp(0.74rem,1.25vh,0.9rem)]";
 export const authFooterLinkClass =
   "font-medium text-[var(--cyber-accent)] transition hover:text-white";
 
+/** Conteneur plein écran : fond cyber + dégradé + logo centré au-dessus du contenu. */
 export function AuthPageLayout({ children }: AuthPageLayoutProps) {
   return (
     <div className="relative min-h-screen overflow-x-hidden overflow-y-auto bg-[var(--cyber-bg)] px-2 py-2 sm:px-4 sm:py-4 md:h-dvh md:overflow-hidden md:px-6 md:py-4 lg:px-8">
@@ -58,6 +67,7 @@ export function AuthPageLayout({ children }: AuthPageLayoutProps) {
   );
 }
 
+/** Carte centrale (bordure, fond translucide, blur) qui encapsule le formulaire d'auth. */
 export function AuthCard({ children, className, bodyClassName }: AuthCardProps) {
   return (
     <div
@@ -78,6 +88,7 @@ export function AuthCard({ children, className, bodyClassName }: AuthCardProps) 
   );
 }
 
+/** En-tête commun aux écrans d'auth : titre principal + description sous-titre. */
 export function AuthHeading({ title, description }: AuthHeadingProps) {
   return (
     <div className="text-center">

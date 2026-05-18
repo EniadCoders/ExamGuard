@@ -1,3 +1,20 @@
+/**
+ * SignUpPage
+ * ----------
+ * Page d'inscription d'ExamGuard, avec choix du type de compte via RoleTabs.
+ *
+ * Deux parcours :
+ *  - "student" : formulaire complet de création de compte étudiant
+ *                (StudentSignUpForm).
+ *  - "teacher" : formulaire de contact destiné au support, les comptes
+ *                professeurs étant créés manuellement (TeacherContactForm).
+ *
+ * Après soumission, un récapitulatif (SignUpSuccessSummary) est affiché
+ * avec la possibilité de continuer vers la connexion ou de revenir
+ * pour modifier les informations.
+ *
+ * Routes liées : "/" (connexion).
+ */
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import {

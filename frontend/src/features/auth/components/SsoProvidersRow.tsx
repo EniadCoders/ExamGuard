@@ -1,3 +1,8 @@
+/**
+ * Rangée des fournisseurs SSO (accès sécurisé, Google, GitHub,
+ * organisation) au-dessus du formulaire de connexion. Chaque bouton
+ * délègue son action au parent via une prop optionnelle.
+ */
 import { Building2, Github, ShieldCheck } from "lucide-react";
 import imgGoogleIcon from "@/assets/8e4241399baefbe8f8feffab0fe67682e140e1b1.png";
 import { authProviderButtonClass } from "@/features/auth/components/AuthPageLayout";
@@ -11,6 +16,7 @@ interface SsoProvidersRowProps {
 
 const iconClass = "h-[clamp(0.95rem,1.8vh,1.15rem)] w-[clamp(0.95rem,1.8vh,1.15rem)]";
 
+/** Rangée des 4 fournisseurs SSO ; chaque bouton délègue son clic à une prop optionnelle. */
 export function SsoProvidersRow({
   onSecureAccess,
   onGoogle,

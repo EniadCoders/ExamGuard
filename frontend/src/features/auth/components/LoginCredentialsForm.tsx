@@ -1,3 +1,9 @@
+/**
+ * Formulaire email + mot de passe de la page de connexion.
+ * Gère son propre état (saisie, chargement, erreur), appelle `login()`
+ * et remonte l'utilisateur authentifié via `onSuccess` pour que la page
+ * gère la redirection selon le rôle.
+ */
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { login, routeForRole, type AuthUser } from "@/features/auth/api";
@@ -21,6 +27,7 @@ const roleOptions = [
   { value: "teacher" as const, label: "Professeur" },
 ];
 
+/** Sous-écran principal du login : onglets rôle + saisie email/mot de passe + soumission. */
 export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
   const navigate = useNavigate();
 
@@ -30,6 +37,7 @@ export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Envoie les identifiants à l'API ; mappe les statuts HTTP vers un message d'erreur français.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -51,6 +59,7 @@ export function LoginCredentialsForm({ onSuccess }: LoginCredentialsFormProps) {
     }
   };
 
+  // Décorateur de setter : applique la nouvelle valeur et efface l'erreur affichée si besoin.
   const clearErrorOn = <T,>(setter: (value: T) => void) => (value: T) => {
     setter(value);
     if (error) setError("");

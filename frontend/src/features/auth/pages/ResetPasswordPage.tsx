@@ -1,3 +1,21 @@
+/**
+ * ResetPasswordPage
+ * -----------------
+ * Page de réinitialisation du mot de passe (après clic sur le lien reçu par email).
+ *
+ * Fonctionnalités :
+ *  - Saisie et confirmation d'un nouveau mot de passe (champs masqués/visibles).
+ *  - Indicateur visuel de robustesse (StrengthBar) basé sur longueur,
+ *    majuscule, chiffre et caractère spécial.
+ *  - Validation en temps réel de la correspondance des deux champs.
+ *  - Récapitulatif de la politique de mot de passe.
+ *
+ * Étapes :
+ *  - "form"    : formulaire de saisie.
+ *  - "success" : confirmation que le mot de passe a été mis à jour.
+ *
+ * Routes liées : "/" (connexion).
+ */
 import { useState } from "react";
 import {
   ArrowLeft,

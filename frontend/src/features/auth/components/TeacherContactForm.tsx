@@ -1,3 +1,8 @@
+/**
+ * Formulaire de demande de création de compte professeur. Les comptes
+ * enseignants ne sont pas auto-créés : ce composant assemble un mailto
+ * pré-rempli vers le support ExamGuard et notifie le parent du succès.
+ */
 import { useState } from "react";
 import { Send } from "lucide-react";
 import {
@@ -17,6 +22,7 @@ interface TeacherContactFormProps {
   onSuccess: (values: TeacherContactValues) => void;
 }
 
+/** Formulaire de demande professeur : assemble un mailto pré-rempli vers le support. */
 export function TeacherContactForm({ onSuccess }: TeacherContactFormProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,6 +30,7 @@ export function TeacherContactForm({ onSuccess }: TeacherContactFormProps) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  // Valide les champs requis, construit l'URL mailto et notifie le parent du succès.
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

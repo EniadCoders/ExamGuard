@@ -1,3 +1,8 @@
+/**
+ * Écran de confirmation affiché après une inscription réussie.
+ * Récapitule les informations soumises (étudiant ou demande professeur)
+ * et propose deux actions : aller à la connexion ou revenir au formulaire.
+ */
 import { ArrowRight, GraduationCap } from "lucide-react";
 import {
   authPrimaryButtonClass,
@@ -16,6 +21,7 @@ interface SignUpSuccessSummaryProps {
   onEdit: () => void;
 }
 
+/** Rend le récapitulatif final + boutons « Aller à la connexion » et « Modifier ». */
 export function SignUpSuccessSummary({ summary, onContinue, onEdit }: SignUpSuccessSummaryProps) {
   const isStudent = summary.kind === "student";
 

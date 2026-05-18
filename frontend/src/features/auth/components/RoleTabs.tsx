@@ -1,3 +1,9 @@
+/**
+ * Sélecteur générique à deux onglets (composant contrôlé).
+ * Utilisé pour choisir Étudiant / Professeur sur les écrans de
+ * connexion et d'inscription. Le type des valeurs est paramétré
+ * pour rester strictement typé côté appelant.
+ */
 interface RoleTabsProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
@@ -7,6 +13,7 @@ interface RoleTabsProps<T extends string> {
 const tabBaseClass =
   "rounded-[0.78rem] px-3 py-[clamp(0.58rem,1.15vh,0.72rem)] text-[clamp(0.68rem,1.2vh,0.84rem)] font-semibold transition sm:rounded-[0.9rem] sm:px-4 md:rounded-[0.95rem]";
 
+/** Composant contrôlé qui rend une rangée de deux boutons-onglets exclusifs. */
 export function RoleTabs<T extends string>({ value, onChange, options }: RoleTabsProps<T>) {
   return (
     <div className="grid grid-cols-2 gap-1 rounded-[0.95rem] border border-[rgba(117,195,214,0.14)] bg-[rgba(8,18,27,0.86)] p-1 md:rounded-[1.05rem]">

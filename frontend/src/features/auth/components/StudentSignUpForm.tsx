@@ -1,3 +1,9 @@
+/**
+ * Formulaire complet d'inscription étudiant : identité, école, filière,
+ * département, identifiant APOGEE/CNE et mot de passe. Valide localement,
+ * appelle `signupStudent()` et remonte les valeurs soumises via
+ * `onSuccess` pour alimenter l'écran de confirmation.
+ */
 import { useState } from "react";
 import { UserPlus } from "lucide-react";
 import { signupStudent } from "@/features/auth/api";
@@ -27,6 +33,7 @@ interface StudentSignUpFormProps {
   onSuccess: (values: StudentSignUpValues) => void;
 }
 
+/** Formulaire étudiant complet : valide les champs, appelle l'API d'inscription, remonte les valeurs au succès. */
 export function StudentSignUpForm({ onSuccess }: StudentSignUpFormProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -41,6 +48,7 @@ export function StudentSignUpForm({ onSuccess }: StudentSignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Vérifie présence des champs, longueur du mot de passe et correspondance avant l'appel `signupStudent`.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

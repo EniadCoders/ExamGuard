@@ -1,7 +1,12 @@
+/**
+ * Séparateur horizontal avec libellé centré (par défaut « Ou »),
+ * utilisé pour distinguer les blocs SSO et le formulaire classique.
+ */
 interface OrDividerProps {
   label?: string;
 }
 
+/** Affiche une barre horizontale traversée par un libellé centré (par défaut « Ou »). */
 export function OrDivider({ label = "Ou" }: OrDividerProps) {
   return (
     <div className="flex items-center gap-[clamp(0.45rem,1vh,0.7rem)]">
