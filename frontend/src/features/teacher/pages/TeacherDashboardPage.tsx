@@ -2372,7 +2372,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     if (messageTarget) {
       setToast(`Message envoyé à ${messageTarget.name}.`);
     } else {
-      setToast(`Message envoyé à ${liveParticipants.length} étudiant(s).`);
+      setToast(`Message envoyé à ${connected} étudiant(s).`);
     }
     setMessageOpen(false);
     setMessageTarget(null);
@@ -2418,6 +2418,8 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
   const active = liveParticipants.filter(p => p.state === "active").length;
   const submitted = liveParticipants.filter(p => p.state === "submitted").length;
   const flagged = liveParticipants.filter(p => p.state === "flagged").length;
+  // Étudiants ayant effectivement rejoint l'examen (les "not-joined" sont exclus).
+  const connected = active + submitted + flagged;
 
   return (
     <div className="cyber-dashboard-page fixed inset-0 z-40 flex flex-col bg-[#FAFAFA] overflow-y-auto">
@@ -2493,7 +2495,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
         <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 py-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             {[
-              { label: "Étudiants connectés", value: `${active + submitted + flagged}/${total}`, icon: Wifi },
+              { label: "Étudiants connectés", value: `${connected}/${total}`, icon: Wifi },
               { label: "En cours",            value: active,    icon: Activity },
               { label: "Soumis",              value: submitted, icon: CheckCircle2 },
               { label: "Alertes",             value: flagged,   icon: AlertTriangle },
@@ -2520,35 +2522,50 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                   <div key={p.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors ${
                     p.state === "kicked"
                       ? "border-red-500/30 bg-red-950/30 opacity-60"
-                      : "border-[rgba(123,241,255,0.1)] bg-[rgba(7,17,25,0.5)] hover:bg-[rgba(11,27,38,0.7)]"
+                      : p.state === "not-joined"
+                        ? "border-[rgba(123,241,255,0.08)] bg-[rgba(7,17,25,0.3)] opacity-60"
+                        : "border-[rgba(123,241,255,0.1)] bg-[rgba(7,17,25,0.5)] hover:bg-[rgba(11,27,38,0.7)]"
                   }`}>
                     <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
                       <span className="text-[10px] font-bold text-white">{p.name.split(" ").map(n => n[0]).join("")}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`text-sm font-medium truncate ${p.state === "kicked" ? "text-red-300 line-through" : "text-[var(--cyber-text)]"}`}>{p.name}</p>
+                        <p className={`text-sm font-medium truncate ${
+                          p.state === "kicked"
+                            ? "text-red-300 line-through"
+                            : p.state === "not-joined"
+                              ? "text-[var(--cyber-subtle-text)]"
+                              : "text-[var(--cyber-text)]"
+                        }`}>{p.name}</p>
                         {p.state === "flagged" && <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />}
                         {p.state === "submitted" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
                         {p.state === "kicked" && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-red-600 text-white">Exclu</span>}
+                        {p.state === "not-joined" && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-[rgba(123,241,255,0.12)] text-[var(--cyber-subtle-text)]">Pas rejoint</span>}
                       </div>
                       <div className="mt-1 flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-[rgba(123,241,255,0.08)] rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              p.state === "kicked" ? "bg-red-700" :
-                              p.state === "flagged" ? "bg-red-500" :
-                              p.state === "submitted" ? "bg-emerald-500" :
-                              "bg-[var(--cyber-accent-strong)]"
-                            }`}
-                            style={{ width: `${p.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-[var(--cyber-muted-text)] tabular-nums">{p.answered}/{p.totalQuestions} q.</span>
+                        {p.state === "not-joined" ? (
+                          <span className="text-[10px] text-[var(--cyber-subtle-text)] italic">En attente de connexion…</span>
+                        ) : (
+                          <>
+                            <div className="flex-1 h-1.5 bg-[rgba(123,241,255,0.08)] rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  p.state === "kicked" ? "bg-red-700" :
+                                  p.state === "flagged" ? "bg-red-500" :
+                                  p.state === "submitted" ? "bg-emerald-500" :
+                                  "bg-[var(--cyber-accent-strong)]"
+                                }`}
+                                style={{ width: `${p.progress}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] text-[var(--cyber-muted-text)] tabular-nums">{p.answered}/{p.totalQuestions} q.</span>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <span className="text-sm font-bold text-[var(--cyber-text)] tabular-nums">{p.score}/20</span>
-                    {p.state !== "kicked" && p.state !== "submitted" && (
+                    <span className="text-sm font-bold text-[var(--cyber-text)] tabular-nums">{p.state === "not-joined" ? "—" : `${p.score}/20`}</span>
+                    {p.state !== "kicked" && p.state !== "submitted" && p.state !== "not-joined" && (
                       <>
                         <button
                           onClick={() => { setMessageTarget({ id: p.id, name: p.name }); setMessageOpen(true); }}
@@ -2640,7 +2657,9 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
 
         {/* End confirm */}
         {confirmEnd && (() => {
-          const notFinished = liveParticipants.filter(p => p.state !== "submitted");
+          const notFinished = liveParticipants.filter(
+            p => p.state !== "submitted" && p.state !== "not-joined",
+          );
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
               <div className="w-full max-w-md rounded-2xl border border-[rgba(123,241,255,0.25)] bg-[rgba(11,27,38,0.95)] p-6 shadow-2xl">
@@ -2703,7 +2722,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                   <p className="text-sm text-[var(--cyber-muted-text)] mt-1">
                     {messageTarget
                       ? "Visible immédiatement par cet étudiant uniquement."
-                      : `Visible immédiatement par les ${liveParticipants.length} étudiant(s) en cours.`}
+                      : `Visible immédiatement par les ${connected} étudiant(s) connecté(s).`}
                   </p>
                 </div>
               </div>
@@ -2758,7 +2777,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
                   <p id="message-confirm-desc" className="text-sm text-[var(--cyber-muted-text)] mt-1 leading-relaxed">
                     {messageTarget
                       ? "Le message sera visible immédiatement par cet étudiant."
-                      : `Le message sera visible immédiatement par les ${liveParticipants.length} étudiant(s) en cours.`}
+                      : `Le message sera visible immédiatement par les ${connected} étudiant(s) connecté(s).`}
                   </p>
                 </div>
               </div>

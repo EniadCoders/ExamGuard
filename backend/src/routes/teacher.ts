@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { ExamModel } from "../models/Exam.js";
 import { ExamAttemptModel } from "../models/ExamAttempt.js";
 import { UserModel } from "../models/User.js";
+import { NotificationModel } from "../models/Notification.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
 const router = Router();
@@ -157,6 +158,19 @@ function mapExam(exam: any) {
   };
 }
 
+/** Crée une notification in-app pour chaque étudiant inscrit. */
+async function notifyStudents(
+  studentIds: readonly (string | mongoose.Types.ObjectId)[],
+  type: string,
+  title: string,
+  message: string,
+) {
+  if (!studentIds.length) return;
+  await NotificationModel.insertMany(
+    studentIds.map((userId) => ({ userId, type, title, message })),
+  );
+}
+
 /** Garde uniquement les ObjectId valides parmi une liste d'identifiants. */
 function toObjectIds(ids: unknown): mongoose.Types.ObjectId[] {
   if (!Array.isArray(ids)) return [];
@@ -247,6 +261,16 @@ router.post("/exams", async (req, res) => {
     questions,
   });
 
+  // Examen publié : prévenir les étudiants inscrits.
+  if (exam.status === "scheduled" && exam.enrolledStudents.length) {
+    await notifyStudents(
+      exam.enrolledStudents.map(String),
+      "exam-scheduled",
+      `Nouvel examen — ${exam.title}`,
+      `Vous êtes inscrit à l'examen « ${exam.title} » (${exam.subject}).`,
+    );
+  }
+
   res.status(201).json({ exam: mapExam(exam.toObject()) });
 });
 
@@ -277,8 +301,12 @@ router.patch("/exams/:id", async (req, res) => {
   }
   if (typeof body.importedFileName === "string") exam.importedFileName = body.importedFileName;
   if (body.rules) exam.set("rules", body.rules);
+  let newlyEnrolled: mongoose.Types.ObjectId[] = [];
   if (body.studentIds !== undefined) {
-    exam.enrolledStudents = toObjectIds(body.studentIds) as any;
+    const before = new Set((exam.enrolledStudents ?? []).map((id) => String(id)));
+    const next = toObjectIds(body.studentIds);
+    newlyEnrolled = next.filter((id) => !before.has(String(id)));
+    exam.enrolledStudents = next as any;
   }
   if (body.questions !== undefined) {
     const questions = draftToStored(body.questions);
@@ -288,6 +316,17 @@ router.patch("/exams/:id", async (req, res) => {
   if (body.status === "draft" || body.status === "scheduled") exam.status = body.status;
 
   await exam.save();
+
+  // Étudiants ajoutés à un examen visible : les en prévenir.
+  if (newlyEnrolled.length && exam.status !== "draft" && exam.status !== "archived") {
+    await notifyStudents(
+      newlyEnrolled.map(String),
+      "exam-scheduled",
+      `Nouvel examen — ${exam.title}`,
+      `Vous êtes inscrit à l'examen « ${exam.title} » (${exam.subject}).`,
+    );
+  }
+
   res.json({ exam: mapExam(exam.toObject()) });
 });
 
@@ -330,6 +369,17 @@ router.post("/exams/:id/launch", async (req, res) => {
   }
   exam.status = "live";
   await exam.save();
+
+  // Examen lancé : prévenir les étudiants inscrits qu'ils peuvent le rejoindre.
+  if (exam.enrolledStudents.length) {
+    await notifyStudents(
+      exam.enrolledStudents.map(String),
+      "exam-live",
+      `Examen démarré — ${exam.title}`,
+      `L'examen « ${exam.title} » a démarré. Vous pouvez le rejoindre dès maintenant.`,
+    );
+  }
+
   res.json({ exam: mapExam(exam.toObject()) });
 });
 
@@ -409,7 +459,14 @@ router.get("/exams/:id/monitor", async (req, res) => {
       attempt?.status === "submitted" || attempt?.status === "graded";
     const flagged =
       !submitted && (attempt?.antiCheatEvents?.length ?? 0) > 0;
-    const state = submitted ? "submitted" : flagged ? "flagged" : "active";
+    // Pas de tentative = l'étudiant n'a pas encore rejoint l'examen.
+    const state = !attempt
+      ? "not-joined"
+      : submitted
+        ? "submitted"
+        : flagged
+          ? "flagged"
+          : "active";
     return {
       id,
       name: student?.fullName ?? "Étudiant",

@@ -61,7 +61,10 @@ export function DashboardOverview({
     );
   }
 
-  const activeExam = allExams.find((e) => e.status === "ongoing");
+  // Examen en cours de passage, ou à défaut un examen démarrable immédiatement.
+  const activeExam =
+    allExams.find((e) => e.status === "ongoing") ??
+    allExams.find((e) => e.status === "upcoming" && e.canStart);
 
   return (
     <>
@@ -79,7 +82,11 @@ export function DashboardOverview({
       ) : (
         <div className="space-y-8">
           {activeExam && (
-            <ActiveExamCard exam={activeExam} onJoin={() => onJoinExam(activeExam.id)} />
+            <ActiveExamCard
+              exam={activeExam}
+              isResume={activeExam.status === "ongoing"}
+              onJoin={() => onJoinExam(activeExam.id)}
+            />
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -212,14 +219,24 @@ function EmptyExamsState({ onOpenJoinCode }: { onOpenJoinCode: () => void }) {
   );
 }
 
-function ActiveExamCard({ exam, onJoin }: { exam: DashboardExam; onJoin: () => void }) {
+function ActiveExamCard({
+  exam,
+  isResume,
+  onJoin,
+}: {
+  exam: DashboardExam;
+  isResume: boolean;
+  onJoin: () => void;
+}) {
   return (
     <DashboardCard tone="accent" className="p-7 sm:p-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="mb-4 flex flex-wrap items-center gap-3">
-            <DashboardStatusBadge status="ongoing" />
-            <span className="dashboard-card-kicker">Examen actif</span>
+            <DashboardStatusBadge status={isResume ? "ongoing" : "upcoming"} />
+            <span className="dashboard-card-kicker">
+              {isResume ? "Examen actif" : "Disponible maintenant"}
+            </span>
           </div>
           <h2 className="text-2xl font-semibold text-[var(--cyber-text)] sm:text-3xl">
             {exam.title}
@@ -244,7 +261,7 @@ function ActiveExamCard({ exam, onJoin }: { exam: DashboardExam; onJoin: () => v
             className="cyber-button-primary inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold lg:mt-auto"
           >
             <Play className="w-4 h-4" />
-            <span>Rejoindre l&apos;examen</span>
+            <span>{isResume ? "Reprendre l'examen" : "Commencer l'examen"}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

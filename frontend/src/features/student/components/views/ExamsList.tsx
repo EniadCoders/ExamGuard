@@ -204,10 +204,19 @@ function ExamCard({ exam, expanded, onJoin, onToggleExpand }: ExamCardProps) {
               className="cyber-button-primary flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold"
             >
               <Play className="w-4 h-4" />
-              <span>Rejoindre</span>
+              <span>Reprendre</span>
             </button>
           )}
-          {exam.status === "upcoming" && (
+          {exam.status === "upcoming" && exam.canStart && (
+            <button
+              onClick={onJoin}
+              className="cyber-button-primary flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold"
+            >
+              <Play className="w-4 h-4" />
+              <span>Commencer l'examen</span>
+            </button>
+          )}
+          {exam.status === "upcoming" && !exam.canStart && (
             <button
               onClick={onToggleExpand}
               className="cyber-button-secondary rounded-xl px-6 py-3 text-sm font-medium"

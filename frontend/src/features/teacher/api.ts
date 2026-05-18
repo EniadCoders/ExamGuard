@@ -239,7 +239,7 @@ export interface MonitorParticipant {
   totalQuestions: number;
   answered: number;
   progress: number;
-  state: "active" | "flagged" | "submitted" | "kicked";
+  state: "active" | "flagged" | "submitted" | "kicked" | "not-joined";
   score: number;
 }
 

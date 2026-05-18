@@ -12,6 +12,10 @@ export type DashboardExam = {
   title: string;
   subject: string;
   status: "completed" | "ongoing" | "upcoming";
+  /** Statut réel de l'examen côté professeur (draft, scheduled, live…). */
+  examStatus: string;
+  /** Vrai si l'étudiant peut démarrer/reprendre l'examen maintenant. */
+  canStart: boolean;
   date: string;
   time: string;
   duration: number;

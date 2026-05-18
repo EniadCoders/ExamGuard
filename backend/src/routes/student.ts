@@ -165,12 +165,17 @@ router.get("/dashboard", async (req, res) => {
     const questionTypes = Array.from(
       new Set((exam.questions ?? []).map((q: any) => q.type)),
     );
+    // L'étudiant peut démarrer si l'examen est lançable et qu'il n'a pas déjà rendu sa copie.
+    const attemptDone =
+      attempt?.status === "submitted" || attempt?.status === "graded";
+    const canStart = !attemptDone && isExamLaunchable(exam).ok;
     return {
       id: String(exam._id),
       title: exam.title,
       subject: exam.subject,
       status,
       examStatus: exam.status,
+      canStart,
       date: date ? formatDateFr(date) : "",
       time: date ? formatTimeFr(date) : "",
       duration: exam.durationMinutes,
