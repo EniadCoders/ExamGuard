@@ -75,6 +75,16 @@ async function generateJoinCode(): Promise<string> {
   throw new Error("could not generate a unique join code");
 }
 
+/**
+ * Vérifie que chaque question a un énoncé non vide. Renvoie la liste des
+ * positions (1-indexées) invalides — vide si tout est OK.
+ */
+function findEmptyQuestionTexts(draft: any[]): number[] {
+  return (Array.isArray(draft) ? draft : [])
+    .map((q, i) => (String(q?.text ?? "").trim() ? -1 : i + 1))
+    .filter((i) => i > 0);
+}
+
 /** Convertit les questions du format éditeur (frontend) vers le format stocké. */
 function draftToStored(draft: any[]): any[] {
   return (Array.isArray(draft) ? draft : []).map((q, index) => {
@@ -240,6 +250,12 @@ router.post("/exams", async (req, res) => {
   }
 
   const status = body.status === "scheduled" ? "scheduled" : "draft";
+  const emptyTextPositions = findEmptyQuestionTexts(body.questions);
+  if (emptyTextPositions.length) {
+    return res.status(400).json({
+      error: `l'énoncé est obligatoire pour la/les question(s) ${emptyTextPositions.join(", ")}`,
+    });
+  }
   const questions = draftToStored(body.questions);
   const totalPoints = questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);
 
@@ -309,6 +325,12 @@ router.patch("/exams/:id", async (req, res) => {
     exam.enrolledStudents = next as any;
   }
   if (body.questions !== undefined) {
+    const emptyTextPositions = findEmptyQuestionTexts(body.questions);
+    if (emptyTextPositions.length) {
+      return res.status(400).json({
+        error: `l'énoncé est obligatoire pour la/les question(s) ${emptyTextPositions.join(", ")}`,
+      });
+    }
     const questions = draftToStored(body.questions);
     exam.questions = questions as any;
     exam.totalPoints = questions.reduce((sum, q) => sum + (Number(q.points) || 0), 0);

@@ -25,6 +25,8 @@ import { LoginCredentialsForm } from "@/features/auth/components/LoginCredential
 import { OrDivider } from "@/features/auth/components/OrDivider";
 import { SsoProvidersRow } from "@/features/auth/components/SsoProvidersRow";
 
+// Composant principal de la page de connexion : assemble les boutons SSO,
+// le formulaire email/mot de passe et redirige selon le rôle de l'utilisateur authentifié.
 export function LoginPage() {
   const navigate = useNavigate();
 

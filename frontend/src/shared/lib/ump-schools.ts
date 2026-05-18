@@ -1,3 +1,13 @@
+/**
+ * Liste exhaustive des établissements de l'Université Mohammed Premier (UMP) d'Oujda.
+ *
+ * Utilisée notamment dans les formulaires d'inscription et de profil pour permettre
+ * à l'utilisateur de sélectionner son école/faculté d'appartenance.
+ *
+ * Le type est figé via `as const` afin d'exposer un tuple en lecture seule, dont
+ * chaque entrée peut servir de littéral de type (utile pour les validations Zod
+ * ou les enums dérivés).
+ */
 export const umpSchools = [
   "École Nationale de l'Intelligence Artificielle et du Digital de Berkane (ENIAD)",
   "École Nationale des Sciences Appliquées d'Oujda (ENSAO)",

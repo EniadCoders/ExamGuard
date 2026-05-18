@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import { connectToDatabase } from "./db.js";
@@ -23,6 +23,27 @@ app.get("/api/health", (_req, res) => {
     db: states[mongoose.connection.readyState] ?? "unknown",
     dbName: mongoose.connection.name,
   });
+});
+
+/**
+ * Handler d'erreurs global : sans lui, une route `async` qui rejette laisse la
+ * requête HTTP en suspens et le client voit "serveur injoignable". On traduit
+ * les erreurs Mongoose en 400 et tout le reste en 500 avec un message lisible.
+ */
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof mongoose.Error.ValidationError) {
+    const fields = Object.entries(err.errors).map(([path, e]) => ({
+      path,
+      message: e.message,
+    }));
+    return res.status(400).json({ error: "validation failed", fields });
+  }
+  if (err instanceof mongoose.Error.CastError) {
+    return res.status(400).json({ error: `invalid value for ${err.path}` });
+  }
+  console.error("[server] unhandled error:", err);
+  const message = err instanceof Error ? err.message : "internal server error";
+  res.status(500).json({ error: message });
 });
 
 const PORT = Number(process.env.PORT ?? 4000);

@@ -31,6 +31,8 @@ import { AuthShell } from "@/features/auth/components/AuthShell";
 
 type Step = "form" | "success";
 
+// Affiche une barre de robustesse du mot de passe : calcule un score (longueur,
+// majuscule, chiffre, caractère spécial) et le traduit en jauge colorée et libellé.
 function StrengthBar({ password }: { password: string }) {
   const score = (() => {
     let s = 0;
@@ -80,6 +82,8 @@ function StrengthBar({ password }: { password: string }) {
   );
 }
 
+// Composant principal de la page : gère la saisie/confirmation du nouveau mot de passe,
+// la visibilité des champs, la validation et le passage à l'écran de succès.
 export function ResetPasswordPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("form");
@@ -90,6 +94,8 @@ export function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Soumet le formulaire : vérifie la longueur minimale et la correspondance
+  // des mots de passe, simule la mise à jour puis affiche l'écran de succès.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

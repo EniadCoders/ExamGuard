@@ -354,18 +354,23 @@ router.post("/exams/:id/start", async (req, res) => {
     if (expired) return res.status(409).json({ error: "time expired" });
   }
 
-  // Réordonne les questions selon l'ordre persisté
-  const byId = new Map<number, any>(
-    (exam.questions ?? []).map((q: any) => [q.id, q]),
+  // Convertit les sous-documents Mongoose en objets JS purs : sans ça, le
+  // destructuring/spread plus bas ne capture pas les vraies propriétés
+  // (`text`, `options`…) et l'étudiant reçoit des questions vides.
+  const plainQuestions = (exam.questions ?? []).map((q: any) =>
+    typeof q?.toObject === "function" ? q.toObject() : q,
   );
+
+  // Réordonne les questions selon l'ordre persisté
+  const byId = new Map<number, any>(plainQuestions.map((q: any) => [q.id, q]));
   const orderedQuestions = (attempt.questionOrder ?? [])
     .map((id) => byId.get(id))
     .filter(Boolean);
   // Fallback si l'ordre est vide ou questions ajoutées depuis
   const finalQuestions =
-    orderedQuestions.length === (exam.questions ?? []).length
+    orderedQuestions.length === plainQuestions.length
       ? orderedQuestions
-      : exam.questions ?? [];
+      : plainQuestions;
 
   // Shuffle des options MCQ (en mémoire seulement, non persisté côté étudiant
   // pour rester simple — le mapping est stable car les ids d'options sont stockés

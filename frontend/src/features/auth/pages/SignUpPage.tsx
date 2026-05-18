@@ -33,6 +33,7 @@ import {
   TeacherContactForm,
   type TeacherContactValues,
 } from "@/features/auth/components/TeacherContactForm";
+
 import { SignUpSuccessSummary } from "@/features/auth/components/SignUpSuccessSummary";
 
 type AccountType = "student" | "teacher";
@@ -45,6 +46,8 @@ const accountOptions = [
   { value: "teacher" as const, label: "Professeur" },
 ];
 
+// Composant principal de la page d'inscription : gère le choix du type de compte
+// (étudiant / professeur), affiche le formulaire correspondant et l'écran de récapitulatif.
 export function SignUpPage() {
   const navigate = useNavigate();
   const [accountType, setAccountType] = useState<AccountType>("student");

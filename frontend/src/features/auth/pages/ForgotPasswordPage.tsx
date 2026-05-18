@@ -29,12 +29,16 @@ import {
 
 type Step = "form" | "sent";
 
+// Composant principal de la page : gère l'état du formulaire (email, étape, chargement)
+// et bascule entre la vue de saisie et la vue de confirmation d'envoi.
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<Step>("form");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Soumet le formulaire : valide l'email saisi, simule l'envoi du lien de
+  // réinitialisation puis passe à l'étape de confirmation.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
