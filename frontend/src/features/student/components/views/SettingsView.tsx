@@ -26,9 +26,7 @@ interface SettingsViewProps {
   onSaveProfile: () => void;
 
   // Security
-  is2FAEnabled: boolean;
   activeSessions: string[];
-  onRequest2FAToggle: () => void;
   onRequestRevokeSession: (device: string) => void;
 }
 
@@ -90,9 +88,7 @@ export function SettingsView(props: SettingsViewProps) {
           {activeTab === "notifications" && <NotificationSettings />}
           {activeTab === "security" && (
             <SecuritySettings
-              is2FAEnabled={props.is2FAEnabled}
               activeSessions={props.activeSessions}
-              onRequest2FAToggle={props.onRequest2FAToggle}
               onRequestRevokeSession={props.onRequestRevokeSession}
             />
           )}

@@ -1,44 +1,10 @@
 import { Router, type Request } from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import otplib from "otplib";
-import QRCode from "qrcode";
-
-const { authenticator } = otplib;
 import { UserModel } from "../models/User.js";
 import { ActiveSessionModel } from "../models/ActiveSession.js";
-import { requireAuth, signToken, signChallengeToken } from "../middleware/auth.js";
+import { requireAuth, signToken } from "../middleware/auth.js";
 
 const router = Router();
-
-// ─── 2FA (TOTP) ────────────────────────────────────────────────────────────
-
-/** Génère 8 codes de secours à usage unique. */
-function generateBackupCodes(): string[] {
-  const block = () => Math.random().toString(36).slice(2, 6).toUpperCase();
-  return Array.from({ length: 8 }, () => `${block()}-${block()}`);
-}
-
-/** Vérifie un code TOTP ou consomme un code de secours valide. */
-async function verifyTwoFactorCode(user: any, rawCode: string): Promise<boolean> {
-  const code = rawCode.trim();
-  if (
-    user.twoFactorSecret &&
-    authenticator.check(code.replace(/\s/g, ""), user.twoFactorSecret)
-  ) {
-    return true;
-  }
-  const codes: string[] = user.twoFactorBackupCodes ?? [];
-  for (let i = 0; i < codes.length; i++) {
-    if (await bcrypt.compare(code.toUpperCase(), codes[i])) {
-      codes.splice(i, 1);
-      user.twoFactorBackupCodes = codes;
-      await user.save();
-      return true;
-    }
-  }
-  return false;
-}
 
 // ─── Sessions ──────────────────────────────────────────────────────────────
 
@@ -136,7 +102,7 @@ router.post("/signup", async (req, res) => {
   res.status(201).json({ token, user: publicUser(user) });
 });
 
-// POST /login : connexion email + mot de passe ; émet un défi 2FA si activé.
+// POST /login : connexion email + mot de passe.
 router.post("/login", async (req, res) => {
   const { email, password } = req.body ?? {};
   if (!email || !password) {
@@ -152,48 +118,9 @@ router.post("/login", async (req, res) => {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(401).json({ error: "invalid credentials" });
 
-  // 2FA activée : on n'émet pas le token, on demande le code.
-  if (user.twoFactorEnabled) {
-    return res.json({
-      twoFactorRequired: true,
-      challengeToken: signChallengeToken(user.id),
-    });
-  }
-
   user.lastLoginAt = new Date();
   await user.save();
 
-  const session = await createSession(req, user.id);
-  const token = signToken({ userId: user.id, role: user.role, sessionId: session.id });
-  res.json({ token, user: publicUser(user) });
-});
-
-// Étape 2 de la connexion : vérification du code 2FA.
-// POST /login/2fa : étape 2 du login, valide le code TOTP / code de secours.
-router.post("/login/2fa", async (req, res) => {
-  const { challengeToken, code } = req.body ?? {};
-  if (!challengeToken || !code) {
-    return res.status(400).json({ error: "challengeToken and code required" });
-  }
-  let userId: string;
-  try {
-    const payload = jwt.verify(challengeToken, process.env.JWT_SECRET!) as any;
-    if (!payload.twoFactorPending) throw new Error("not a challenge token");
-    userId = payload.userId;
-  } catch {
-    return res.status(401).json({ error: "invalid or expired challenge" });
-  }
-
-  const user = await UserModel.findById(userId);
-  if (!user || !user.twoFactorEnabled) {
-    return res.status(401).json({ error: "invalid credentials" });
-  }
-  if (!(await verifyTwoFactorCode(user, String(code)))) {
-    return res.status(401).json({ error: "invalid code" });
-  }
-
-  user.lastLoginAt = new Date();
-  await user.save();
   const session = await createSession(req, user.id);
   const token = signToken({ userId: user.id, role: user.role, sessionId: session.id });
   res.json({ token, user: publicUser(user) });
@@ -275,68 +202,6 @@ router.post("/change-password", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ─── 2FA — activation / désactivation ──────────────────────────────────────
-
-// POST /2fa/setup : génère un secret TOTP + QR code en attente d'activation.
-router.post("/2fa/setup", requireAuth, async (req, res) => {
-  const user = await UserModel.findById(req.auth!.userId);
-  if (!user) return res.status(404).json({ error: "user not found" });
-
-  const secret = authenticator.generateSecret();
-  user.twoFactorPendingSecret = secret;
-  await user.save();
-
-  const otpauthUrl = authenticator.keyuri(user.email, "ExamGuard", secret);
-  const qrCode = await QRCode.toDataURL(otpauthUrl);
-  res.json({ secret, otpauthUrl, qrCode });
-});
-
-// POST /2fa/enable : confirme l'activation 2FA et renvoie les codes de secours.
-router.post("/2fa/enable", requireAuth, async (req, res) => {
-  const { code } = req.body ?? {};
-  const user = await UserModel.findById(req.auth!.userId);
-  if (!user) return res.status(404).json({ error: "user not found" });
-  if (!user.twoFactorPendingSecret) {
-    return res.status(400).json({ error: "no 2FA setup in progress" });
-  }
-  if (
-    !code ||
-    !authenticator.check(String(code).replace(/\s/g, ""), user.twoFactorPendingSecret)
-  ) {
-    return res.status(400).json({ error: "invalid code" });
-  }
-
-  const backupCodes = generateBackupCodes();
-  user.twoFactorBackupCodes = await Promise.all(
-    backupCodes.map((c) => bcrypt.hash(c, 10)),
-  );
-  user.twoFactorSecret = user.twoFactorPendingSecret;
-  user.twoFactorPendingSecret = undefined;
-  user.twoFactorEnabled = true;
-  await user.save();
-
-  res.json({ ok: true, backupCodes });
-});
-
-// POST /2fa/disable : désactive la 2FA après validation d'un code.
-router.post("/2fa/disable", requireAuth, async (req, res) => {
-  const { code } = req.body ?? {};
-  const user = await UserModel.findById(req.auth!.userId);
-  if (!user) return res.status(404).json({ error: "user not found" });
-  if (!user.twoFactorEnabled) {
-    return res.status(400).json({ error: "2FA not enabled" });
-  }
-  if (!(await verifyTwoFactorCode(user, String(code ?? "")))) {
-    return res.status(400).json({ error: "invalid code" });
-  }
-  user.twoFactorEnabled = false;
-  user.twoFactorSecret = undefined;
-  user.twoFactorPendingSecret = undefined;
-  user.twoFactorBackupCodes = [];
-  await user.save();
-  res.json({ ok: true });
-});
-
 // ─── Sessions actives ──────────────────────────────────────────────────────
 
 // GET /sessions : liste les sessions actives de l'utilisateur courant.
@@ -375,7 +240,7 @@ router.delete("/sessions", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-/** Projection publique de l'utilisateur (sans hash de mot de passe ni secret 2FA). */
+/** Projection publique de l'utilisateur (sans hash de mot de passe). */
 function publicUser(user: any) {
   return {
     id: user.id,
@@ -391,7 +256,6 @@ function publicUser(user: any) {
     bio: user.bio,
     avatarUrl: user.avatarUrl,
     preferences: user.preferences,
-    twoFactorEnabled: user.twoFactorEnabled,
     status: user.status,
   };
 }

@@ -32,7 +32,6 @@ import {
 } from "@/features/student/components/views/SettingsView";
 import { JoinExamModal } from "@/features/student/components/modals/JoinExamModal";
 import { ExamLockModal } from "@/features/student/components/modals/ExamLockModal";
-import { TwoFactorConfirmModal } from "@/features/student/components/modals/TwoFactorConfirmModal";
 import { RevokeSessionModal } from "@/features/student/components/modals/RevokeSessionModal";
 import type { ProfileMessage } from "@/features/student/components/settings/ProfileSettings";
 
@@ -80,8 +79,6 @@ export function StudentDashboard() {
   const [targetExamId, setTargetExamId] = useState<string | null>(null);
 
   // Settings modals
-  const [show2FAPopup, setShow2FAPopup] = useState(false);
-  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [sessionToRevoke, setSessionToRevoke] = useState<string | null>(null);
   const [activeSessionsList, setActiveSessionsList] = useState(["MacBook Pro", "iPhone 14"]);
 
@@ -466,24 +463,11 @@ export function StudentDashboard() {
               onProfilePhoneChange={setProfilePhone}
               onProfileSchoolChange={setProfileSchool}
               onSaveProfile={handleSaveProfile}
-              is2FAEnabled={is2FAEnabled}
               activeSessions={activeSessionsList}
-              onRequest2FAToggle={() => setShow2FAPopup(true)}
               onRequestRevokeSession={setSessionToRevoke}
             />
           )}
         </main>
-
-        {show2FAPopup && (
-          <TwoFactorConfirmModal
-            isEnabled={is2FAEnabled}
-            onCancel={() => setShow2FAPopup(false)}
-            onConfirm={() => {
-              setIs2FAEnabled((v) => !v);
-              setShow2FAPopup(false);
-            }}
-          />
-        )}
 
         {sessionToRevoke && (
           <RevokeSessionModal
