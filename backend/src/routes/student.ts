@@ -6,6 +6,7 @@ import { UserModel } from "../models/User.js";
 import { NotificationModel } from "../models/Notification.js";
 import { requireAuth } from "../middleware/auth.js";
 import { finalizeAttempt, sameOptionSet } from "../services/examGrading.js";
+import { remainingSecondsFrom } from "../services/examTiming.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -53,26 +54,9 @@ function shuffleInPlace<T>(arr: T[]): T[] {
   return arr;
 }
 
-/** Millisecondes de pause à déduire des échéances (pauses passées + pause en cours). */
-function pausedMsOf(exam: any): number {
-  const lc = exam?.liveControl ?? {};
-  let ms = lc.totalPausedMs ?? 0;
-  if (lc.paused && lc.pausedAt) {
-    ms += Math.max(0, Date.now() - new Date(lc.pausedAt).getTime());
-  }
-  return ms;
-}
-
-/**
- * Secondes restantes pour une tentative, en tenant compte du temps additionnel
- * accordé par le professeur et des éventuelles pauses de l'examen.
- */
+/** Secondes restantes pour une tentative (temps additionnel et pauses inclus). */
 function remainingSecondsOf(exam: any, attempt: any): number {
-  const totalMs =
-    (exam.durationMinutes + (exam.liveControl?.extraMinutes ?? 0)) * 60_000;
-  const elapsedMs =
-    Date.now() - new Date(attempt.startedAt).getTime() - pausedMsOf(exam);
-  return Math.max(0, Math.round((totalMs - elapsedMs) / 1000));
+  return remainingSecondsFrom(exam, attempt.startedAt);
 }
 
 /** Soumet automatiquement une tentative dont la durée est dépassée. */

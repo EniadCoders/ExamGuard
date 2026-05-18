@@ -6,6 +6,7 @@ import { UserModel } from "../models/User.js";
 import { NotificationModel } from "../models/Notification.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { finalizeAttempt } from "../services/examGrading.js";
+import { remainingSecondsFrom } from "../services/examTiming.js";
 
 const router = Router();
 
@@ -561,9 +562,19 @@ router.get("/exams/:id/monitor", async (req, res) => {
   alerts.sort((x, y) => y.ts - x.ts);
 
   const lc = (exam.liveControl ?? {}) as any;
+  // Chrono de l'examen : ancré sur la première tentative démarrée, pour que le
+  // moniteur affiche exactement le même temps restant que les étudiants.
+  const startTimes = attempts
+    .map((a) => a.startedAt)
+    .filter(Boolean)
+    .map((d) => new Date(d as any).getTime());
+  const remainingSeconds = startTimes.length
+    ? remainingSecondsFrom(exam, new Date(Math.min(...startTimes)))
+    : (exam.durationMinutes + (lc.extraMinutes ?? 0)) * 60;
   res.json({
     participants,
     alerts: alerts.map(({ ts, ...rest }) => rest),
+    remainingSeconds,
     liveControl: {
       paused: !!lc.paused,
       extraMinutes: lc.extraMinutes ?? 0,

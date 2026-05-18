@@ -270,6 +270,8 @@ export interface ExamLiveControl {
 export interface ExamMonitor {
   participants: MonitorParticipant[];
   alerts: MonitorAlert[];
+  /** Temps restant de l'examen en secondes (chrono partagé avec les étudiants). */
+  remainingSeconds: number;
   liveControl: ExamLiveControl;
 }
 

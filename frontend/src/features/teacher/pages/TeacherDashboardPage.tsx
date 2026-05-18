@@ -2332,7 +2332,8 @@ function AnalyticsTab({ exams }: { exams: Exam[] }) {
 // ─── Live Exam Monitor ────────────────────────────────────────────────────────
 function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => void; onEnd: () => void }) {
   const [paused, setPaused] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
+  // Temps restant de l'examen (en secondes), faisant autorité côté serveur.
+  const [remaining, setRemaining] = useState<number | null>(null);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [extraMinutes, setExtraMinutes] = useState(0);
   const [locked, setLocked] = useState(false);
@@ -2356,7 +2357,10 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
 
   useEffect(() => {
     if (paused) return;
-    const t = setInterval(() => setElapsed(e => e + 1), 1000);
+    const t = setInterval(
+      () => setRemaining((r) => (r == null ? r : Math.max(0, r - 1))),
+      1000,
+    );
     return () => clearInterval(t);
   }, [paused]);
 
@@ -2397,6 +2401,7 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
     try {
       const { liveControl } = await extendExam(exam.id, 5);
       setExtraMinutes(liveControl.extraMinutes);
+      setRemaining((r) => (r == null ? r : r + 5 * 60));
       setToast("Durée prolongée de 5 minutes.");
     } catch {
       setToast("Échec de la prolongation.");
@@ -2470,15 +2475,16 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
         .then((d) => {
           if (!active) return;
           setMonitor(d);
-          // Synchronise les contrôles avec l'état serveur faisant autorité.
+          // Synchronise les contrôles et le chrono avec l'état serveur.
           setPaused(d.liveControl.paused);
           setLocked(d.liveControl.submissionsLocked);
           setExtraMinutes(d.liveControl.extraMinutes);
+          setRemaining(d.remainingSeconds);
         })
         .catch(() => {});
     };
     load();
-    const t = setInterval(load, 10000);
+    const t = setInterval(load, 5000);
     return () => { active = false; clearInterval(t); };
   }, [exam.id]);
 
@@ -2523,16 +2529,17 @@ function LiveExamMonitor({ exam, onBack, onEnd }: { exam: Exam; onBack: () => vo
             </div>
             <div className="flex items-center gap-3">
               {(() => {
-                const totalSeconds = (exam.duration + extraMinutes) * 60;
-                const remaining = Math.max(0, totalSeconds - elapsed);
-                const lowTime = remaining > 0 && remaining <= 300; // < 5 min
+                const rem = remaining ?? 0;
+                const lowTime = rem > 0 && rem <= 300; // < 5 min
                 return (
                   <div className="hidden sm:flex flex-col items-end">
                     <span className="text-xs text-[var(--cyber-subtle-text)] uppercase tracking-wide">Temps restant</span>
                     <span className={`text-base font-mono font-bold tabular-nums ${
-                      remaining === 0 ? "text-red-400" : lowTime ? "text-amber-300" : "text-[var(--cyber-text)]"
+                      remaining == null
+                        ? "text-[var(--cyber-text)]"
+                        : rem === 0 ? "text-red-400" : lowTime ? "text-amber-300" : "text-[var(--cyber-text)]"
                     }`}>
-                      {formatTime(remaining)}
+                      {remaining == null ? "—:—:—" : formatTime(rem)}
                     </span>
                   </div>
                 );
