@@ -70,7 +70,10 @@ function isExamLaunchable(exam: any): { ok: boolean; reason?: string } {
   if (status === "draft") return { ok: false, reason: "exam not published" };
   if (status === "archived") return { ok: false, reason: "exam archived" };
   if (status === "completed") return { ok: false, reason: "exam closed" };
-  // scheduled vs live : autoriser dès l'heure planifiée
+  // Un examen "live" a été démarré explicitement par le professeur :
+  // il est joignable immédiatement, quelle que soit l'heure planifiée.
+  if (status === "live") return { ok: true };
+  // scheduled : autoriser uniquement à partir de l'heure planifiée.
   if (exam.scheduledAt && new Date(exam.scheduledAt).getTime() > Date.now()) {
     return { ok: false, reason: "exam not started yet" };
   }
