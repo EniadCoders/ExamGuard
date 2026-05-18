@@ -1,3 +1,8 @@
+/**
+ * Vue "Calendrier" du dashboard étudiant : agenda chronologique des examens
+ * (à venir, en cours, passés) avec filtres par statut, recherche textuelle
+ * et regroupement par mois.
+ */
 import { AlertTriangle, ChevronDown, Search, X } from "lucide-react";
 import {
   DashboardCard,

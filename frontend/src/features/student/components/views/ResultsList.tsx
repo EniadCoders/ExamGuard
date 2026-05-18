@@ -1,3 +1,7 @@
+/**
+ * Vue "Résultats" : liste des copies corrigées avec anneau de score, badge de
+ * validation et ouverture du détail dans `ResultDetailModal` au clic.
+ */
 import { ChevronDown, Search, X } from "lucide-react";
 import {
   DashboardStatusBadge,

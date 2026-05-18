@@ -1,3 +1,8 @@
+/**
+ * Vue "Paramètres" : conteneur à onglets latéraux qui regroupe les sections
+ * Profil, Mot de passe, Notifications et Sécurité, et orchestre l'ouverture
+ * de `RevokeSessionModal` depuis la sous-section Sécurité.
+ */
 import { Bell, Lock, Shield, User } from "lucide-react";
 import type { DashboardUser } from "@/features/student/api";
 import { ProfileSettings, type ProfileMessage } from "@/features/student/components/settings/ProfileSettings";

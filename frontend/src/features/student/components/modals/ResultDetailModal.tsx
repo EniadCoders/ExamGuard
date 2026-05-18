@@ -1,3 +1,8 @@
+/**
+ * Modal détaillant un résultat d'examen : score total, validation, durée,
+ * nombre d'évènements anti-triche et breakdown question par question
+ * (réponse donnée vs bonne réponse pour les MCQ).
+ */
 import { Clock, CalendarDays } from "lucide-react";
 import {
   DashboardCard,

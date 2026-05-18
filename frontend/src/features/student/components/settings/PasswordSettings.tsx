@@ -1,3 +1,8 @@
+/**
+ * Section "Mot de passe" des paramètres étudiant : ancien mot de passe + nouveau
+ * + confirmation, avec indicateur visuel de force calculé en temps réel et
+ * toggle d'affichage en clair.
+ */
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 

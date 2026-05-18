@@ -1,3 +1,8 @@
+/**
+ * Petits composants UI partagés par les vues du dashboard étudiant :
+ * pastille de type de question (`ExamTypeChip`) et anneau de score animé
+ * (`ScoreRing`) réutilisés par ExamsList, ResultsList et ResultDetailModal.
+ */
 import { DashboardTag } from "@/shared/components/dashboard/DashboardCard";
 
 interface ExamTypeChipProps {

@@ -1,3 +1,8 @@
+/**
+ * Section "Notifications" des paramètres étudiant : interrupteurs pour activer
+ * ou désactiver les rappels d'examens, l'alerte de publication des résultats
+ * et les annonces de l'établissement.
+ */
 import { ToggleSwitch } from "@/shared/components/ToggleSwitch";
 
 const notifications = [

@@ -1,3 +1,8 @@
+/**
+ * Section "Profil" des paramètres étudiant : avatar, nom complet, email,
+ * téléphone, école UMP (depuis la liste `umpSchools`), filière et identifiant
+ * Apogée / CNE. Émet un `ProfileMessage` après sauvegarde pour feedback UI.
+ */
 import { Camera, ChevronDown, Save, User } from "lucide-react";
 import { umpSchools } from "@/shared/lib/ump-schools";
 import type { DashboardUser } from "@/features/student/api";

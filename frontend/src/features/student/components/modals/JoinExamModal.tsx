@@ -1,3 +1,8 @@
+/**
+ * Modal en deux étapes (saisie du code à 6 lettres puis confirmation succès)
+ * permettant à l'étudiant de rejoindre un examen via le code de partage fourni
+ * par le professeur.
+ */
 interface JoinExamModalProps {
   step: "input" | "success";
   code: string;

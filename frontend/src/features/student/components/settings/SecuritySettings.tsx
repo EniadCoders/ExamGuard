@@ -1,3 +1,8 @@
+/**
+ * Section "Sécurité" des paramètres étudiant : liste des sessions actives
+ * (web / mobile) avec icône d'appareil et bouton de demande de révocation
+ * (qui ouvre `RevokeSessionModal`).
+ */
 import { Monitor, Smartphone } from "lucide-react";
 
 interface SecuritySettingsProps {

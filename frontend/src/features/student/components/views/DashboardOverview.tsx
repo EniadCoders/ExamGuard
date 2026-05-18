@@ -1,3 +1,8 @@
+/**
+ * Vue "Tableau de bord" par défaut : indicateurs clés (KPI), moyenne, badges
+ * de performance, prochains examens et derniers résultats, avec raccourcis
+ * vers les vues détaillées.
+ */
 import {
   Clock,
   Users,

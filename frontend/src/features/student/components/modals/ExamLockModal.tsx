@@ -1,3 +1,8 @@
+/**
+ * Modal d'avertissement affichée avant de basculer en mode examen (plein écran,
+ * blocage du changement d'onglet, copier-coller désactivé). L'étudiant doit
+ * accepter explicitement les règles anti-triche avant que la tentative ne démarre.
+ */
 import { Lock, ShieldAlert } from "lucide-react";
 
 interface ExamLockModalProps {

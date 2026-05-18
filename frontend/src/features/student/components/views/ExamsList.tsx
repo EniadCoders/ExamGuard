@@ -1,3 +1,8 @@
+/**
+ * Vue "Examens" : liste des examens auxquels l'étudiant est inscrit (à venir,
+ * en cours, terminés), avec filtre par statut, recherche et bouton de
+ * démarrage / reprise pilotant `ExamLockModal`.
+ */
 import {
   Clock,
   Users,

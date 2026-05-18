@@ -1,3 +1,8 @@
+/**
+ * Barre de navigation supérieure du dashboard étudiant : logo, onglets de vue
+ * (Dashboard / Examens / Résultats / Calendrier / Paramètres), bouton "Rejoindre",
+ * cloche notifications et menu profil avec déconnexion.
+ */
 import {
   LayoutDashboard,
   FileText,

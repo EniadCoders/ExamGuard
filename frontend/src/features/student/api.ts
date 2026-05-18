@@ -1,3 +1,8 @@
+/**
+ * Client API du dashboard étudiant : dashboard agrégé, jonction d'examens par
+ * code, démarrage / autosave / soumission de tentatives, signalement anti-triche,
+ * détail d'un résultat et notifications.
+ */
 import { api } from "@/shared/lib/api";
 import type { Question, Answer } from "@/shared/types/exam";
 

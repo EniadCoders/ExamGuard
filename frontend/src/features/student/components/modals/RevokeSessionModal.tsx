@@ -1,3 +1,7 @@
+/**
+ * Modal de confirmation avant la révocation d'une session active depuis la
+ * page Paramètres → Sécurité (déconnexion forcée d'un autre appareil).
+ */
 import { AlertTriangle } from "lucide-react";
 
 interface RevokeSessionModalProps {

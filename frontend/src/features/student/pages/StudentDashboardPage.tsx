@@ -1,3 +1,9 @@
+/**
+ * Page racine du dashboard étudiant : charge `fetchDashboard` au montage,
+ * route entre les cinq vues principales (Overview, Examens, Résultats,
+ * Calendrier, Paramètres) via un état `activeView`, et orchestre toutes les
+ * modales transverses (JoinExam, ExamLock, ResultDetail, RevokeSession).
+ */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { GridBackground } from "@/shared/components/GridBackground";
