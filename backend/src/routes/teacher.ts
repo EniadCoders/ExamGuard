@@ -8,6 +8,7 @@ import { requireAuth, requireRole } from "../middleware/auth.js";
 import { finalizeAttempt } from "../services/examGrading.js";
 import { remainingSecondsFrom } from "../services/examTiming.js";
 import { rewriteTextWithLlmApi, type RewriteKind } from "../services/llmRewrite.js";
+import { sendCompletedExamReport } from "../services/examReportAutomation.js";
 
 const router = Router();
 
@@ -469,6 +470,11 @@ router.post("/exams/:id/complete", async (req, res) => {
 
   exam.status = "completed";
   await exam.save();
+
+  void sendCompletedExamReport(exam._id).catch((err) => {
+    console.error("[n8n] failed to send completed exam report:", err);
+  });
+
   res.json({ exam: mapExam(exam.toObject()) });
 });
 
