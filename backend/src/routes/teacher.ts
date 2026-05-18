@@ -5,6 +5,7 @@ import { ExamAttemptModel } from "../models/ExamAttempt.js";
 import { UserModel } from "../models/User.js";
 import { NotificationModel } from "../models/Notification.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { finalizeAttempt } from "../services/examGrading.js";
 
 const router = Router();
 
@@ -402,6 +403,44 @@ router.post("/exams/:id/launch", async (req, res) => {
     );
   }
 
+  res.json({ exam: mapExam(exam.toObject()) });
+});
+
+// ─── Examens — clôturer (statut "completed") ───────────────────────────────
+
+// POST /exams/:id/complete : clôt un examen en cours.
+// L'examen passe en "completed" (plus aucun étudiant ne peut le rejoindre) et
+// les tentatives encore ouvertes sont soumises automatiquement avec leurs
+// réponses actuelles.
+router.post("/exams/:id/complete", async (req, res) => {
+  const teacherId = req.auth!.userId;
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(404).json({ error: "exam not found" });
+  }
+  const exam = await ExamModel.findOne({ _id: req.params.id, createdBy: teacherId });
+  if (!exam) return res.status(404).json({ error: "exam not found" });
+  if (exam.status === "completed") {
+    return res.json({ exam: mapExam(exam.toObject()) }); // déjà clôturé : idempotent
+  }
+  if (exam.status !== "live") {
+    return res.status(409).json({ error: "only a live exam can be completed" });
+  }
+
+  // Soumettre les tentatives encore en cours avec leurs réponses actuelles.
+  const openAttempts = await ExamAttemptModel.find({
+    examId: exam._id,
+    status: "in-progress",
+  });
+  const examData = exam.toObject();
+  for (const attempt of openAttempts) {
+    await finalizeAttempt(attempt, examData, {
+      autoSubmitted: true,
+      autoSubmitTitle: "Examen clôturé par l'enseignant",
+    });
+  }
+
+  exam.status = "completed";
+  await exam.save();
   res.json({ exam: mapExam(exam.toObject()) });
 });
 

@@ -77,6 +77,7 @@ import {
   archiveExam as apiArchiveExam,
   unarchiveExam as apiUnarchiveExam,
   launchExam as apiLaunchExam,
+  completeExam,
   fetchTeacherStudents,
   fetchTeacherDashboard,
   fetchTeacherRoster,
@@ -1658,6 +1659,7 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor, loading }: { onCre
   const [showDetails, setShowDetails] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const filtered = exams.filter(e => {
     const matchSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) || e.subject.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1672,14 +1674,28 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor, loading }: { onCre
 
   const archiveExam = async (id: string) => {
     setBusyId(id);
+    setActionError(null);
     try { replaceExam(await apiArchiveExam(id)); }
-    catch { /* l'examen reste inchangé */ }
+    catch (e) {
+      setActionError(
+        e instanceof ApiError && e.status === 409
+          ? "Cet examen ne peut pas être archivé dans son état actuel."
+          : "Impossible d'archiver l'examen. Réessayez.",
+      );
+    }
     finally { setBusyId(null); }
   };
   const unarchiveExam = async (id: string) => {
     setBusyId(id);
+    setActionError(null);
     try { replaceExam(await apiUnarchiveExam(id)); }
-    catch { /* l'examen reste inchangé */ }
+    catch (e) {
+      setActionError(
+        e instanceof ApiError && e.status === 409
+          ? "Cet examen n'est pas archivé."
+          : "Impossible de désarchiver l'examen. Réessayez.",
+      );
+    }
     finally { setBusyId(null); }
   };
   const launchExam = async (exam: Exam) => {
@@ -1753,6 +1769,15 @@ function ExamsTab({ onCreateExam, exams, setExams, onMonitor, loading }: { onCre
           </button>
         </div>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* Exams Grid */}
       {loading ? (
@@ -2995,8 +3020,16 @@ export function TeacherDashboard() {
       <LiveExamMonitor
         exam={liveExam}
         onBack={() => setLiveExamId(null)}
-        onEnd={() => {
-          const completedExam: Exam = { ...liveExam, status: "completed" };
+        onEnd={async () => {
+          // Persiste la clôture côté serveur (statut "completed" + soumission
+          // des tentatives ouvertes). En cas d'échec réseau, on conserve au
+          // moins la transition locale.
+          let completedExam: Exam = { ...liveExam, status: "completed" };
+          try {
+            completedExam = await completeExam(liveExam.id);
+          } catch {
+            /* l'examen reste affiché comme terminé localement */
+          }
           setExams(prev => prev.map(e => e.id === liveExam.id ? completedExam : e));
           setLiveExamId(null);
           setActiveTab("exams");

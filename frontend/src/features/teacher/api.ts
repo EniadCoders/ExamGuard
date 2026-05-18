@@ -118,6 +118,14 @@ export async function launchExam(id: string): Promise<TeacherExam> {
   return data.exam;
 }
 
+/** Clôt un examen en cours : passe en "completed" et soumet les tentatives ouvertes. */
+export async function completeExam(id: string): Promise<TeacherExam> {
+  const data = await api<{ exam: TeacherExam }>(`/teacher/exams/${id}/complete`, {
+    method: "POST",
+  });
+  return data.exam;
+}
+
 export async function deleteExam(id: string): Promise<void> {
   await api(`/teacher/exams/${id}`, { method: "DELETE" });
 }
