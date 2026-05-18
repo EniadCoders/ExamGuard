@@ -1,4 +1,5 @@
 import { Router } from "express";
+import mongoose from "mongoose";
 import { ExamModel } from "../models/Exam.js";
 import { ExamAttemptModel } from "../models/ExamAttempt.js";
 import { UserModel } from "../models/User.js";

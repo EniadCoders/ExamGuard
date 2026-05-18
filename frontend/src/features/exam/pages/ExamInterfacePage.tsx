@@ -234,7 +234,8 @@ export function ExamInterface() {
         .catch(() => {});
     };
     poll();
-    const t = setInterval(poll, 5000);
+    // Intervalle court : les actions du professeur se répercutent en ~2 s.
+    const t = setInterval(poll, 2000);
     return () => {
       active = false;
       clearInterval(t);
