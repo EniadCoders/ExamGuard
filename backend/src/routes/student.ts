@@ -77,14 +77,27 @@ function isExamLaunchable(exam: any): { ok: boolean; reason?: string } {
   if (status === "draft") return { ok: false, reason: "exam not published" };
   if (status === "archived") return { ok: false, reason: "exam archived" };
   if (status === "completed") return { ok: false, reason: "exam closed" };
-  // Un examen "live" a été démarré explicitement par le professeur :
-  // il est joignable immédiatement, quelle que soit l'heure planifiée.
   if (status === "live") return { ok: true };
-  // scheduled : autoriser uniquement à partir de l'heure planifiée.
-  if (exam.scheduledAt && new Date(exam.scheduledAt).getTime() > Date.now()) {
+
+  // Examens planifiés en mode manuel doivent rester fermés tant que le professeur
+  // ne les a pas lancés explicitement.
+  if (status === "scheduled" && exam.launchMode === "manual") {
     return { ok: false, reason: "exam not started yet" };
   }
-  return { ok: true };
+
+  // Examens planifiés en mode auto ne peuvent être démarrés qu'après la date
+  // prévue.
+  if (status === "scheduled") {
+    if (!exam.scheduledAt) {
+      return { ok: false, reason: "exam not scheduled" };
+    }
+    if (new Date(exam.scheduledAt).getTime() > Date.now()) {
+      return { ok: false, reason: "exam not started yet" };
+    }
+    return { ok: true };
+  }
+
+  return { ok: false, reason: "exam not started yet" };
 }
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────
