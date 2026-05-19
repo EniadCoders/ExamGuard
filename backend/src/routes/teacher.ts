@@ -343,9 +343,16 @@ async function notifyStudents(
  */
 function toObjectIds(ids: unknown): mongoose.Types.ObjectId[] {
   if (!Array.isArray(ids)) return [];
+  const uniqueIds = new Set<string>();
   return ids
-    .filter((id) => mongoose.isValidObjectId(id))  // Garder seulement les IDs valides
-    .map((id) => new mongoose.Types.ObjectId(String(id)));  // Convertir en ObjectId
+    .map((id) => String(id).trim())
+    .filter((id) => id && mongoose.isValidObjectId(id))
+    .filter((id) => {
+      if (uniqueIds.has(id)) return false;
+      uniqueIds.add(id);
+      return true;
+    })
+    .map((id) => new mongoose.Types.ObjectId(id));
 }
 
 /**

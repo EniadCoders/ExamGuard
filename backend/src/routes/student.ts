@@ -258,8 +258,10 @@ router.post("/exams/join", async (req, res) => {
 
   const already = exam.enrolledStudents.some((id) => String(id) === studentId);
   if (!already) {
-    exam.enrolledStudents.push(studentId as any);
-    await exam.save();
+    await ExamModel.updateOne(
+      { _id: exam._id, enrolledStudents: { $ne: studentId } },
+      { $addToSet: { enrolledStudents: studentId } },
+    );
   }
 
   res.json({
