@@ -22,6 +22,13 @@ const TEACHER = {
   department: "Informatique",
 };
 
+const SUPERADMIN = {
+  email: "admin@examguard.local",
+  password: "admin123",
+  fullName: "Super Admin",
+  department: "Administration",
+};
+
 // Étudiants de l'ENIAD (Université Mohammed Premier) — filières IA, ROC, GINF, IRSI.
 const STUDENTS = [
   { email: "zakariatest@gmail.com", password: "zakariaTest123", fullName: "Zakaria Test", program: "IA", department: "IA", identifier: "ZT2026" },
@@ -160,9 +167,14 @@ async function seed() {
   // Réinitialisation : on supprime le professeur Dupont et TOUS les étudiants
   // (peu importe leur email), ainsi que leurs examens / tentatives / notifications.
   const prevTeacher = await UserModel.findOne({ email: TEACHER.email });
+  const prevSuperadmin = await UserModel.findOne({ email: SUPERADMIN.email });
   const prevStudents = await UserModel.find({ role: "student" }).select("_id");
   const prevStudentIds = prevStudents.map((u) => u._id);
-  const prevIds = [...prevStudentIds, ...(prevTeacher ? [prevTeacher._id] : [])];
+  const prevIds = [
+    ...prevStudentIds,
+    ...(prevTeacher ? [prevTeacher._id] : []),
+    ...(prevSuperadmin ? [prevSuperadmin._id] : []),
+  ];
   const prevExams = await ExamModel.find({ createdBy: { $in: prevIds } }).select("_id");
   await ExamAttemptModel.deleteMany({
     $or: [
@@ -173,6 +185,17 @@ async function seed() {
   await NotificationModel.deleteMany({ userId: { $in: prevIds } });
   await ExamModel.deleteMany({ createdBy: { $in: prevIds } });
   await UserModel.deleteMany({ _id: { $in: prevIds } });
+
+  console.log("[seed] creating superadmin…");
+  await UserModel.create({
+    email: SUPERADMIN.email,
+    passwordHash: await bcrypt.hash(SUPERADMIN.password, 10),
+    role: "superadmin",
+    fullName: SUPERADMIN.fullName,
+    department: SUPERADMIN.department,
+    status: "active",
+    lastLoginAt: new Date(),
+  });
 
   console.log("[seed] creating teacher…");
   const teacher = await UserModel.create({
